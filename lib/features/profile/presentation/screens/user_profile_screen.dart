@@ -569,9 +569,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     icon: Icons.logout,
                     title: 'Logout',
                     titleColor: Colors.red,
-                    onTap: () {
-                      auth.logout();
-                      Navigator.pushReplacementNamed(context, '/auth');
+                    onTap: () async {
+                      final router = GoRouter.of(context);
+                      await auth.signOut();
+                      router.go('/auth');
                     },
                   ),
                 ],

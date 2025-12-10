@@ -223,9 +223,10 @@ class ProfileOverviewScreen extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(18)),
                         ),
-                        onPressed: () {
-                          auth.logout();
-                          GoRouter.of(context).go('/auth');
+                        onPressed: () async {
+                          final router = GoRouter.of(context);
+                          await auth.signOut();
+                          router.go('/auth');
                         },
                         child: const Text(
                           'Log out',

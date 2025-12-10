@@ -26,12 +26,19 @@ class AuthUserView {
 class AuthProvider extends ChangeNotifier {
   final SupabaseClient _client = AppLocator.I.get<SupabaseClient>();
   bool _loggedIn = false;
+  bool _passwordRecovery = false;
   AuthProvider() {
     _loggedIn = _client.auth.currentSession != null;
     if (_loggedIn) {
       _ensureProfileExists();
     }
-    _client.auth.onAuthStateChange.listen((event) {
+    _client.auth.onAuthStateChange.listen((data) {
+      final ev = data.event;
+      if (ev == AuthChangeEvent.passwordRecovery) {
+        _passwordRecovery = true;
+        notifyListeners();
+        return;
+      }
       _loggedIn = _client.auth.currentSession != null;
       if (_loggedIn) {
         _ensureProfileExists();
@@ -40,6 +47,7 @@ class AuthProvider extends ChangeNotifier {
     });
   }
   bool get isLoggedIn => _loggedIn;
+  bool get isPasswordRecovery => _passwordRecovery;
 
   AuthUserView? get user {
     final u = _client.auth.currentUser;
@@ -177,6 +185,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> signOut() async {
     await _client.auth.signOut();
     _loggedIn = false;
+    _passwordRecovery = false;
     notifyListeners();
   }
 

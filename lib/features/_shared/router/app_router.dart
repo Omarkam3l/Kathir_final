@@ -35,8 +35,16 @@ class AppRouter {
     refreshListenable: auth,
     observers: [observer],
     redirect: (context, state) {
+      if (auth.isPasswordRecovery && state.matchedLocation != '/new-password') {
+        return '/new-password';
+      }
       final loggedIn = auth.isLoggedIn;
-      final signingFlow = state.matchedLocation == '/role' || state.matchedLocation == '/auth';
+      final signingFlow = state.matchedLocation == '/role' ||
+          state.matchedLocation == '/auth' ||
+          state.matchedLocation == '/login' ||
+          state.matchedLocation == '/forgot-password' ||
+          state.matchedLocation == '/verify-otp' ||
+          state.matchedLocation == '/new-password';
       if (!loggedIn && state.matchedLocation == '/') {
         return '/auth';
       }

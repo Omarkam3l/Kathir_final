@@ -260,6 +260,8 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        final auth = Provider.of<AuthProvider>(context, listen: false);
+        final router = GoRouter.of(context);
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -281,12 +283,11 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context); // Close dialog
                 Navigator.pop(context); // Close drawer
-                // Perform logout and navigate to login
-                Navigator.of(context)
-                    .pushNamedAndRemoveUntil('/', (route) => false);
+                await auth.signOut();
+                router.go('/auth');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
