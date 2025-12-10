@@ -1,0 +1,301 @@
+import 'package:flutter/material.dart';
+import 'package:kathir_final/core/utils/app_colors.dart';
+import 'package:go_router/go_router.dart';
+
+import '../models/figma_models.dart';
+
+class OrderTrackingScreen extends StatelessWidget {
+  static const routeName = '/order-tracking';
+  const OrderTrackingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final stages = DemoData.orderTimeline();
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
+              child: Row(
+                children: [
+                  _diamondButton(
+                    icon: Icons.arrow_back_ios_new,
+                    onTap: () {
+                      final router = GoRouter.of(context);
+                      if (router.canPop()) {
+                        router.pop();
+                      } else {
+                        router.go('/home');
+                      }
+                    },
+                    context: context,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      'Order status',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                  ),
+                  CircleAvatar(
+                    backgroundColor: Theme.of(context).cardColor,
+                    child: Icon(Icons.chat_bubble_outline,
+                        color: Theme.of(context).iconTheme.color),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(18, 12, 18, 24),
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(26),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 20,
+                          offset: const Offset(0, 12),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'Courier arriving',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(context).textTheme.bodyLarge?.color,
+                              ),
+                            ),
+                            const Spacer(),
+                            const Text('Order #921',
+                                style: TextStyle(color: Colors.grey)),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Mathew is 5 min away • 0.8 km',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 18),
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).inputDecorationTheme.fillColor ?? const Color(0xFF2A2A2A),
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 24,
+                                backgroundColor: Theme.of(context).cardColor,
+                                child: Icon(Icons.delivery_dining,
+                                    color: Theme.of(context).colorScheme.primary),
+                              ),
+                              const SizedBox(width: 12),
+                              const Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Mathew Carter',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text('White Toyota Prius • 421-B'),
+                                ],
+                              ),
+                              const Spacer(),
+                              IconButton(
+                                onPressed: () {},
+                                icon: Icon(Icons.phone,
+                                    color: Theme.of(context).colorScheme.primary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(26),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Timeline',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                            fontSize: 18,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        for (int i = 0; i < stages.length; i++) ...[
+                          _TimelineTile(
+                            stage: stages[i],
+                            isCompleted: i <= 2,
+                            isLast: i == stages.length - 1,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(26),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.map, color: Theme.of(context).colorScheme.primary),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            'Track courier live on the map',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {},
+                          child: const Text(
+                            'Open',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _diamondButton({required IconData icon, required VoidCallback onTap, required BuildContext context}) {
+    return Transform.rotate(
+      angle: 0.78,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Transform.rotate(
+            angle: -0.78,
+            child: Icon(icon, color: Theme.of(context).iconTheme.color),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TimelineTile extends StatelessWidget {
+  const _TimelineTile({
+    required this.stage,
+    required this.isCompleted,
+    required this.isLast,
+  });
+
+  final OrderStage stage;
+  final bool isCompleted;
+  final bool isLast;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Column(
+          children: [
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: isCompleted
+                  ? AppColors.primaryAccent
+                  : AppColors.lightBackground,
+              child: Icon(
+                stage.icon,
+                size: 18,
+                color: isCompleted ? Colors.white : AppColors.primaryAccent,
+              ),
+            ),
+            if (!isLast)
+              Container(
+                width: 2,
+                height: 40,
+                color: isCompleted
+                    ? AppColors.primaryAccent
+                    : AppColors.lightBackground,
+              ),
+          ],
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  stage.label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                color: isCompleted ? Theme.of(context).textTheme.bodyLarge?.color : Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  stage.time,
+                  style: TextStyle(
+                    color: isCompleted ? Theme.of(context).colorScheme.primary : Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
