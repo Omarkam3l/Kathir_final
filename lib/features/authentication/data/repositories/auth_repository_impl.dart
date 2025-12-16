@@ -1,3 +1,6 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'package:supabase_flutter/supabase_flutter.dart' as s;
 import '../../../../core/errors/failure.dart';
 import '../../../../core/utils/either.dart';
 import '../../domain/entities/user_entity.dart';
@@ -104,6 +107,52 @@ class AuthRepositoryImpl implements AuthRepository {
       return Right(url);
     } catch (e) {
       return Left(Failure('uploadDocuments failed', cause: e));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> sendPasswordResetEmail(String email) async {
+    try {
+      await remote.sendPasswordResetEmail(email);
+      return const Right(null);
+    } catch (e) {
+      return Left(Failure('sendPasswordResetEmail failed', cause: e));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> verifySignupOtp(
+      String email, String otp) async {
+    try {
+      final u = await remote.verifySignupOtp(email, otp);
+      return Right(u);
+    } on s.AuthException {
+      return const Left(Failure('Invalid or expired code'));
+    } catch (e) {
+      return Left(Failure('verifySignupOtp failed', cause: e));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> verifyRecoveryOtp(
+      String email, String otp) async {
+    try {
+      await remote.verifyRecoveryOtp(email, otp);
+      return const Right(null);
+    } on s.AuthException {
+      return const Left(Failure('Invalid or expired code'));
+    } catch (e) {
+      return Left(Failure('verifyRecoveryOtp failed', cause: e));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updatePassword(String newPassword) async {
+    try {
+      await remote.updatePassword(newPassword);
+      return const Right(null);
+    } catch (e) {
+      return Left(Failure('updatePassword failed', cause: e));
     }
   }
 }

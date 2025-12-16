@@ -21,6 +21,10 @@ abstract class AuthRemoteDataSource {
   Future<String> uploadDocuments(
       String userId, String fileName, List<int> bytes,
       {String bucket});
+  Future<void> sendPasswordResetEmail(String email);
+  Future<UserModel> verifySignupOtp(String email, String otp);
+  Future<void> verifyRecoveryOtp(String email, String otp);
+  Future<void> updatePassword(String newPassword);
 }
 
 class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
@@ -44,8 +48,9 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
         email: email,
         password: password,
         data: {'full_name': fullName, 'role': UserRole.user.wireValue},
-        emailRedirectTo:
-            kIsWeb ? Uri.base.toString() : 'io.supabase.flutter://login-callback/');
+        emailRedirectTo: kIsWeb
+            ? Uri.base.toString()
+            : 'io.supabase.flutter://login-callback/');
     if (res.session == null) {
       return UserModelFactory.fromAuthUser(res.user!);
     }
@@ -60,8 +65,9 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
         email: email,
         password: password,
         data: {'full_name': fullName, 'role': UserRole.ngo.wireValue},
-        emailRedirectTo:
-            kIsWeb ? Uri.base.toString() : 'io.supabase.flutter://login-callback/');
+        emailRedirectTo: kIsWeb
+            ? Uri.base.toString()
+            : 'io.supabase.flutter://login-callback/');
     if (res.session == null) {
       return UserModelFactory.fromAuthUser(res.user!);
     }
@@ -76,8 +82,9 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
         email: email,
         password: password,
         data: {'full_name': fullName, 'role': UserRole.restaurant.wireValue},
-        emailRedirectTo:
-            kIsWeb ? Uri.base.toString() : 'io.supabase.flutter://login-callback/');
+        emailRedirectTo: kIsWeb
+            ? Uri.base.toString()
+            : 'io.supabase.flutter://login-callback/');
     if (res.session == null) {
       return UserModelFactory.fromAuthUser(res.user!);
     }
@@ -137,6 +144,41 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
       {String bucket = 'legal_docs'}) {
     final path = '$userId/$fileName';
     return helper.uploadDocument(bucket: bucket, path: path, bytes: bytes);
+  }
+
+  @override
+  Future<void> sendPasswordResetEmail(String email) async {
+    await client.auth.resetPasswordForEmail(
+      email,
+      redirectTo: kIsWeb
+          ? Uri.base.toString()
+          : 'io.supabase.flutter://login-callback/',
+    );
+  }
+
+  @override
+  Future<UserModel> verifySignupOtp(String email, String otp) async {
+    await client.auth.verifyOTP(type: OtpType.signup, token: otp, email: email);
+    final s = await _waitForSession();
+    final u = client.auth.currentUser;
+    if (u == null && s?.user == null) {
+      throw const AuthException('Verification failed');
+    }
+    return UserModelFactory.fromAuthUser(u ?? s!.user);
+  }
+
+  @override
+  Future<void> verifyRecoveryOtp(String email, String otp) async {
+    await client.auth.verifyOTP(
+      type: OtpType.recovery,
+      token: otp,
+      email: email,
+    );
+  }
+
+  @override
+  Future<void> updatePassword(String newPassword) async {
+    await client.auth.updateUser(UserAttributes(password: newPassword));
   }
 }
 

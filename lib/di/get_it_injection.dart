@@ -9,6 +9,10 @@ import '../features/authentication/domain/usecases/sign_up_usecase.dart';
 import '../features/authentication/domain/usecases/upload_legal_documents_usecase.dart';
 import '../features/authentication/domain/usecases/social_login_usecase.dart';
 import '../features/authentication/domain/usecases/create_or_get_profile_usecase.dart';
+import '../features/authentication/domain/usecases/send_password_reset_usecase.dart';
+import '../features/authentication/domain/usecases/verify_signup_otp_usecase.dart';
+import '../features/authentication/domain/usecases/verify_recovery_otp_usecase.dart';
+import '../features/authentication/domain/usecases/update_password_usecase.dart';
 import '../features/meals/data/datasources/meal_remote_datasource.dart';
 import '../features/meals/data/repositories/meal_repository_impl.dart';
 import '../features/meals/domain/repositories/meal_repository.dart';
@@ -34,6 +38,10 @@ Future<void> registerGetItDependencies() async {
       () => UploadLegalDocumentsUseCase(sl()));
   sl.registerFactory<SocialLoginUseCase>(() => SocialLoginUseCase(sl()));
   sl.registerFactory<CreateOrGetProfileUseCase>(() => CreateOrGetProfileUseCase(sl()));
+  sl.registerFactory<SendPasswordResetUseCase>(() => SendPasswordResetUseCase(sl()));
+  sl.registerFactory<VerifySignupOtpUseCase>(() => VerifySignupOtpUseCase(sl()));
+  sl.registerFactory<VerifyRecoveryOtpUseCase>(() => VerifyRecoveryOtpUseCase(sl()));
+  sl.registerFactory<UpdatePasswordUseCase>(() => UpdatePasswordUseCase(sl()));
 
   sl.registerLazySingleton<MealRemoteDataSource>(
       () => SupabaseMealRemoteDataSource(sl()));
@@ -54,5 +62,9 @@ Future<void> registerGetItDependencies() async {
         uploadDocs: sl(),
         socialLogin: sl(),
         createOrGetProfile: sl(),
+        sendPasswordReset: sl(),
+        verifySignupOtp: sl(),
+        verifyRecoveryOtp: sl(),
+        updatePassword: sl(),
       ));
 }

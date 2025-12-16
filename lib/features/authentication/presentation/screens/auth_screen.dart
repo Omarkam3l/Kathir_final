@@ -3,11 +3,13 @@ import 'package:flutter/foundation.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:kathir_final/core/utils/user_role.dart';
 import 'package:kathir_final/features/_shared/widgets/custom_input_field.dart';
+import 'package:kathir_final/features/authentication/presentation/screens/verification_screen.dart';
 import 'package:kathir_final/features/authentication/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as s;
 import '../../domain/usecases/sign_up_usecase.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'verification_screen.dart';
 import 'package:file_picker/file_picker.dart';
 
 import 'package:kathir_final/features/_shared/providers/theme_provider.dart';
@@ -136,6 +138,8 @@ class _AuthScreenState extends State<AuthScreen> {
               backgroundColor: AppColors.primaryAccent,
             ),
           );
+          GoRouter.of(context).go('${VerificationScreen.routeName}?mode=signup',
+              extra: _emailController.text.trim());
         }
       }
     } catch (e) {
@@ -522,15 +526,14 @@ class _AuthScreenState extends State<AuthScreen> {
                                   messenger.showSnackBar(
                                     const SnackBar(
                                       content: Text('Verification email sent'),
-                                      backgroundColor:
-                                          AppColors.primaryAccent,
+                                      backgroundColor: AppColors.primaryAccent,
                                     ),
                                   );
                                 } catch (e) {
                                   messenger.showSnackBar(
                                     SnackBar(
-                                      content:
-                                          Text('Resend failed: ${e.toString()}'),
+                                      content: Text(
+                                          'Resend failed: ${e.toString()}'),
                                       backgroundColor: Colors.red,
                                     ),
                                   );

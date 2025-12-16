@@ -8,6 +8,10 @@ import '../../domain/usecases/sign_up_usecase.dart';
 import '../../domain/usecases/upload_legal_documents_usecase.dart';
 import '../../domain/usecases/social_login_usecase.dart';
 import '../../domain/usecases/create_or_get_profile_usecase.dart';
+import '../../domain/usecases/send_password_reset_usecase.dart';
+import '../../domain/usecases/verify_signup_otp_usecase.dart';
+import '../../domain/usecases/verify_recovery_otp_usecase.dart';
+import '../../domain/usecases/update_password_usecase.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final SignInUseCase signIn;
@@ -15,6 +19,10 @@ class AuthViewModel extends ChangeNotifier {
   final UploadLegalDocumentsUseCase uploadDocs;
   final SocialLoginUseCase socialLogin;
   final CreateOrGetProfileUseCase createOrGetProfile;
+  final SendPasswordResetUseCase sendPasswordReset;
+  final VerifySignupOtpUseCase verifySignupOtp;
+  final VerifyRecoveryOtpUseCase verifyRecoveryOtp;
+  final UpdatePasswordUseCase updatePassword;
 
   bool loading = false;
   Failure? failure;
@@ -29,6 +37,10 @@ class AuthViewModel extends ChangeNotifier {
     required this.uploadDocs,
     required this.socialLogin,
     required this.createOrGetProfile,
+    required this.sendPasswordReset,
+    required this.verifySignupOtp,
+    required this.verifyRecoveryOtp,
+    required this.updatePassword,
   });
 
   Future<bool> login(String email, String password) async {
@@ -97,6 +109,74 @@ class AuthViewModel extends ChangeNotifier {
   Future<String?> uploadLegalDoc(String userId, String fileName, List<int> bytes) async {
     final res = await uploadDocs(userId, fileName, bytes);
     return res.fold((l) => null, (r) => r);
+  }
+
+  Future<bool> requestPasswordReset(String email) async {
+    loading = true;
+    failure = null;
+    notifyListeners();
+    final res = await sendPasswordReset(email);
+    final ok = res.fold((l) {
+      failure = l;
+      return false;
+    }, (_) => true);
+    loading = false;
+    notifyListeners();
+    return ok;
+  }
+
+  Future<bool> confirmSignupCode(String email, String otp) async {
+    loading = true;
+    failure = null;
+    notifyListeners();
+    final res = await verifySignupOtp(email, otp);
+    final ok = res.fold((l) {
+      failure = l;
+      return false;
+    }, (r) {
+      user = r;
+      final data = {
+        'email': r.email,
+        'full_name': r.fullName,
+        'role': r.role,
+        if (r.phoneNumber != null) 'phone_number': r.phoneNumber,
+        if (r.organizationName != null) 'organization_name': r.organizationName,
+        'is_verified': r.isVerified,
+      };
+      createOrGetProfile.call(r.id, data);
+      return true;
+    });
+    loading = false;
+    notifyListeners();
+    return ok;
+  }
+
+  Future<bool> confirmRecoveryCode(String email, String otp) async {
+    loading = true;
+    failure = null;
+    notifyListeners();
+    final res = await verifyRecoveryOtp(email, otp);
+    final ok = res.fold((l) {
+      failure = l;
+      return false;
+    }, (_) => true);
+    loading = false;
+    notifyListeners();
+    return ok;
+  }
+
+  Future<bool> setNewPassword(String newPasswordValue) async {
+    loading = true;
+    failure = null;
+    notifyListeners();
+    final res = await updatePassword(newPasswordValue);
+    final ok = res.fold((l) {
+      failure = l;
+      return false;
+    }, (_) => true);
+    loading = false;
+    notifyListeners();
+    return ok;
   }
 
   void setRole(UserRole role) {

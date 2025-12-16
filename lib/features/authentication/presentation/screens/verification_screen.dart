@@ -13,7 +13,9 @@ import 'new_password_screen.dart';
 class VerificationScreen extends StatefulWidget {
   static const routeName = '/verify-otp';
   final String email;
-  const VerificationScreen({super.key, this.email = ''});
+  final bool forSignup;
+  const VerificationScreen(
+      {super.key, this.email = '', this.forSignup = false});
 
   @override
   State<VerificationScreen> createState() => _VerificationScreenState();
@@ -35,11 +37,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
       }
     });
   }
+
   @override
   void dispose() {
     _timer?.cancel();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     final email = widget.email;
@@ -48,7 +52,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
       child: Consumer<VerificationViewModel>(
         builder: (context, vm, _) => Scaffold(
           appBar: AppBar(
-            leading: IconButton(icon: const Icon(Icons.arrow_back, color: AppColors.brandRed), onPressed: () => context.pop()),
+            leading: IconButton(
+                icon: const Icon(Icons.arrow_back, color: AppColors.brandRed),
+                onPressed: () => context.pop()),
             backgroundColor: Theme.of(context).cardColor,
             elevation: 0,
           ),
@@ -71,9 +77,14 @@ class _VerificationScreenState extends State<VerificationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.shield_outlined, color: AppColors.brandRed, size: 36),
+                  const Icon(Icons.shield_outlined,
+                      color: AppColors.brandRed, size: 36),
                   const SizedBox(height: 12),
-                  Text('Enter your verification code', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                  Text('Enter your verification code',
+                      style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(context).textTheme.bodyLarge?.color)),
                   const SizedBox(height: 16),
                   CustomOtpInputs(onCompleted: (code) {
                     _otp = code;
@@ -88,7 +99,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
                               final messenger = ScaffoldMessenger.of(context);
                               try {
                                 await s.Supabase.instance.client.auth.resend(
-                                  type: s.OtpType.recovery,
+                                  type: widget.forSignup
+                                      ? s.OtpType.signup
+                                      : s.OtpType.recovery,
                                   email: email,
                                   emailRedirectTo: kIsWeb
                                       ? Uri.base.toString()
@@ -100,7 +113,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                     backgroundColor: AppColors.primaryAccent));
                               } catch (e) {
                                 messenger.showSnackBar(SnackBar(
-                                    content: Text('Resend failed: ${e.toString()}'),
+                                    content:
+                                        Text('Resend failed: ${e.toString()}'),
                                     backgroundColor: AppColors.brandRed));
                               }
                             },
@@ -108,7 +122,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
                         _secondsLeft > 0
                             ? 'Resend OTP (${_secondsLeft}s)'
                             : 'Resend OTP',
-                        style: const TextStyle(color: Color(0xFF0099A6), fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                            color: Color(0xFF0099A6),
+                            fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -118,19 +134,31 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     child: _DiamondButton(
                       loading: vm.loading,
                       onTap: () async {
-                        if (_otp.length != 6) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('OTP must be 6 digits'), backgroundColor: AppColors.brandRed));
+                        if (_otp.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Code required'),
+                                  backgroundColor: AppColors.brandRed));
                           return;
                         }
                         final messenger = ScaffoldMessenger.of(context);
                         final router = GoRouter.of(context);
-                        final ok = await vm.submit(email, _otp);
+                        final ok = widget.forSignup
+                            ? await vm.submitSignup(email, _otp)
+                            : await vm.submitRecovery(email, _otp);
                         if (!mounted) return;
                         if (ok) {
-                          router.go(NewPasswordScreen.routeName, extra: email);
+                          if (widget.forSignup) {
+                            router.go('/home');
+                          } else {
+                            router.go(NewPasswordScreen.routeName,
+                                extra: email);
+                          }
                         } else {
                           final msg = vm.error ?? 'Wrong/Expired OTP';
-                          messenger.showSnackBar(SnackBar(content: Text(msg), backgroundColor: AppColors.brandRed));
+                          messenger.showSnackBar(SnackBar(
+                              content: Text(msg),
+                              backgroundColor: AppColors.brandRed));
                         }
                       },
                       icon: Icons.check,
@@ -150,7 +178,8 @@ class _DiamondButton extends StatelessWidget {
   final bool loading;
   final VoidCallback onTap;
   final IconData icon;
-  const _DiamondButton({required this.loading, required this.onTap, required this.icon});
+  const _DiamondButton(
+      {required this.loading, required this.onTap, required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -175,7 +204,10 @@ class _DiamondButton extends StatelessWidget {
           ),
           child: Transform.rotate(
             angle: -0.78,
-            child: loading ? const Center(child: CircularProgressIndicator(color: Colors.white)) : Icon(icon, color: Colors.white),
+            child: loading
+                ? const Center(
+                    child: CircularProgressIndicator(color: Colors.white))
+                : Icon(icon, color: Colors.white),
           ),
         ),
       ),
