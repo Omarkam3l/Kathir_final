@@ -1,5 +1,8 @@
 import 'package:go_router/go_router.dart';
 import '../_shared/screens/main_navigation_screen.dart';
+import '../../di/global_injection/app_locator.dart';
+import 'presentation/viewmodels/home_viewmodel.dart';
+import '../meals/presentation/screens/all_meals_screen.dart';
 
 List<GoRoute> homeRoutes() => [
   GoRoute(path: '/home', builder: (context, state) => const MainNavigationScreen(initialIndex: 0)),
@@ -7,4 +10,11 @@ List<GoRoute> homeRoutes() => [
   GoRoute(path: '/cart', builder: (context, state) => const MainNavigationScreen(initialIndex: 2)),
   GoRoute(path: '/alerts', builder: (context, state) => const MainNavigationScreen(initialIndex: 3)),
   GoRoute(path: '/profile', builder: (context, state) => const MainNavigationScreen(initialIndex: 4)),
+  GoRoute(
+    path: '/meals',
+    builder: (context, state) {
+      final vm = AppLocator.I.get<HomeViewModel>();
+      return AllMealsScreen(allOffers: vm.meals);
+    },
+  ),
 ];

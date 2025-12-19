@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kathir_final/features/_shared/providers/theme_provider.dart';
 import 'package:kathir_final/features/_shared/config/ui_config.dart';
 import 'package:kathir_final/features/authentication/presentation/blocs/auth_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ProfileDrawer extends StatefulWidget {
   const ProfileDrawer({super.key});
@@ -62,6 +63,7 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
   }
 
   Widget _buildProfileHeader() {
+    final l10n = AppLocalizations.of(context)!;
     final auth = context.watch<AuthProvider>();
     final user = auth.user;
     return Container(
@@ -97,7 +99,7 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  user?.name ?? 'Guest User',
+                  user?.name ?? l10n.guestUser,
                   style: TextStyle(
                     color: Theme.of(context).textTheme.bodyLarge?.color,
                     fontSize: 18,
@@ -106,7 +108,7 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  user?.email ?? 'Not logged in',
+                  user?.email ?? l10n.notLoggedIn,
                   style: TextStyle(
                     color: Theme.of(context).textTheme.bodyMedium?.color,
                     fontSize: 13,
@@ -123,12 +125,13 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
 
   Widget _buildMenuItems() {
     final router = GoRouter.of(context);
-    final items = UiConfig.drawerItems();
+    final l10n = AppLocalizations.of(context)!;
+    final items = UiConfig.drawerItems(l10n);
     return Column(
       children: [
         _buildMenuItem(
           icon: Icons.home,
-          label: 'Home',
+          label: l10n.drawerHome,
           isSelected: _currentPage == 'Home',
           onTap: () {
             setState(() => _currentPage = 'Home');
@@ -156,7 +159,7 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
         ),
         _buildMenuItem(
           icon: Icons.logout,
-          label: 'Logout',
+          label: l10n.drawerLogout,
           onTap: () => _showLogoutDialog(context),
         ),
         const SizedBox(height: 20),
@@ -211,6 +214,7 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
   Widget _buildThemeToggle() {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, _) {
+        final l10n = AppLocalizations.of(context)!;
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
@@ -239,7 +243,7 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
                     ),
                     const SizedBox(width: 16),
                     Text(
-                      themeProvider.isDarkMode ? 'Light Mode' : 'Dark Mode',
+                      themeProvider.isDarkMode ? l10n.themeLight : l10n.themeDark,
                       style: TextStyle(
                         color: Theme.of(context).textTheme.bodyLarge?.color,
                         fontSize: 15,
@@ -262,23 +266,24 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
       builder: (BuildContext context) {
         final auth = Provider.of<AuthProvider>(context, listen: false);
         final router = GoRouter.of(context);
+        final l10n = AppLocalizations.of(context)!;
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           title: Text(
-            'Logout',
+            l10n.drawerLogout,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           content: Text(
-            'Are you sure you want to logout?',
+            l10n.logoutConfirm,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                'Cancel',
+                l10n.cancelAction,
                 style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
               ),
             ),
@@ -296,7 +301,7 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
                 ),
               ),
               child: Text(
-                'Logout',
+                l10n.drawerLogout,
                 style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
               ),
             ),

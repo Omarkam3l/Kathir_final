@@ -20,7 +20,7 @@ void registerUserHomeDependencies() {
   AppLocator.I.registerFactory<GetTopRatedRestaurants>(() => GetTopRatedRestaurants(repo));
   AppLocator.I.registerFactory<GetAvailableMeals>(() => GetAvailableMeals(repo));
 
-  AppLocator.I.registerFactory<HomeViewModel>(() => HomeViewModel(
+  AppLocator.I.registerSingleton<HomeViewModel>(HomeViewModel(
         getOffers: AppLocator.I.get<GetOffers>(),
         getTopRestaurants: AppLocator.I.get<GetTopRatedRestaurants>(),
         getMeals: AppLocator.I.get<GetAvailableMeals>(),

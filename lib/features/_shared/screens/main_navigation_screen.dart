@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:kathir_final/features/user_home/presentation/screens/home_screen.dart';
 import 'package:kathir_final/features/favorites/presentation/screens/favourites_screen.dart';
+import 'package:kathir_final/features/user_home/presentation/screens/home_screen.dart';
 import 'package:kathir_final/features/cart/presentation/screens/cart_screen.dart';
 import 'package:kathir_final/features/profile/presentation/screens/notifications_screen.dart';
 import 'package:kathir_final/features/profile/presentation/screens/profile_overview_screen.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final int initialIndex;
@@ -33,18 +34,19 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: IndexedStack(index: _index, children: _pages),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _index,
         onTap: _select,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite_border), label: 'Favourites'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined), label: 'Cart'),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications_none), label: 'Alerts'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
+        items: [
+          BottomNavigationBarItem(icon: const Icon(Icons.home), label: l10n.navHome),
+          BottomNavigationBarItem(icon: const Icon(Icons.favorite_border), label: l10n.navFavourites),
+          BottomNavigationBarItem(icon: const Icon(Icons.shopping_cart_outlined), label: l10n.navCart),
+          BottomNavigationBarItem(icon: const Icon(Icons.notifications_none), label: l10n.navAlerts),
+          BottomNavigationBarItem(icon: const Icon(Icons.person_outline), label: l10n.navProfile),
         ],
       ),
     );

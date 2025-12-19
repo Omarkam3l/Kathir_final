@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../authentication/presentation/blocs/auth_provider.dart';
-import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'add_card_screen.dart';
 import '../../../orders/presentation/controllers/orders_controller.dart';
 import '../../../orders/presentation/screens/my_orders_screen.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class UserProfileScreen extends StatefulWidget {
   static const routeName = '/user-profile';
@@ -51,6 +51,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _isLoading = true);
     final auth = Provider.of<AuthProvider>(context);
 
@@ -75,8 +76,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Profile updated successfully'),
-            backgroundColor: AppColors.primaryAccent,
+            content: Text(l10n.profileUpdated),
+            backgroundColor: Theme.of(context).colorScheme.primary,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -99,6 +100,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   Future<void> _addNewAddress() async {
+    final l10n = AppLocalizations.of(context)!;
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final result = await showDialog<String>(
       context: context,
@@ -111,9 +113,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       if (!mounted) return;
       setState(() {});
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Address added successfully'),
-          backgroundColor: AppColors.primaryAccent,
+        SnackBar(
+          content: Text(l10n.addressAdded),
+          backgroundColor: Theme.of(context).colorScheme.primary,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -122,14 +124,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final auth = Provider.of<AuthProvider>(context);
     final user = auth.user;
 
     if (user == null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Profile'),
-          backgroundColor: AppColors.white,
+          title: Text(l10n.profile),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
         ),
         body: Center(
@@ -138,14 +141,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             children: [
               const Icon(Icons.person_off, size: 64, color: Colors.grey),
               const SizedBox(height: 16),
-              const Text('Please log in to view your profile'),
+              Text(l10n.profileLoginMessage),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () {
                   Navigator.pushReplacementNamed(context, '/auth');
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryAccent,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 32,
                     vertical: 16,
@@ -163,7 +166,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.white,
+        backgroundColor: Theme.of(context).cardColor,
         leading: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -179,25 +182,25 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             child: Container(
               margin: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
+                color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back_ios_new,
                 size: 18,
-                color: Colors.white70,
+                color: Theme.of(context).iconTheme.color,
               ),
             ),
           ),
         ),
-        title: const Text(
-          'My Profile',
-          style: TextStyle(
-            color: AppColors.darkText,
-            fontWeight: FontWeight.w700,
-            fontSize: 20,
-          ),
-        ),
+        title: Text(
+              l10n.myProfile,
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+                fontWeight: FontWeight.w700,
+                fontSize: 20,
+              ),
+            ),
         actions: [
           if (!_isEditing)
             Material(
@@ -216,14 +219,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.deepTeal, AppColors.tealAqua],
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context).colorScheme.secondary,
+                        Theme.of(context).colorScheme.primary,
+                      ],
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
-                    'Edit',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.editAction,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
                     ),
@@ -247,9 +253,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 child: Container(
                   margin: const EdgeInsets.all(8),
                   padding: const EdgeInsets.all(8),
-                  child: const Icon(
+                  child: Icon(
                     Icons.close,
-                    color: AppColors.darkText,
+                    color: Theme.of(context).iconTheme.color,
                   ),
                 ),
               ),
@@ -258,22 +264,25 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         ],
       ),
       body: SingleChildScrollView(
-          child: Column(
-            children: [
+        child: Column(
+          children: [
             // Profile Header Card
             Container(
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.deepTeal, AppColors.tealAqua],
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).colorScheme.secondary,
+                    Theme.of(context).colorScheme.primary,
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primaryAccent.withOpacity(0.3),
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -285,7 +294,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                color: Theme.of(context).cardColor.withOpacity(0.2),
+                      color: Colors.white.withOpacity(0.2),
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: Colors.white.withOpacity(0.3),
@@ -353,7 +362,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
             // Personal Information Section
             _buildSection(
-              title: 'Personal Information',
+              title: l10n.personalInfo,
               icon: Icons.person_outline,
               child: Form(
                 key: _formKey,
@@ -365,11 +374,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       icon: Icons.person,
                       enabled: _isEditing,
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Name is required';
-                        }
-                        return null;
-                      },
+                          if (value == null || value.isEmpty) {
+                            return l10n.nameRequired;
+                          }
+                          return null;
+                        },
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
@@ -394,7 +403,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _saveProfile,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryAccent,
+                            backgroundColor: Theme.of(context).colorScheme.primary,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -411,9 +420,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                         Colors.white),
                                   ),
                                 )
-                              : const Text(
-                                  'Save Changes',
-                                  style: TextStyle(
+                              : Text(
+                                  l10n.saveChanges,
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -463,8 +472,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     icon: const Icon(Icons.add),
                     label: const Text('Add New Address'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primaryAccent,
-                      side: const BorderSide(color: AppColors.primaryAccent),
+                      foregroundColor: Theme.of(context).colorScheme.primary,
+                      side: BorderSide(color: Theme.of(context).colorScheme.primary),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
                         vertical: 12,
@@ -515,8 +524,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     icon: const Icon(Icons.add_card),
                     label: const Text('Add New Card'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primaryAccent,
-                      side: const BorderSide(color: AppColors.primaryAccent),
+                      foregroundColor: Theme.of(context).colorScheme.primary,
+                      side: BorderSide(color: Theme.of(context).colorScheme.primary),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
                         vertical: 12,
@@ -569,10 +578,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     icon: Icons.logout,
                     title: 'Logout',
                     titleColor: Colors.red,
-                    onTap: () async {
-                      final router = GoRouter.of(context);
-                      await auth.signOut();
-                      router.go('/auth');
+                    onTap: () {
+                      auth.logout();
+                      Navigator.pushReplacementNamed(context, '/auth');
                     },
                   ),
                 ],
@@ -595,11 +603,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Theme.of(context).shadowColor.withOpacity(0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -613,18 +621,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryAccent.withOpacity(0.1),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: AppColors.primaryAccent, size: 20),
+                child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
               ),
               const SizedBox(width: 12),
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.darkText,
+                  color: Theme.of(context).textTheme.titleLarge?.color,
                 ),
               ),
             ],
@@ -649,15 +657,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       enabled: enabled,
       keyboardType: keyboardType,
       validator: validator,
-      style: const TextStyle(
-        color: AppColors.darkText,
+      style: TextStyle(
+        color: Theme.of(context).textTheme.bodyLarge?.color,
         fontSize: 15,
       ),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: AppColors.primaryAccent),
+        prefixIcon: Icon(icon, color: Theme.of(context).colorScheme.primary),
         filled: true,
-        fillColor: enabled ? AppColors.lightBackground : Colors.grey[100],
+        fillColor: enabled ? Theme.of(context).colorScheme.surface : Theme.of(context).disabledColor.withOpacity(0.1),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey[300]!),
@@ -669,7 +677,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide:
-              const BorderSide(color: AppColors.primaryAccent, width: 2),
+              BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -684,7 +692,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.lightBackground,
+        color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[200]!),
       ),
@@ -693,12 +701,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primaryAccent.withOpacity(0.1),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.location_on,
-              color: AppColors.primaryAccent,
+              color: Theme.of(context).colorScheme.primary,
               size: 20,
             ),
           ),
@@ -706,9 +714,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           Expanded(
             child: Text(
               address,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: AppColors.darkText,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
               ),
             ),
           ),
@@ -737,15 +745,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       height: 120,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.deepTeal, AppColors.tealAqua],
+        gradient: LinearGradient(
+          colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.secondary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryAccent.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -836,7 +844,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           child: Row(
             children: [
               Icon(icon,
-                  color: titleColor ?? AppColors.primaryAccent, size: 22),
+                  color: titleColor ?? Theme.of(context).colorScheme.primary, size: 22),
               const SizedBox(width: 16),
               Expanded(
                 child: Text(
@@ -844,7 +852,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: titleColor ?? AppColors.darkText,
+                    color: titleColor ?? Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
               ),
@@ -877,6 +885,7 @@ class _AddressDialogState extends State<_AddressDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
@@ -885,28 +894,28 @@ class _AddressDialogState extends State<_AddressDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Add New Address',
+            Text(
+              l10n.addNewAddress,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: AppColors.darkText,
+                color: Theme.of(context).textTheme.titleLarge?.color,
               ),
             ),
             const SizedBox(height: 20),
             TextField(
               controller: _controller,
               decoration: InputDecoration(
-                hintText: 'Enter your address',
-                prefixIcon: const Icon(Icons.location_on,
-                    color: AppColors.primaryAccent),
+                hintText: l10n.enterAddressHint,
+                prefixIcon: Icon(Icons.location_on,
+                    color: Theme.of(context).colorScheme.primary),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                      color: AppColors.primaryAccent, width: 2),
+                  borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.primary, width: 2),
                 ),
               ),
               maxLines: 3,
@@ -917,7 +926,7 @@ class _AddressDialogState extends State<_AddressDialog> {
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
+                  child: Text(l10n.cancelAction),
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton(
@@ -925,12 +934,12 @@ class _AddressDialogState extends State<_AddressDialog> {
                     Navigator.pop(context, _controller.text.trim());
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryAccent,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('Add'),
+                  child: Text(l10n.addAction),
                 ),
               ],
             ),

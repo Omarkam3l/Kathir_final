@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:kathir_final/features/authentication/presentation/blocs/auth_provider.dart';
 
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 class AddCardScreen extends StatefulWidget {
   static const routeName = '/add-card';
   const AddCardScreen({super.key});
@@ -20,9 +22,13 @@ class _AddCardScreenState extends State<AddCardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final auth = Provider.of<AuthProvider>(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inputFillColor = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF3F1EB);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Add New Card'), backgroundColor: Colors.white, foregroundColor: Colors.black, elevation: 0),
+      appBar: AppBar(title: Text(l10n.addNewCard), elevation: 0),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(children: [
@@ -30,28 +36,87 @@ class _AddCardScreenState extends State<AddCardScreen> {
           Container(
             height: 180,
             width: double.infinity,
-            decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color.fromARGB(255, 157, 237, 239), Color.fromARGB(255, 97, 218, 255)]), borderRadius: BorderRadius.circular(16)),
+            decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.secondary,
+                ]),
+                borderRadius: BorderRadius.circular(16)),
             padding: const EdgeInsets.all(16),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               const Align(alignment: Alignment.topRight, child: Icon(Icons.credit_card, color: Colors.white)),
-              Text(_number.text.isEmpty ? 'XXXX XXXX XXXX XXXX' : _number.text, style: const TextStyle(color: Colors.white, fontSize: 18, letterSpacing: 2)),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(_name.text.isEmpty ? 'Full Name' : _name.text, style: const TextStyle(color: Colors.white)), Text(_expiry.text.isEmpty ? 'MM/YY' : _expiry.text, style: const TextStyle(color: Colors.white))])
+              Text(_number.text.isEmpty ? l10n.cardNumberHint : _number.text, style: const TextStyle(color: Colors.white, fontSize: 18, letterSpacing: 2)),
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(_name.text.isEmpty ? l10n.fullNameLabel : _name.text, style: const TextStyle(color: Colors.white)), Text(_expiry.text.isEmpty ? l10n.expiryDateHint : _expiry.text, style: const TextStyle(color: Colors.white))])
             ]),
           ),
           const SizedBox(height: 16),
           Form(
             key: _formKey,
             child: Column(children: [
-              TextFormField(controller: _number, decoration: const InputDecoration(labelText: 'Card Number'), keyboardType: TextInputType.number, validator: (v) => v == null || v.replaceAll(' ', '').length < 12 ? 'Enter card number' : null),
+              TextFormField(
+                controller: _number,
+                decoration: InputDecoration(
+                  labelText: l10n.cardNumberLabel,
+                  filled: true,
+                  fillColor: inputFillColor,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (v) => v == null || v.replaceAll(' ', '').length < 12 ? l10n.enterCardNumberError : null
+              ),
               const SizedBox(height: 8),
-              TextFormField(controller: _name, decoration: const InputDecoration(labelText: 'Full name'), validator: (v) => v == null || v.isEmpty ? 'Enter name' : null),
+              TextFormField(
+                controller: _name,
+                decoration: InputDecoration(
+                  labelText: l10n.fullNameLabel,
+                  filled: true,
+                  fillColor: inputFillColor,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
+                validator: (v) => v == null || v.isEmpty ? l10n.enterNameError : null
+              ),
               const SizedBox(height: 8),
-              Row(children: [Expanded(child: TextFormField(controller: _expiry, decoration: const InputDecoration(labelText: 'Expiry'), validator: (v) => v == null || v.isEmpty ? 'Enter expiry' : null)), const SizedBox(width: 12), Expanded(child: TextFormField(controller: _cvv, decoration: const InputDecoration(labelText: 'CVV'), obscureText: true, validator: (v) => v == null || v.length < 3 ? 'Enter CVV' : null))]),
+              Row(children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _expiry,
+                    decoration: InputDecoration(
+                      labelText: l10n.expiryDateLabel,
+                      filled: true,
+                      fillColor: inputFillColor,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
+                    validator: (v) => v == null || v.isEmpty ? l10n.enterExpiryError : null
+                  )
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextFormField(
+                    controller: _cvv,
+                    decoration: InputDecoration(
+                      labelText: l10n.cvvLabel,
+                      filled: true,
+                      fillColor: inputFillColor,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
+                    obscureText: true,
+                    validator: (v) => v == null || v.length < 3 ? l10n.enterCvvError : null
+                  )
+                )
+              ]),
               const SizedBox(height: 16),
-              ElevatedButton(
-                  onPressed: _loading
-                      ? null
-                      : () async {
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: _loading
+                        ? null
+                        : () async {
                           final navigator = Navigator.of(context);
                           if (!_formKey.currentState!.validate()) return;
                           setState(() => _loading = true);
@@ -66,8 +131,9 @@ class _AddCardScreenState extends State<AddCardScreen> {
                           navigator.pop();
                         },
                   child: _loading
-                      ? const CircularProgressIndicator()
-                      : const Text('Add Card'))
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(l10n.addCardAction))
+            ),
             ]),
           )
         ]),

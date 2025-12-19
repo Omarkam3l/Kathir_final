@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as s;
 import 'dart:async';
 import 'package:go_router/go_router.dart';
 import '../viewmodels/verification_viewmodel.dart';
 import '../../../../di/global_injection/app_locator.dart';
 import '../../../_shared/widgets/custom_otp_inputs.dart';
-import '../../../../core/utils/app_colors.dart';
 import 'new_password_screen.dart';
 
 class VerificationScreen extends StatefulWidget {
@@ -47,13 +47,15 @@ class _VerificationScreenState extends State<VerificationScreen> {
   @override
   Widget build(BuildContext context) {
     final email = widget.email;
+    final l10n = AppLocalizations.of(context)!;
     return ChangeNotifierProvider(
       create: (_) => AppLocator.I.get<VerificationViewModel>(),
       child: Consumer<VerificationViewModel>(
         builder: (context, vm, _) => Scaffold(
           appBar: AppBar(
             leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.brandRed),
+                icon: Icon(Icons.arrow_back,
+                    color: Theme.of(context).textTheme.bodyLarge?.color),
                 onPressed: () => context.pop()),
             backgroundColor: Theme.of(context).cardColor,
             elevation: 0,
@@ -77,10 +79,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.shield_outlined,
-                      color: AppColors.brandRed, size: 36),
+                   Icon(Icons.shield_outlined,
+                      color: Theme.of(context).colorScheme.primary, size: 36),
                   const SizedBox(height: 12),
-                  Text('Enter your verification code',
+                  Text(l10n.enterVerificationCode,
                       style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -97,6 +99,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
                           ? null
                           : () async {
                               final messenger = ScaffoldMessenger.of(context);
+                              final primaryColor = Theme.of(context).colorScheme.primary;
+                              final errorColor = Theme.of(context).colorScheme.error;
                               try {
                                 await s.Supabase.instance.client.auth.resend(
                                   type: widget.forSignup
@@ -108,20 +112,20 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                       : 'io.supabase.flutter://login-callback/',
                                 );
                                 _startCooldown();
-                                messenger.showSnackBar(const SnackBar(
-                                    content: Text('OTP resent'),
-                                    backgroundColor: AppColors.primaryAccent));
+                                messenger.showSnackBar(SnackBar(
+                                    content: Text(l10n.otpResent),
+                                    backgroundColor: primaryColor));
                               } catch (e) {
                                 messenger.showSnackBar(SnackBar(
                                     content:
-                                        Text('Resend failed: ${e.toString()}'),
-                                    backgroundColor: AppColors.brandRed));
+                                        Text(l10n.resendFailed(e.toString())),
+                                    backgroundColor: errorColor));
                               }
                             },
                       child: Text(
                         _secondsLeft > 0
-                            ? 'Resend OTP (${_secondsLeft}s)'
-                            : 'Resend OTP',
+                            ? l10n.resendOtpTimer(_secondsLeft)
+                            : l10n.resendOtp,
                         style: const TextStyle(
                             color: Color(0xFF0099A6),
                             fontWeight: FontWeight.w600),
@@ -136,13 +140,15 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       onTap: () async {
                         if (_otp.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('Code required'),
-                                  backgroundColor: AppColors.brandRed));
+                              SnackBar(
+                                  content: Text(l10n.codeRequired),
+                                  backgroundColor: Theme.of(context).colorScheme.error));
                           return;
                         }
                         final messenger = ScaffoldMessenger.of(context);
                         final router = GoRouter.of(context);
+                        final errorColor = Theme.of(context).colorScheme.error;
+                        
                         final ok = widget.forSignup
                             ? await vm.submitSignup(email, _otp)
                             : await vm.submitRecovery(email, _otp);
@@ -155,10 +161,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                 extra: email);
                           }
                         } else {
-                          final msg = vm.error ?? 'Wrong/Expired OTP';
+                          final msg = vm.error ?? l10n.wrongOtp;
                           messenger.showSnackBar(SnackBar(
                               content: Text(msg),
-                              backgroundColor: AppColors.brandRed));
+                              backgroundColor: errorColor));
                         }
                       },
                       icon: Icons.check,
@@ -192,7 +198,7 @@ class _DiamondButton extends StatelessWidget {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: AppColors.brandRed,
+            color: Theme.of(context).colorScheme.primary,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(

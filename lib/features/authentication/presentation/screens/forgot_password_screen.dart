@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../viewmodels/forgot_password_viewmodel.dart';
 import '../../../../di/global_injection/app_locator.dart';
 import '../../../_shared/widgets/custom_text_field.dart';
-import '../../../../core/utils/app_colors.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 import 'verification_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -25,12 +27,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return ChangeNotifierProvider(
       create: (_) => AppLocator.I.get<ForgotPasswordViewModel>(),
       child: Consumer<ForgotPasswordViewModel>(
         builder: (context, vm, _) => Scaffold(
           appBar: AppBar(
-            leading: IconButton(icon: const Icon(Icons.arrow_back, color: AppColors.brandRed), onPressed: () => context.pop()),
+            leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.primary), onPressed: () => context.pop()),
             backgroundColor: Theme.of(context).cardColor,
             elevation: 0,
           ),
@@ -53,13 +56,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.lock_outline, color: AppColors.brandRed, size: 36),
+                  Icon(Icons.lock_outline, color: Theme.of(context).colorScheme.primary, size: 36),
                   const SizedBox(height: 12),
-                  Text('Forgot Password', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                  Text(l10n.forgotPasswordTitle, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.bodyLarge?.color)),
                   const SizedBox(height: 8),
-                  Text('Enter your registered email or phone.', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
+                  Text(l10n.forgotPasswordSubtitle, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
                   const SizedBox(height: 16),
-                  CustomTextField(controller: _email, hint: 'Email or phone', keyboardType: TextInputType.emailAddress),
+                  CustomTextField(controller: _email, hint: l10n.emailLabel, keyboardType: TextInputType.emailAddress),
                   const SizedBox(height: 24),
                   Align(
                     alignment: Alignment.centerRight,
@@ -67,19 +70,27 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       loading: vm.loading,
                       onTap: () async {
                         final value = _email.text.trim();
-                        if (value.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Email must not be empty'), backgroundColor: AppColors.brandRed));
+                        if (value.isEmpty || !value.contains('@')) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.enterValidEmail), backgroundColor: Theme.of(context).colorScheme.error));
                           return;
                         }
                         final messenger = ScaffoldMessenger.of(context);
                         final router = GoRouter.of(context);
+                        final errorColor = Theme.of(context).colorScheme.error;
                         final ok = await vm.submit(value);
                         if (!mounted) return;
                         if (ok) {
-                          messenger.showSnackBar(const SnackBar(content: Text('Verification code sent'), backgroundColor: Colors.green));
+                          try {
+                            await Supabase.instance.client.auth.resend(
+                              type: OtpType.recovery,
+                              email: value,
+                              emailRedirectTo: kIsWeb ? Uri.base.toString() : 'io.supabase.flutter://login-callback/',
+                            );
+                          } catch (_) {}
+                          messenger.showSnackBar(SnackBar(content: Text(l10n.checkEmailForCode), backgroundColor: Colors.green));
                           router.go(VerificationScreen.routeName, extra: value);
                         } else {
-                          messenger.showSnackBar(SnackBar(content: Text(vm.error ?? 'Network error'), backgroundColor: AppColors.brandRed));
+                          messenger.showSnackBar(SnackBar(content: Text(vm.error ?? l10n.networkError), backgroundColor: errorColor));
                         }
                       },
                       icon: Icons.arrow_forward,
@@ -112,7 +123,7 @@ class _DiamondButton extends StatelessWidget {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: AppColors.brandRed,
+            color: Theme.of(context).colorScheme.primary,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(

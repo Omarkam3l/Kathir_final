@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 import '../controllers/orders_controller.dart';
 import '../widgets/orders/order_list_item.dart';
 import '../widgets/orders/order_tab_button.dart';
@@ -13,6 +15,7 @@ class MyOrdersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final controller = context.watch<OrdersController>();
     final activeStatus = controller.activeTab;
     final orders = controller.ordersForActiveTab;
@@ -29,7 +32,7 @@ class MyOrdersScreen extends StatelessWidget {
               child: Row(
                 children: [
                   OrderTabButton(
-                    label: 'Current',
+                    label: l10n.currentTab,
                     isSelected: activeStatus == OrderStatus.current,
                     onTap: () => context
                         .read<OrdersController>()
@@ -37,7 +40,7 @@ class MyOrdersScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   OrderTabButton(
-                    label: 'Completed',
+                    label: l10n.completedTab,
                     isSelected: activeStatus == OrderStatus.completed,
                     onTap: () => context
                         .read<OrdersController>()
@@ -45,7 +48,7 @@ class MyOrdersScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   OrderTabButton(
-                    label: 'Cancelled',
+                    label: l10n.cancelledTab,
                     isSelected: activeStatus == OrderStatus.cancelled,
                     onTap: () => context
                         .read<OrdersController>()
@@ -83,6 +86,7 @@ class _OrdersAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 10, 18, 6),
       child: Row(
@@ -101,7 +105,7 @@ class _OrdersAppBar extends StatelessWidget {
             },
           ),
           Text(
-            'My Orders',
+            l10n.myOrdersTitle,
             style: TextStyle(
               color: Theme.of(context).textTheme.bodyLarge?.color,
               fontSize: 22,

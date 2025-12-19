@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../../core/utils/app_colors.dart';
 import '../../../../core/utils/app_dimensions.dart';
 import '../../../../core/utils/app_styles.dart';
 import 'package:provider/provider.dart';
 import '../../../profile/presentation/providers/foodie_state.dart';
 import '../../domain/entities/meal_offer.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 /// Compact meal card widget with animations and interactions
 class MealCardCompact extends StatefulWidget {
@@ -126,7 +126,9 @@ class _MealCardCompactState extends State<MealCardCompact>
   }
 
   Widget _buildImageSection(MealOffer offer, bool isSelected) {
-    return Stack(
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Stack(
       clipBehavior: Clip.none,
       children: [
         Hero(
@@ -169,10 +171,12 @@ class _MealCardCompactState extends State<MealCardCompact>
         _buildFavoriteButton(offer),
         _buildRestaurantBadge(offer),
       ],
+      ),
     );
   }
 
   Widget _buildFavoriteButton(MealOffer offer) {
+    final l10n = AppLocalizations.of(context)!;
     return Positioned(
       top: 10,
       left: 10,
@@ -188,7 +192,7 @@ class _MealCardCompactState extends State<MealCardCompact>
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          fav ? 'Removed from favourites' : 'Added to favourites',
+                          fav ? l10n.removedFromFavourites : l10n.addedToFavourites,
                         ),
                         duration: const Duration(seconds: 1),
                       ),
@@ -234,7 +238,7 @@ class _MealCardCompactState extends State<MealCardCompact>
               offset: const Offset(0, 4),
             )
           ],
-          color: AppColors.primaryAccent.withOpacity(0.12),
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
         ),
         child: Center(
           child: Text(
@@ -250,6 +254,7 @@ class _MealCardCompactState extends State<MealCardCompact>
   }
 
   Widget _buildContentSection(MealOffer offer, bool isSelected) {
+    final l10n = AppLocalizations.of(context)!;
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -296,7 +301,7 @@ class _MealCardCompactState extends State<MealCardCompact>
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    '${offer.quantity} Left',
+                    l10n.quantityLeft(offer.quantity),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -314,7 +319,7 @@ class _MealCardCompactState extends State<MealCardCompact>
               children: [
                 Flexible(
                   child: Text(
-                    'Estimated \$${offer.originalPrice.toStringAsFixed(0)}',
+                    l10n.estimatedPrice(offer.originalPrice.toStringAsFixed(0)),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -326,7 +331,7 @@ class _MealCardCompactState extends State<MealCardCompact>
                 const SizedBox(width: 12),
                 Flexible(
                   child: Text(
-                    'Expires: ${_formatExpiry(offer.expiry)}',
+                    l10n.expiresAt(_formatExpiry(offer.expiry)),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -350,7 +355,7 @@ class _MealCardCompactState extends State<MealCardCompact>
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  'Donation \$${offer.donationPrice.toStringAsFixed(0)}',
+                  l10n.donationPrice(offer.donationPrice.toStringAsFixed(0)),
                   style: TextStyle(
                     fontSize: 16,
                     color: Theme.of(context).colorScheme.primary,
@@ -369,8 +374,11 @@ class _MealCardCompactState extends State<MealCardCompact>
   }
 
   Widget _buildTimerBadge(MealOffer offer) {
+    final l10n = AppLocalizations.of(context)!;
     final isUrgent = offer.minutesLeft <= 30;
-    final color = isUrgent ? AppColors.secondaryAccent : AppColors.primaryAccent;
+    final color = isUrgent
+        ? Theme.of(context).colorScheme.error
+        : Theme.of(context).colorScheme.primary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
@@ -382,7 +390,7 @@ class _MealCardCompactState extends State<MealCardCompact>
           Icon(Icons.timer, size: 14, color: color),
           const SizedBox(width: 6),
           Text(
-            '${offer.minutesLeft} min',
+            l10n.minutesShort(offer.minutesLeft),
             style: TextStyle(
               color: color,
               fontSize: 12,
@@ -395,6 +403,7 @@ class _MealCardCompactState extends State<MealCardCompact>
   }
 
   Widget _buildAddToCartButton(MealOffer offer, bool isSelected) {
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
           width: double.infinity,
           child: ElevatedButton(
@@ -403,11 +412,10 @@ class _MealCardCompactState extends State<MealCardCompact>
               foodie.addToCart(offer);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('${offer.title} added to cart'),
+                  content: Text(l10n.addedToCartNamed(offer.title)),
                   duration: const Duration(seconds: 1),
                 ),
               );
-              widget.onTap();
             },
             style: AppStyles.primaryButtonStyle.copyWith(
           padding: WidgetStateProperty.all(
@@ -416,11 +424,11 @@ class _MealCardCompactState extends State<MealCardCompact>
             ),
           ),
         ),
-            child: const Text(
-              'Add to Cart',
+            child: Text(
+              l10n.addToCart,
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onPrimary,
               ),
             ),
           ),

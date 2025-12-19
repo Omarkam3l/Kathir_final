@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:go_router/go_router.dart';
+
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class HelpScreen extends StatelessWidget {
   static const routeName = '/help';
@@ -8,6 +9,7 @@ class HelpScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -17,9 +19,10 @@ class HelpScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(18, 16, 18, 6),
               child: Row(
                 children: [
-          _diamondButton(
-            icon: Icons.arrow_back_ios_new,
-            onTap: () {
+            _diamondButton(
+              context,
+              icon: Icons.arrow_back_ios_new,
+              onTap: () {
               final router = GoRouter.of(context);
               if (router.canPop()) {
                 router.pop();
@@ -31,7 +34,7 @@ class HelpScreen extends StatelessWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
-                      'Need Help?',
+                      l10n.needHelp,
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w800,
@@ -48,29 +51,29 @@ class HelpScreen extends StatelessWidget {
                 children: [
                   _HelpCard(
                     icon: Icons.phone,
-                    title: 'Contact Support',
-                    subtitle: 'Call us at +1 (555) 123-4567',
+                    title: l10n.contactSupport,
+                    subtitle: l10n.callUs(l10n.supportPhone),
                     onTap: () {},
                   ),
                   const SizedBox(height: 16),
                   _HelpCard(
                     icon: Icons.email,
-                    title: 'Email Us',
-                    subtitle: 'support@foodie.com',
+                    title: l10n.emailUs,
+                    subtitle: l10n.supportEmail,
                     onTap: () {},
                   ),
                   const SizedBox(height: 16),
                   _HelpCard(
                     icon: Icons.chat_bubble,
-                    title: 'Live Chat',
-                    subtitle: 'Available 24/7',
+                    title: l10n.liveChat,
+                    subtitle: l10n.available247,
                     onTap: () {},
                   ),
                   const SizedBox(height: 16),
                   _HelpCard(
                     icon: Icons.help_outline,
-                    title: 'FAQs',
-                    subtitle: 'Frequently asked questions',
+                    title: l10n.faqs,
+                    subtitle: l10n.faqSubtitle,
                     onTap: () {},
                   ),
                 ],
@@ -82,7 +85,7 @@ class HelpScreen extends StatelessWidget {
     );
   }
 
-  Widget _diamondButton({required IconData icon, required VoidCallback onTap}) {
+  Widget _diamondButton(BuildContext context, {required IconData icon, required VoidCallback onTap}) {
     return Transform.rotate(
       angle: 0.78,
       child: InkWell(
@@ -92,7 +95,7 @@ class HelpScreen extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -104,7 +107,7 @@ class HelpScreen extends StatelessWidget {
           ),
           child: Transform.rotate(
             angle: -0.78,
-            child: Icon(icon, color: AppColors.darkText),
+            child: Icon(icon, color: Theme.of(context).iconTheme.color),
           ),
         ),
       ),
@@ -156,24 +159,24 @@ class _HelpCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
                     style: const TextStyle(
-                      color: Colors.white70,
+                      color: Colors.grey,
                       fontSize: 14,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.white70),
+            const Icon(Icons.chevron_right, color: Colors.grey),
           ],
         ),
       ),

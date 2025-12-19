@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import '../../../orders/presentation/models/figma_models.dart';
 import '../../../orders/presentation/screens/order_tracking_screen.dart';
+
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class NotificationsScreen extends StatelessWidget {
   static const routeName = '/notifications';
@@ -10,7 +11,8 @@ class NotificationsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final notifications = DemoData.notifications();
+    final l10n = AppLocalizations.of(context)!;
+    final notifications = DemoData.notifications(l10n);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -22,6 +24,7 @@ class NotificationsScreen extends StatelessWidget {
               child: Row(
                 children: [
                   _diamondButton(
+                    context: context,
                     icon: Icons.arrow_back_ios_new,
                     onTap: () {
                       final router = GoRouter.of(context);
@@ -35,7 +38,7 @@ class NotificationsScreen extends StatelessWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
-                      'Notifications',
+                      l10n.notifications,
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w800,
@@ -45,7 +48,8 @@ class NotificationsScreen extends StatelessWidget {
                   ),
                   IconButton(
                     onPressed: () {},
-                    icon: const Icon(Icons.settings, color: AppColors.darkText),
+                    icon: Icon(Icons.settings,
+                        color: Theme.of(context).iconTheme.color),
                   ),
                 ],
               ),
@@ -74,15 +78,15 @@ class NotificationsScreen extends StatelessWidget {
                         CircleAvatar(
                           radius: 24,
                           backgroundColor: item.isNew
-                              ? AppColors.primaryAccent
-                              : AppColors.lightBackground,
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).scaffoldBackgroundColor,
                           child: Icon(
                             item.isNew
                                 ? Icons.notifications_active
                                 : Icons.notifications_none,
                             color: item.isNew
                                 ? Colors.white
-                                : AppColors.primaryAccent,
+                                : Theme.of(context).colorScheme.primary,
                           ),
                         ),
                         const SizedBox(width: 14),
@@ -95,9 +99,12 @@ class NotificationsScreen extends StatelessWidget {
                                   Expanded(
                                     child: Text(
                                       item.title,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.w700,
-                                        color: Colors.white,
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.color,
                                         fontSize: 16,
                                       ),
                                     ),
@@ -113,7 +120,11 @@ class NotificationsScreen extends StatelessWidget {
                               Text(
                                 item.description,
                                 style: TextStyle(
-                                  color: Colors.grey.shade700,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.color
+                                      ?.withOpacity(0.8),
                                   height: 1.4,
                                 ),
                               ),
@@ -128,17 +139,18 @@ class NotificationsScreen extends StatelessWidget {
                                                 OrderTrackingScreen.routeName),
                                         style: TextButton.styleFrom(
                                           foregroundColor:
-                                              AppColors.secondaryAccent,
+                                              Theme.of(context).colorScheme.secondary,
                                           padding: const EdgeInsets.symmetric(
                                               vertical: 12),
-                                          backgroundColor: AppColors
-                                              .secondaryAccent
+                                          backgroundColor: Theme.of(context)
+                                              .colorScheme
+                                              .secondary
                                               .withOpacity(0.08),
                                           shape: RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.circular(14)),
                                         ),
-                                        child: const Text('Track order'),
+                                        child: Text(l10n.trackOrderAction),
                                       ),
                                     ),
                                   ],
@@ -161,7 +173,8 @@ class NotificationsScreen extends StatelessWidget {
     );
   }
 
-  Widget _diamondButton({required IconData icon, required VoidCallback onTap}) {
+  Widget _diamondButton(
+      {required IconData icon, required VoidCallback onTap, required BuildContext context}) {
     return Transform.rotate(
       angle: 0.78,
       child: InkWell(
@@ -171,7 +184,7 @@ class NotificationsScreen extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -183,7 +196,7 @@ class NotificationsScreen extends StatelessWidget {
           ),
           child: Transform.rotate(
             angle: -0.78,
-            child: Icon(icon, color: AppColors.darkText),
+            child: Icon(icon, color: Theme.of(context).iconTheme.color),
           ),
         ),
       ),

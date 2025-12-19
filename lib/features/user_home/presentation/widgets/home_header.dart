@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../../core/utils/app_dimensions.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 /// Header widget for the home screen with search functionality
 class HomeHeader extends StatelessWidget {
@@ -13,6 +14,7 @@ class HomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -20,7 +22,7 @@ class HomeHeader extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLarge),
             child: Text(
-            'Find your',
+            l10n.findYour,
             style: TextStyle(
               fontSize: 20,
               color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -33,7 +35,7 @@ class HomeHeader extends StatelessWidget {
             child: Row(
               children: [
                 Text(
-                  'Best Food',
+                  l10n.bestFood,
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
@@ -42,7 +44,7 @@ class HomeHeader extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'here',
+                  l10n.here,
                   style: TextStyle(
                     fontSize: 26,
                     color: Theme.of(context).textTheme.bodyLarge?.color,
@@ -74,8 +76,8 @@ class HomeHeader extends StatelessWidget {
                         child: TextField(
                           onChanged: onQueryChanged,
                           style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
-                          decoration: const InputDecoration(
-                            hintText: 'Search food...',
+                          decoration: InputDecoration(
+                            hintText: l10n.searchFoodHint,
                             border: InputBorder.none,
                             enabledBorder: InputBorder.none,
                             focusedBorder: InputBorder.none,

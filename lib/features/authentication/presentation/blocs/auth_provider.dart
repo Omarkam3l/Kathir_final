@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/utils/user_role.dart';
 import '../../../../di/global_injection/app_locator.dart';
 import '../../data/models/user_model.dart';
+import '../../../../core/services/email_service.dart';
 
 class AuthUserView {
   final String id;
@@ -189,9 +190,9 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void logout() {
+  Future<void> logout() async {
     // alias for existing signOut
-    signOut();
+    await signOut();
   }
 
   Future<void> updateProfile({String? name, String? phone}) async {
@@ -252,9 +253,45 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> changePassword(String currentPassword, String newPassword) async {
-    // Supabase updates password for the current session user
-    await _client.auth.updateUser(UserAttributes(password: newPassword));
-    return true;
+    final email = _client.auth.currentUser?.email;
+    if (email == null) return false;
+
+    // 1. Verify current password by re-authenticating
+    try {
+      final res = await _client.auth.signInWithPassword(
+        email: email,
+        password: currentPassword,
+      );
+      
+      if (res.session == null) {
+        debugPrint('changePassword: Re-authentication failed (no session)');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('changePassword: Re-authentication error: $e');
+      // Assume wrong password if re-auth fails
+      return false;
+    }
+
+    // 2. Update password
+    try {
+      await _client.auth.updateUser(UserAttributes(password: newPassword));
+      
+      // 3. Send notification email
+      try {
+        final emailService = AppLocator.I.get<EmailService>();
+        await emailService.sendPasswordChangedNotification(email);
+      } catch (e) {
+        debugPrint('Failed to send password changed email: $e');
+        // Continue even if email fails, as password was changed
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint('changePassword: Update user error: $e');
+      // Rethrow to let UI handle "Update failed" instead of "Wrong password"
+      rethrow;
+    }
   }
 
   Future<void> deleteAccount() async {

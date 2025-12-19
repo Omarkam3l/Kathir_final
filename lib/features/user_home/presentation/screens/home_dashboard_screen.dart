@@ -12,6 +12,7 @@ import '../widgets/home_header.dart';
 import '../widgets/highlights_section.dart';
 import '../widgets/meal_card_compact.dart';
 import '../widgets/profile_drawer.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 /// Main home dashboard screen displaying meal offers and highlights
 class HomeDashboardScreen extends StatefulWidget {
@@ -109,7 +110,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: Theme.of(context).colorScheme.primary,
         onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Chatbot coming soon...')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.chatbotComingSoon)),
         ),
         child: const Icon(Icons.chat_bubble_rounded, color: Colors.white),
       ),
@@ -202,6 +203,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
   Widget _buildMealsSection() {
+    final l10n = AppLocalizations.of(context)!;
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
@@ -214,7 +216,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           children: [
             Expanded(
               child: Text(
-                'Available Meals',
+                l10n.availableMeals,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -233,7 +235,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 );
               },
               child: Text(
-                'See all',
+                l10n.seeAll,
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w600,

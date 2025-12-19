@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../../core/utils/app_colors.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/utils/user_role.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as s;
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../../../profile/presentation/providers/foodie_state.dart';
+import 'choose_address_screen.dart';
+import 'payment_method_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   static const routeName = '/checkout';
@@ -17,6 +21,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   int _selected = 0;
   int _slot = 0;
   PurchaseMode _purchaseMode = PurchaseMode.buyer;
+  
+  // Mock address state - in a real app this would come from an AddressProvider
+  final String _addressTitle = 'Work • 212 Kathir Heights';
+  final String _addressSubtitle = 'Tech Park, Floor 11';
 
   @override
   void initState() {
@@ -34,301 +42,345 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const subtotal = 52.5;
-    const delivery = 3.5;
-    const tip = 4.0;
-    const total = subtotal + delivery + tip;
-
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 16, 18, 4),
-              child: Row(
-                children: [
-                  _diamondButton(
-                    icon: Icons.arrow_back_ios_new,
-                    onTap: () {
-                      final router = GoRouter.of(context);
-                      if (router.canPop()) {
-                        router.pop();
-                      } else {
-                        router.go('/home');
-                      }
-                    },
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      'Checkout',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
+        child: Consumer<FoodieState>(
+          builder: (context, foodie, _) {
+            final total = foodie.total;
+            
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 16, 18, 4),
+                  child: Row(
+                    children: [
+                      _diamondButton(
+                        context,
+                        icon: Icons.arrow_back_ios_new,
+                        onTap: () {
+                          final router = GoRouter.of(context);
+                          if (router.canPop()) {
+                            router.pop();
+                          } else {
+                            router.go('/home');
+                          }
+                        },
                       ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(18, 10, 18, 120),
-                child: Column(
-                  children: [
-                    // Buyer/Donor Selection (only for UserRole.user)
-                    if (_canChooseBuyerDonor(context)) ...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ChoiceChip(
-                            label: const Text('Buyer'),
-                            selected: _purchaseMode == PurchaseMode.buyer,
-                            onSelected: (_) => setState(
-                                () => _purchaseMode = PurchaseMode.buyer),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          l10n.checkoutTitle,
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
                           ),
-                          const SizedBox(width: 12),
-                          ChoiceChip(
-                            label: const Text('Donor'),
-                            selected: _purchaseMode == PurchaseMode.donor,
-                            onSelected: (_) => setState(
-                                () => _purchaseMode = PurchaseMode.donor),
-                          ),
-                        ],
+                        ),
                       ),
-                      const SizedBox(height: 18),
                     ],
-                    _SectionCard(
-                      title: 'Delivery address',
-                      trailing: TextButton(
-                        onPressed: () {},
-                        child: const Text('Change'),
-                      ),
-                      child: const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Work • 212 Kathir Heights',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text('Tech Park, Floor 11'),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    _SectionCard(
-                      title: 'Delivery slot',
-                      child: Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: List.generate(3, (index) {
-                          const slots = [
-                            'Now (25 min)',
-                            '18:30 - 19:00',
-                            'Schedule'
-                          ];
-                          return GestureDetector(
-                            onTap: () => setState(() => _slot = index),
-                            child: Container(
-                              width: 110,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: _slot == index
-                                    ? AppColors.darkText
-                                    : AppColors.lightBackground,
-                                borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(18, 10, 18, 120),
+                    child: Column(
+                      children: [
+                        // Buyer/Donor Selection (only for UserRole.user)
+                        if (_canChooseBuyerDonor(context)) ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ChoiceChip(
+                                label: Text(l10n.buyerRole),
+                                selected: _purchaseMode == PurchaseMode.buyer,
+                                onSelected: (_) => setState(
+                                    () => _purchaseMode = PurchaseMode.buyer),
                               ),
-                              child: Center(
-                                child: Text(
-                                  slots[index],
-                                  style: TextStyle(
-                                    color: _slot == index
-                                        ? Colors.white
-                                        : AppColors.darkText,
-                                    fontWeight: FontWeight.w600,
+                              const SizedBox(width: 12),
+                              ChoiceChip(
+                                label: Text(l10n.donorRole),
+                                selected: _purchaseMode == PurchaseMode.donor,
+                                onSelected: (_) => setState(
+                                    () => _purchaseMode = PurchaseMode.donor),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                        ],
+                        _SectionCard(
+                          title: l10n.deliveryAddress,
+                          trailing: TextButton(
+                            onPressed: () async {
+                              await context.push(ChooseAddressScreen.routeName);
+                              // In a real app, we'd handle the result here if it returns a selected address
+                              // For now, we'll just simulate a change if needed or rely on provider updates
+                            },
+                            child: Text(l10n.changeAction),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _addressTitle,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _addressSubtitle,
+                                style: TextStyle(
+                                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        _SectionCard(
+                          title: l10n.deliverySlot,
+                          child: Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: List.generate(3, (index) {
+                              final slots = [
+                                l10n.nowSlot,
+                                '18:30 - 19:00',
+                                l10n.scheduleSlot
+                              ];
+                              final isSelected = _slot == index;
+                              return GestureDetector(
+                                onTap: () => setState(() => _slot = index),
+                                child: Container(
+                                  width: 110,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? Theme.of(context).textTheme.bodyLarge?.color
+                                        : Theme.of(context).scaffoldBackgroundColor,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      slots[index],
+                                      style: TextStyle(
+                                        color: isSelected
+                                            ? Theme.of(context).scaffoldBackgroundColor
+                                            : Theme.of(context).textTheme.bodyLarge?.color,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    _SectionCard(
-                      title: 'Payment method',
-                      child: Column(
-                        children: [
-                          for (int i = 0; i < _methods.length; i++) ...[
-                            RadioListTile<int>(
-                              value: i,
-                              groupValue: _selected,
-                              activeColor: AppColors.primaryAccent,
-                              onChanged: (value) =>
-                                  setState(() => _selected = value ?? 0),
-                              title: Text(
-                                '${_methods[i].brand} • ${_methods[i].maskedNumber}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.darkText,
+                              );
+                            }),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        _SectionCard(
+                          title: l10n.paymentMethod,
+                          child: Column(
+                            children: [
+                              for (int i = 0; i < _methods.length; i++) ...[
+                                RadioListTile<int>(
+                                  value: i,
+                                  groupValue: _selected,
+                                  activeColor: Theme.of(context).colorScheme.primary,
+                                  onChanged: (value) =>
+                                      setState(() => _selected = value ?? 0),
+                                  title: Text(
+                                    '${_methods[i].brand} • ${_methods[i].maskedNumber}',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                                    ),
+                                  ),
+                                  secondary: CircleAvatar(
+                                    backgroundColor:
+                                        Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                                    child: Icon(_methods[i].icon,
+                                        color: Theme.of(context).colorScheme.primary),
+                                  ),
+                                ),
+                                if (i != _methods.length - 1)
+                                  const Divider(indent: 12, endIndent: 12),
+                              ],
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: () => context.push(PaymentMethodScreen.routeName),
+                                  icon: const Icon(Icons.add),
+                                  label: Text(l10n.addNewCard),
                                 ),
                               ),
-                              secondary: CircleAvatar(
-                                backgroundColor:
-                                    AppColors.primaryAccent.withOpacity(0.12),
-                                child: Icon(_methods[i].icon,
-                                    color: AppColors.primaryAccent),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        _SectionCard(
+                          title: l10n.orderSummary,
+                          child: Column(
+                            children: [
+                              _SummaryRow(label: l10n.subtotalItems(foodie.cartCount), value: foodie.subtotal),
+                              _SummaryRow(label: l10n.deliveryLabel, value: foodie.deliveryFee),
+                              _SummaryRow(label: l10n.platformFeeLabel, value: foodie.platformFee),
+                              const Divider(height: 28),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Container(
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child:
+                                    Icon(Icons.discount, color: Theme.of(context).scaffoldBackgroundColor),
                               ),
-                            ),
-                            if (i != _methods.length - 1)
-                              const Divider(indent: 12, endIndent: 12),
-                          ],
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () {},
-                              icon: const Icon(Icons.add),
-                              label: const Text('Add new card'),
-                            ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Text(
+                                  l10n.freeDeliveryMessage(50),
+                                  style: TextStyle(
+                                      color: Theme.of(context).scaffoldBackgroundColor,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {},
+                                child: Text(l10n.addCodeAction,
+                                    style: TextStyle(color: Theme.of(context).scaffoldBackgroundColor)),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 18),
-                    const _SectionCard(
-                      title: 'Order summary',
-                      child: Column(
-                        children: [
-                          _SummaryRow(label: 'Subtotal (3 items)', value: 52.5),
-                          _SummaryRow(label: 'Delivery fee', value: 3.5),
-                          _SummaryRow(label: 'Courier tip', value: 4.0),
-                          Divider(height: 28),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: AppColors.darkText,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child:
-                                const Icon(Icons.discount, color: Colors.white),
-                          ),
-                          const SizedBox(width: 14),
-                          const Expanded(
-                            child: Text(
-                              'Free delivery on orders above \$50',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () {},
-                            child: const Text('Add code',
-                                style: TextStyle(color: Colors.white)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.fromLTRB(18, 18, 18, 30),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x22000000),
-              blurRadius: 16,
-              offset: Offset(0, -4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                const Text('Total', style: TextStyle(color: Colors.grey)),
-                const Spacer(),
-                Text(
-                  '\$${total.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
-              ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 58,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18)),
-                ),
-                onPressed: () {
-                  // Handle order placement based on mode
-                  final modeText = _purchaseMode == PurchaseMode.buyer
-                      ? 'buying'
-                      : 'donating';
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Placing order as $modeText...'),
-                      duration: const Duration(seconds: 1),
-                    ),
-                  );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Order placed')),
-                  );
-                },
-                child: Text(
-                  _purchaseMode == PurchaseMode.buyer
-                      ? 'Place order'
-                      : 'Complete donation',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
                   ),
                 ),
-              ),
-            ),
-          ],
+                Container(
+                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 30),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x22000000),
+                        blurRadius: 16,
+                        offset: Offset(0, -4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Text(l10n.totalLabel, style: const TextStyle(color: Colors.grey)),
+                          const Spacer(),
+                          Text(
+                            '\$${total.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: Theme.of(context).textTheme.bodyLarge?.color,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 58,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).colorScheme.secondary,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18)),
+                          ),
+                          onPressed: () {
+                            // Handle order placement based on mode
+                            final modeText = _purchaseMode == PurchaseMode.buyer
+                                ? 'buying'
+                                : 'donating';
+                            
+                            // Show placing order message
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(l10n.placingOrderMessage(modeText)),
+                                duration: const Duration(seconds: 1),
+                              ),
+                            );
+
+                            // Simulate network delay then complete order
+                            Future.delayed(const Duration(seconds: 2), () {
+                              if (context.mounted) {
+                                foodie.clearCart();
+                                
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Icon(Icons.check_circle, color: Colors.green, size: 60),
+                                    content: Text(
+                                      l10n.orderPlacedMessage,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          context.go('/home');
+                                        },
+                                        child: Text(l10n.doneAction),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                            });
+                          },
+                          child: Text(
+                            _purchaseMode == PurchaseMode.buyer
+                                ? l10n.placeOrder
+                                : l10n.completeDonation,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 18,
+                              color: Theme.of(context).colorScheme.onSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _diamondButton({required IconData icon, required VoidCallback onTap}) {
+  Widget _diamondButton(BuildContext context, {required IconData icon, required VoidCallback onTap}) {
     return Transform.rotate(
       angle: 0.78,
       child: InkWell(
@@ -338,7 +390,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -350,7 +402,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           child: Transform.rotate(
             angle: -0.78,
-            child: Icon(icon, color: AppColors.darkText),
+            child: Icon(icon, color: Theme.of(context).iconTheme.color),
           ),
         ),
       ),
@@ -403,9 +455,9 @@ class _SectionCard extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ),
               const Spacer(),
@@ -432,13 +484,13 @@ class _SummaryRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Text(label, style: TextStyle(color: Colors.grey.shade700)),
+          Text(label, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
           const Spacer(),
           Text(
             '\$${value.toStringAsFixed(2)}',
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w700,
-              color: AppColors.darkText,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
         ],

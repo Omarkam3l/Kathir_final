@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CouponsScreen extends StatefulWidget {
   static const routeName = '/coupons';
@@ -18,6 +18,11 @@ class _CouponsScreenState extends State<CouponsScreen> {
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _loadCoupons();
   }
 
@@ -28,12 +33,13 @@ class _CouponsScreenState extends State<CouponsScreen> {
   }
 
   void _loadCoupons() {
+    final l10n = AppLocalizations.of(context)!;
     // Demo coupons
     _availableCoupons = [
-      const CouponModel(
+      CouponModel(
         id: '1',
-        restaurantName: 'Restaurant Name',
-        description: 'Lorem ipsum dolor sit amet.',
+        restaurantName: l10n.demoRestaurantName,
+        description: l10n.demoCouponDescription,
         discount: 20,
         imageUrl:
             'https://source.unsplash.com/collection/1424340/200x200?restaurant',
@@ -43,17 +49,12 @@ class _CouponsScreenState extends State<CouponsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDarkMode ? const Color(0xFF121212) : AppColors.white;
-    final textColor = isDarkMode ? AppColors.white : AppColors.darkText;
-
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
-            _CouponsAppBar(textColor: textColor),
+            const _CouponsAppBar(),
             Expanded(
               child: _userCoupons.isEmpty
                   ? _EmptyCouponsState(
@@ -90,12 +91,11 @@ class _CouponsScreenState extends State<CouponsScreen> {
 }
 
 class _CouponsAppBar extends StatelessWidget {
-  const _CouponsAppBar({required this.textColor});
-
-  final Color textColor;
+  const _CouponsAppBar();
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 10, 18, 6),
       child: Row(
@@ -115,9 +115,9 @@ class _CouponsAppBar extends StatelessWidget {
           const SizedBox(width: 16),
           Expanded(
             child: Text(
-              'Coupons',
+              l10n.couponsTitle,
               style: TextStyle(
-                color: textColor,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
               ),
@@ -131,13 +131,6 @@ class _CouponsAppBar extends StatelessWidget {
 
   Widget _diamondButton(BuildContext context,
       {required IconData icon, required VoidCallback onTap}) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final buttonColor = isDarkMode ? const Color(0xFF1E1E1E) : AppColors.white;
-    final iconColor = isDarkMode ? AppColors.white : AppColors.darkText;
-    final shadowColor = isDarkMode
-        ? Colors.black.withOpacity(0.4)
-        : Colors.black.withOpacity(0.08);
-
     return Transform.rotate(
       angle: 0.78,
       child: InkWell(
@@ -147,11 +140,11 @@ class _CouponsAppBar extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: buttonColor,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: shadowColor,
+                color: Colors.black.withOpacity(0.08),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -159,7 +152,7 @@ class _CouponsAppBar extends StatelessWidget {
           ),
           child: Transform.rotate(
             angle: -0.78,
-            child: Icon(icon, color: iconColor),
+            child: Icon(icon, color: Theme.of(context).iconTheme.color),
           ),
         ),
       ),
@@ -174,10 +167,7 @@ class _EmptyCouponsState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final shadowColor = isDarkMode
-        ? Colors.black.withOpacity(0.2)
-        : Colors.black.withOpacity(0.05);
+    final l10n = AppLocalizations.of(context)!;
 
     return Center(
       child: Padding(
@@ -189,11 +179,11 @@ class _EmptyCouponsState extends StatelessWidget {
               width: 180,
               height: 180,
               decoration: BoxDecoration(
-                color: const Color(0xFFF5E6FF),
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: shadowColor,
+                    color: Colors.black.withOpacity(0.05),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -204,41 +194,41 @@ class _EmptyCouponsState extends StatelessWidget {
                 children: [
                   CustomPaint(
                     size: const Size(120, 120),
-                    painter: _CouponIconPainter(),
+                    painter: _CouponIconPainter(color: Theme.of(context).colorScheme.primary),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'You don\'t have coupon.',
+            Text(
+              l10n.noCouponsMessage,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: AppColors.secondaryAccent,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const SizedBox(height: 24),
             OutlinedButton(
               onPressed: onAddCoupon,
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(
-                    color: AppColors.secondaryAccent, width: 2),
+                side: BorderSide(
+                    color: Theme.of(context).colorScheme.primary, width: 2),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.add, color: AppColors.secondaryAccent, size: 20),
-                  SizedBox(width: 8),
+                  Icon(Icons.add, color: Theme.of(context).colorScheme.primary, size: 20),
+                  const SizedBox(width: 8),
                   Text(
-                    'Add Coupon',
+                    l10n.addCouponAction,
                     style: TextStyle(
-                      color: AppColors.secondaryAccent,
+                      color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
                     ),
@@ -261,10 +251,7 @@ class _CouponsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDarkMode ? const Color(0xFF1E1E1E) : AppColors.white;
-    final textColor = isDarkMode ? AppColors.white : AppColors.darkText;
-    final subtitleColor = isDarkMode ? Colors.grey[400] : Colors.grey;
+    final l10n = AppLocalizations.of(context)!;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 12, 18, 24),
@@ -274,11 +261,11 @@ class _CouponsList extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: cardColor,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(22),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.05),
+                  color: Colors.black.withOpacity(0.05),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -296,10 +283,10 @@ class _CouponsList extends StatelessWidget {
                     errorBuilder: (_, __, ___) => Container(
                       width: 64,
                       height: 64,
-                      color: AppColors.lightBackground,
-                      child: const Icon(
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                      child: Icon(
                         Icons.restaurant,
-                        color: AppColors.primaryAccent,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ),
@@ -312,7 +299,7 @@ class _CouponsList extends StatelessWidget {
                       Text(
                         coupon.restaurantName,
                         style: TextStyle(
-                          color: textColor,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
                         ),
@@ -321,7 +308,7 @@ class _CouponsList extends StatelessWidget {
                       Text(
                         coupon.description,
                         style: TextStyle(
-                          color: subtitleColor,
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                           fontSize: 13,
                         ),
                       ),
@@ -330,8 +317,8 @@ class _CouponsList extends StatelessWidget {
                 ),
                 Text(
                   '${coupon.discount}%',
-                  style: const TextStyle(
-                    color: AppColors.secondaryAccent,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w800,
                     fontSize: 20,
                   ),
@@ -344,21 +331,21 @@ class _CouponsList extends StatelessWidget {
         OutlinedButton(
           onPressed: onAddCoupon,
           style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: AppColors.secondaryAccent, width: 2),
+            side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
             ),
           ),
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add, color: AppColors.secondaryAccent, size: 20),
-              SizedBox(width: 8),
+              Icon(Icons.add, color: Theme.of(context).colorScheme.primary, size: 20),
+              const SizedBox(width: 8),
               Text(
-                'Add Coupon',
+                l10n.addCouponAction,
                 style: TextStyle(
-                  color: AppColors.secondaryAccent,
+                  color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
                 ),
@@ -395,16 +382,14 @@ class _AddCouponDialogState extends State<_AddCouponDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDarkMode ? const Color(0xFF1E1E1E) : AppColors.white;
-    final textColor = isDarkMode ? AppColors.white : AppColors.darkText;
+    final l10n = AppLocalizations.of(context)!;
 
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: cardColor,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(28),
         ),
         child: Column(
@@ -413,21 +398,21 @@ class _AddCouponDialogState extends State<_AddCouponDialog> {
             Container(
               width: 120,
               height: 120,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF5E6FF),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.local_offer_outlined,
                 size: 48,
-                color: AppColors.secondaryAccent,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const SizedBox(height: 24),
             Text(
-              'Enter Coupon Code',
+              l10n.enterCouponCodeTitle,
               style: TextStyle(
-                color: textColor,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
               ),
@@ -436,11 +421,9 @@ class _AddCouponDialogState extends State<_AddCouponDialog> {
             TextField(
               controller: _codeController,
               decoration: InputDecoration(
-                hintText: 'Enter coupon code',
+                hintText: l10n.enterCouponCodeHint,
                 filled: true,
-                fillColor: isDarkMode
-                    ? const Color(0xFF2A2A2A)
-                    : AppColors.lightBackground,
+                fillColor: Theme.of(context).inputDecorationTheme.fillColor ?? Theme.of(context).scaffoldBackgroundColor,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
@@ -454,7 +437,7 @@ class _AddCouponDialogState extends State<_AddCouponDialog> {
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secondaryAccent,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),
@@ -479,12 +462,12 @@ class _AddCouponDialogState extends State<_AddCouponDialog> {
                     widget.onApply(matchingCoupon);
                   }
                 },
-                child: const Text(
-                  'Submit',
-                  style: TextStyle(
+                child: Text(
+                  l10n.submitAction,
+                  style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
-                    color: AppColors.white,
+                    color: Colors.white,
                   ),
                 ),
               ),
@@ -497,10 +480,13 @@ class _AddCouponDialogState extends State<_AddCouponDialog> {
 }
 
 class _CouponIconPainter extends CustomPainter {
+  final Color color;
+  _CouponIconPainter({required this.color});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.secondaryAccent
+      ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3;
 
@@ -528,10 +514,10 @@ class _CouponIconPainter extends CustomPainter {
 
     // Draw % symbol
     final textPainter = TextPainter(
-      text: const TextSpan(
+      text: TextSpan(
         text: '%',
         style: TextStyle(
-          color: AppColors.secondaryAccent,
+          color: color,
           fontSize: 24,
           fontWeight: FontWeight.bold,
         ),
@@ -547,7 +533,7 @@ class _CouponIconPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _CouponIconPainter oldDelegate) => color != oldDelegate.color;
 }
 
 class CouponModel {

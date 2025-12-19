@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../profile/presentation/providers/foodie_state.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CartScreen extends StatelessWidget {
   static const routeName = '/cart';
@@ -53,6 +54,7 @@ class _CartAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 10, 18, 6),
       child: Row(
@@ -75,7 +77,7 @@ class _CartAppBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'My cart',
+                  l10n.myCart,
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
@@ -84,7 +86,7 @@ class _CartAppBar extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${itemCount == 1 ? '1 item' : '$itemCount items'} • Deliver to Work',
+                  '${l10n.itemCount(itemCount)} • ${l10n.deliverToWork}',
                   style: TextStyle(
                     color: Theme.of(context).textTheme.bodySmall?.color,
                     fontSize: 13,
@@ -139,6 +141,7 @@ class _CartEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         const _CartAppBar(itemCount: 0),
@@ -171,7 +174,7 @@ class _CartEmptyState extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Your cart is empty',
+                    l10n.cartEmpty,
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
@@ -180,18 +183,17 @@ class _CartEmptyState extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Add tasty meals and they\'ll appear here instantly.',
+                    l10n.cartEmptyMessage,
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
                     style: Theme.of(context).elevatedButtonTheme.style,
-                    onPressed: () =>
-                        Navigator.of(context).pushNamed('/categories'),
-                    child: const Text(
-                      'Browse meals',
-                      style: TextStyle(
+                    onPressed: () => context.push('/meals'),
+                    child: Text(
+                      l10n.browseMeals,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -211,6 +213,7 @@ class _CartLineItem extends StatelessWidget {
   const _CartLineItem({required this.item});
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final foodie = context.read<FoodieState>();
     final meal = item.meal;
     return Container(
@@ -261,7 +264,7 @@ class _CartLineItem extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text('${meal.restaurant.name} • ${meal.location}',
+                  Text(l10n.restaurantLocation(meal.restaurant.name, meal.location),
                       style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 8),
@@ -275,7 +278,7 @@ class _CartLineItem extends StatelessWidget {
                         icon: const Icon(Icons.remove_circle_outline),
                         color: Theme.of(context).colorScheme.primary,
                       ),
-                      Text('${item.qty} pcs', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      Text(l10n.pieces(item.qty), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                       IconButton(
                         onPressed: () => foodie.increment(meal.id),
                         icon: const Icon(Icons.add_circle_outline),
@@ -306,6 +309,7 @@ class _CartSummaryCard extends StatelessWidget {
   const _CartSummaryCard({required this.subtotal, required this.deliveryFee, required this.platformFee, required this.total});
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
@@ -316,18 +320,22 @@ class _CartSummaryCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _summaryRow(context, 'Subtotal', subtotal),
-          _summaryRow(context, 'Delivery', deliveryFee),
-          _summaryRow(context, 'Platform fee', platformFee),
+          _summaryRow(context, l10n.subtotalLabel, subtotal),
+          _summaryRow(context, l10n.deliveryLabel, deliveryFee),
+          _summaryRow(context, l10n.platformFeeLabel, platformFee),
           const Divider(height: 24),
-          _summaryRow(context, 'Total', total, bold: true),
+          _summaryRow(context, l10n.totalLabel, total, bold: true),
           const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.local_offer_outlined),
-              label: const Text('Add promo code'),
+              onPressed: () {
+                // Analytics: Track checkout initiation
+                debugPrint('Analytics: Checkout initiated');
+                context.push('/checkout');
+              },
+              icon: const Icon(Icons.arrow_forward),
+              label: Text(l10n.checkoutTitle),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Theme.of(context).colorScheme.primary,
                 side: BorderSide(color: Theme.of(context).colorScheme.primary),

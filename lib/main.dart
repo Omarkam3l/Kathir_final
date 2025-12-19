@@ -3,7 +3,10 @@ import 'app/bootstrap/di_bootstrap.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'features/_shared/providers/theme_provider.dart';
+import 'features/_shared/providers/locale_provider.dart';
 import 'features/authentication/presentation/blocs/auth_provider.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'features/orders/presentation/controllers/orders_controller.dart';
 import 'features/profile/presentation/providers/foodie_state.dart';
 import 'features/authentication/presentation/viewmodels/auth_viewmodel.dart';
@@ -32,19 +35,79 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => AppLocator.I.get<AuthViewModel>()),
         ChangeNotifierProvider(create: (_) => OrdersController()),
         ChangeNotifierProvider(create: (_) => FoodieState()),
       ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, theme, _) {
+      child: Consumer2<ThemeProvider, LocaleProvider>(
+        builder: (context, theme, localeProvider, _) {
           final router = AppRouter.of(context);
 
           final lightBase = ThemeData.light(useMaterial3: true);
           final lightTheme = lightBase.copyWith(
+            scaffoldBackgroundColor: const Color(0xFFF0F0F0),
+            cardColor: Colors.white,
+            dividerColor: Colors.black12,
             colorScheme: lightBase.colorScheme.copyWith(
               primary: const Color(0xFF4DD0E1),
+              secondary: const Color(0xFF005F7B),
+              surface: Colors.white,
+              onSurface: const Color(0xFF08314A),
+              onPrimary: Colors.white,
+            ),
+            textTheme: lightBase.textTheme.apply(
+              bodyColor: const Color(0xFF08314A),
+              displayColor: const Color(0xFF08314A),
+            ).copyWith(
+              bodyMedium: const TextStyle(color: Color(0xFF08314A)),
+              bodySmall: TextStyle(color: const Color(0xFF08314A).withOpacity(0.7)),
+              titleSmall: TextStyle(color: const Color(0xFF08314A).withOpacity(0.8)),
+            ),
+            iconTheme: const IconThemeData(color: Color(0xFF08314A)),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Color(0xFFF0F0F0),
+              foregroundColor: Color(0xFF08314A),
+              elevation: 0,
+            ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4DD0E1),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+              ),
+            ),
+            outlinedButtonTheme: OutlinedButtonThemeData(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF4DD0E1),
+                side: const BorderSide(color: Color(0xFF4DD0E1)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+              ),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF4DD0E1),
+              ),
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              fillColor: Colors.white,
+              border: InputBorder.none,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF4DD0E1)),
+              ),
+              labelStyle: TextStyle(color: const Color(0xFF08314A).withOpacity(0.7)),
+              hintStyle: TextStyle(color: const Color(0xFF08314A).withOpacity(0.5)),
             ),
           );
 
@@ -106,6 +169,22 @@ class MyApp extends StatelessWidget {
               labelStyle: TextStyle(color: Colors.white70),
               hintStyle: TextStyle(color: Colors.white60),
             ),
+            dialogTheme: const DialogTheme(
+              backgroundColor: Color(0xFF1E1E1E),
+              titleTextStyle: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+              contentTextStyle: TextStyle(
+                fontSize: 16,
+                color: Colors.white70,
+              ),
+            ),
+            snackBarTheme: const SnackBarThemeData(
+              backgroundColor: Color(0xFF2C2C2C),
+              contentTextStyle: TextStyle(color: Colors.white),
+            ),
           );
 
           return MaterialApp.router(
@@ -115,6 +194,14 @@ class MyApp extends StatelessWidget {
             themeMode: theme.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             debugShowCheckedModeBanner: false,
             routerConfig: router,
+            locale: localeProvider.locale,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
           );
         },
       ),

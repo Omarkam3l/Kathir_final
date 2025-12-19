@@ -17,7 +17,7 @@ class TopRestaurantCard extends StatelessWidget {
       height: 120,
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        shape: BoxShape.circle,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),

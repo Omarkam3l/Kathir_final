@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/app_dimensions.dart';
 import '../../domain/entities/daily_offer.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 /// Card widget for displaying daily offer badges
 class OfferBadgeCard extends StatelessWidget {
@@ -13,6 +14,7 @@ class OfferBadgeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: 120,
       padding: const EdgeInsets.all(AppDimensions.paddingMedium),
@@ -53,7 +55,7 @@ class OfferBadgeCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  '${(offer.discount * 100).round()}% OFF',
+                  l10n.discountOff((offer.discount * 100).round()),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 11,

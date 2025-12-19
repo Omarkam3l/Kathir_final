@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../models/figma_models.dart';
 
@@ -10,7 +10,8 @@ class OrderTrackingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stages = DemoData.orderTimeline();
+    final l10n = AppLocalizations.of(context)!;
+    final stages = DemoData.orderTimeline(l10n);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -36,7 +37,7 @@ class OrderTrackingScreen extends StatelessWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
-                      'Order status',
+                      l10n.orderStatusTitle,
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w800,
@@ -75,7 +76,7 @@ class OrderTrackingScreen extends StatelessWidget {
                         Row(
                           children: [
                             Text(
-                              'Courier arriving',
+                              l10n.courierArriving,
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w700,
@@ -83,20 +84,20 @@ class OrderTrackingScreen extends StatelessWidget {
                               ),
                             ),
                             const Spacer(),
-                            const Text('Order #921',
-                                style: TextStyle(color: Colors.grey)),
+                            Text(l10n.orderNumber('921'),
+                                style: const TextStyle(color: Colors.grey)),
                           ],
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'Mathew is 5 min away • 0.8 km',
-                          style: TextStyle(color: Colors.grey),
+                        Text(
+                          l10n.courierArrivingMessage('Mathew', '5', '0.8'),
+                          style: const TextStyle(color: Colors.grey),
                         ),
                         const SizedBox(height: 18),
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).inputDecorationTheme.fillColor ?? const Color(0xFF2A2A2A),
+                            color: Theme.of(context).inputDecorationTheme.fillColor ?? Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(18),
                           ),
                           child: Row(
@@ -145,7 +146,7 @@ class OrderTrackingScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Timeline',
+                          l10n.timelineTitle,
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             color: Theme.of(context).textTheme.bodyLarge?.color,
@@ -174,19 +175,19 @@ class OrderTrackingScreen extends StatelessWidget {
                       children: [
                         Icon(Icons.map, color: Theme.of(context).colorScheme.primary),
                         const SizedBox(width: 12),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Track courier live on the map',
-                            style: TextStyle(
+                            l10n.trackCourierMap,
+                            style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600),
                           ),
                         ),
                         TextButton(
                           onPressed: () {},
-                          child: const Text(
-                            'Open',
-                            style: TextStyle(color: Colors.white),
+                          child: Text(
+                            l10n.openAction,
+                            style: const TextStyle(color: Colors.white),
                           ),
                         ),
                       ],
@@ -252,12 +253,12 @@ class _TimelineTile extends StatelessWidget {
             CircleAvatar(
               radius: 18,
               backgroundColor: isCompleted
-                  ? AppColors.primaryAccent
-                  : AppColors.lightBackground,
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).dividerColor,
               child: Icon(
                 stage.icon,
                 size: 18,
-                color: isCompleted ? Colors.white : AppColors.primaryAccent,
+                color: isCompleted ? Colors.white : Theme.of(context).colorScheme.primary,
               ),
             ),
             if (!isLast)
@@ -265,8 +266,8 @@ class _TimelineTile extends StatelessWidget {
                 width: 2,
                 height: 40,
                 color: isCompleted
-                    ? AppColors.primaryAccent
-                    : AppColors.lightBackground,
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).dividerColor,
               ),
           ],
         ),

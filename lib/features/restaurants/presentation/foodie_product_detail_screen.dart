@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../models/figma_models.dart';
 
 class FoodieProductDetailScreen extends StatelessWidget {
@@ -8,6 +9,7 @@ class FoodieProductDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
@@ -61,8 +63,8 @@ class FoodieProductDetailScreen extends StatelessWidget {
                     backgroundColor: AppColors.secondaryAccent,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16))),
-                child: const Text('Add to cart',
-                    style: TextStyle(color: AppColors.white)),
+                child: Text(l10n.addToCart,
+                    style: const TextStyle(color: AppColors.white)),
               ),
             ],
           ),

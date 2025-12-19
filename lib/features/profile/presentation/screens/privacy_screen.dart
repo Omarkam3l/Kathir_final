@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:go_router/go_router.dart';
+
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class PrivacyScreen extends StatelessWidget {
   static const routeName = '/privacy';
@@ -8,6 +9,7 @@ class PrivacyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -18,6 +20,7 @@ class PrivacyScreen extends StatelessWidget {
               child: Row(
                 children: [
                   _diamondButton(
+                    context,
                     icon: Icons.arrow_back_ios_new,
                     onTap: () {
                       final router = GoRouter.of(context);
@@ -31,7 +34,7 @@ class PrivacyScreen extends StatelessWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
-                      'Privacy Policy',
+                      l10n.privacyPolicy,
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w800,
@@ -58,72 +61,72 @@ class PrivacyScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Column(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Privacy Policy',
+                        l10n.privacyPolicy,
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.darkText,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Text(
-                        'Last updated: January 2024',
-                        style: TextStyle(
+                        l10n.lastUpdated("January 2024"),
+                        style: const TextStyle(
                           color: Colors.grey,
                           fontSize: 14,
                         ),
                       ),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       Text(
-                        '1. Information We Collect',
+                        l10n.privacyPolicyTitle1,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.darkText,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text(
-                        'We collect information that you provide directly to us, including your name, email address, phone number, and delivery address when you create an account or place an order.',
-                        style: TextStyle(
+                        l10n.privacyPolicyText1,
+                        style: const TextStyle(
                           color: Colors.grey,
                           height: 1.6,
                         ),
                       ),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       Text(
-                        '2. How We Use Your Information',
+                        l10n.privacyPolicyTitle2,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.darkText,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text(
-                        'We use the information we collect to process your orders, communicate with you, and improve our services. We do not sell your personal information to third parties.',
-                        style: TextStyle(
+                        l10n.privacyPolicyText2,
+                        style: const TextStyle(
                           color: Colors.grey,
                           height: 1.6,
                         ),
                       ),
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
                       Text(
-                        '3. Data Security',
+                        l10n.privacyPolicyTitle3,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.darkText,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text(
-                        'We implement appropriate security measures to protect your personal information. However, no method of transmission over the internet is 100% secure.',
-                        style: TextStyle(
+                        l10n.privacyPolicyText3,
+                        style: const TextStyle(
                           color: Colors.grey,
                           height: 1.6,
                         ),
@@ -139,7 +142,7 @@ class PrivacyScreen extends StatelessWidget {
     );
   }
 
-  Widget _diamondButton({required IconData icon, required VoidCallback onTap}) {
+  Widget _diamondButton(BuildContext context, {required IconData icon, required VoidCallback onTap}) {
     return Transform.rotate(
       angle: 0.78,
       child: InkWell(
@@ -149,7 +152,7 @@ class PrivacyScreen extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -161,7 +164,7 @@ class PrivacyScreen extends StatelessWidget {
           ),
           child: Transform.rotate(
             angle: -0.78,
-            child: Icon(icon, color: AppColors.darkText),
+            child: Icon(icon, color: Theme.of(context).iconTheme.color),
           ),
         ),
       ),

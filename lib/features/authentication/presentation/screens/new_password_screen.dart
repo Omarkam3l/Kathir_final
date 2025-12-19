@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../viewmodels/new_password_viewmodel.dart';
 import '../../../../di/global_injection/app_locator.dart';
 import '../../../_shared/widgets/custom_input_field.dart';
-import '../../../../core/utils/app_colors.dart';
 
 class NewPasswordScreen extends StatefulWidget {
   static const routeName = '/new-password';
@@ -28,12 +28,13 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return ChangeNotifierProvider(
       create: (_) => AppLocator.I.get<NewPasswordViewModel>(),
       child: Consumer<NewPasswordViewModel>(
         builder: (context, vm, _) => Scaffold(
           appBar: AppBar(
-            leading: IconButton(icon: const Icon(Icons.arrow_back, color: AppColors.brandRed), onPressed: () => context.pop()),
+            leading: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.primary), onPressed: () => context.pop()),
             backgroundColor: Theme.of(context).cardColor,
             elevation: 0,
           ),
@@ -56,7 +57,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.password, color: AppColors.brandRed, size: 36),
+                  Icon(Icons.password, color: Theme.of(context).colorScheme.primary, size: 36),
                   const SizedBox(height: 12),
                   Text('Create your new password', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.bodyLarge?.color)),
                   const SizedBox(height: 16),
@@ -72,22 +73,23 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                         final p = _pass.text.trim();
                         final c = _confirm.text.trim();
                         if (p.length < 8) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password must be at least 8 characters'), backgroundColor: AppColors.brandRed));
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.passwordMinLength), backgroundColor: Theme.of(context).colorScheme.error));
                           return;
                         }
                         if (p != c) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Passwords do not match'), backgroundColor: AppColors.brandRed));
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.passwordsNoMatch), backgroundColor: Theme.of(context).colorScheme.error));
                           return;
                         }
                         final messenger = ScaffoldMessenger.of(context);
                         final router = GoRouter.of(context);
+                        final errorColor = Theme.of(context).colorScheme.error;
                         final ok = await vm.submit(p);
                         if (!mounted) return;
                         if (ok) {
-                          messenger.showSnackBar(const SnackBar(content: Text('Password updated'), backgroundColor: Colors.green));
+                          messenger.showSnackBar(SnackBar(content: Text(l10n.passwordUpdated), backgroundColor: Colors.green));
                           router.go('/auth');
                         } else {
-                          messenger.showSnackBar(SnackBar(content: Text(vm.error ?? 'Weak password'), backgroundColor: AppColors.brandRed));
+                          messenger.showSnackBar(SnackBar(content: Text(vm.error ?? l10n.weakPassword), backgroundColor: errorColor));
                         }
                       },
                       icon: Icons.arrow_forward,
@@ -120,7 +122,7 @@ class _DiamondButton extends StatelessWidget {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: AppColors.brandRed,
+            color: Theme.of(context).colorScheme.primary,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(

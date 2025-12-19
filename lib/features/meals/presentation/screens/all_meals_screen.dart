@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:go_router/go_router.dart';
-import '../../../../core/utils/app_colors.dart';
 import '../../../user_home/domain/entities/meal_offer.dart';
 import '../../../../core/shared/widgets/diamond_clipper.dart';
 import 'meal_detail.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 enum SortOption { urgency, priceLow, priceHigh, rating, discount }
 
@@ -82,6 +82,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
   }
 
   void _showSortDialog() {
+    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -93,22 +94,22 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Sort By',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.darkText,
+            Text(
+                l10n.sortBy,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
               ),
-            ),
             const SizedBox(height: 20),
             ...SortOption.values.map((option) {
               final labels = {
-                SortOption.urgency: 'Urgency (Time Left)',
-                SortOption.priceLow: 'Price: Low to High',
-                SortOption.priceHigh: 'Price: High to Low',
-                SortOption.rating: 'Highest Rated',
-                SortOption.discount: 'Best Discount',
+                SortOption.urgency: l10n.sortUrgency,
+                SortOption.priceLow: l10n.sortPriceLow,
+                SortOption.priceHigh: l10n.sortPriceHigh,
+                SortOption.rating: l10n.sortRating,
+                SortOption.discount: l10n.sortDiscount,
               };
               return RadioListTile<SortOption>(
                 title: Text(labels[option]!),
@@ -118,7 +119,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                   setState(() => _sortOption = value!);
                   Navigator.pop(context);
                 },
-                activeColor: AppColors.primaryAccent,
+                activeColor: Theme.of(context).colorScheme.primary,
               );
             }),
           ],
@@ -128,6 +129,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
   }
 
   void _showFilterDialog() {
+    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -139,21 +141,21 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Filter By',
+            Text(
+              l10n.filterBy,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: AppColors.darkText,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
             const SizedBox(height: 20),
             ...FilterOption.values.map((option) {
               final labels = {
-                FilterOption.all: 'All Meals',
-                FilterOption.urgent: 'Urgent (≤30 min)',
-                FilterOption.highDiscount: 'High Discount (≥40%)',
-                FilterOption.topRated: 'Top Rated (≥4.5)',
+                FilterOption.all: l10n.filterAll,
+                FilterOption.urgent: l10n.filterUrgent,
+                FilterOption.highDiscount: l10n.filterDiscount,
+                FilterOption.topRated: l10n.filterTopRated,
               };
               return RadioListTile<FilterOption>(
                 title: Text(labels[option]!),
@@ -163,7 +165,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                   setState(() => _filterOption = value!);
                   Navigator.pop(context);
                 },
-                activeColor: AppColors.primaryAccent,
+                activeColor: Theme.of(context).colorScheme.primary,
               );
             }),
           ],
@@ -174,6 +176,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -248,13 +251,13 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: AppColors.primaryAccent.withOpacity(0.1),
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Icon(
                                 Icons.restaurant,
                                 size: 20,
-                                color: AppColors.primaryAccent,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                           ),
@@ -263,7 +266,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'All Meals',
+                          l10n.allMeals,
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
@@ -290,7 +293,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                             children: [
                               const SizedBox(width: 16),
                               Icon(Icons.search,
-                                  color: Colors.grey[600], size: 22),
+                                  color: Theme.of(context).hintColor, size: 22),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: TextField(
@@ -299,8 +302,8 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                                       _searchQuery = value;
                                     });
                                   },
-                                  decoration: const InputDecoration(
-                                    hintText: 'Search meals, restaurants...',
+                                  decoration: InputDecoration(
+                                    hintText: l10n.searchPlaceholder,
                                     border: InputBorder.none,
                                     isCollapsed: true,
                                   ),
@@ -325,7 +328,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                                       child: Icon(
                                         Icons.close,
                                         size: 18,
-                                        color: Colors.grey[600],
+                                        color: Theme.of(context).hintColor,
                                       ),
                                     ),
                                   ),
@@ -346,10 +349,10 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                             width: 52,
                             height: 52,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
+                              gradient: LinearGradient(
                                 colors: [
-                                  AppColors.deepTeal,
-                                  AppColors.tealAqua
+                                  Theme.of(context).colorScheme.primary,
+                                  Theme.of(context).colorScheme.secondary,
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
@@ -358,7 +361,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                               boxShadow: [
                                 BoxShadow(
                                   color:
-                                      AppColors.primaryAccent.withOpacity(0.3),
+                                      Theme.of(context).colorScheme.primary.withOpacity(0.3),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
@@ -424,7 +427,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Sort',
+                              l10n.sort,
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -438,7 +441,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                   ),
                   const Spacer(),
                   Text(
-                    '${_filteredAndSortedOffers.length} ${_filteredAndSortedOffers.length == 1 ? 'meal' : 'meals'}',
+                    '${_filteredAndSortedOffers.length} ${_filteredAndSortedOffers.length == 1 ? l10n.meal : l10n.meals}',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -462,6 +465,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
   }
 
   Widget _buildEmptyState() {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -470,30 +474,30 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: AppColors.primaryAccent.withOpacity(0.1),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.search_off,
               size: 60,
-              color: AppColors.primaryAccent.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'No meals found',
+          Text(
+            l10n.noMealsFound,
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: AppColors.darkText,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Try adjusting your search or filters',
+            l10n.tryAdjustingFilters,
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
+              color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
         ],
@@ -704,24 +708,24 @@ class _ProfessionalMealCardState extends State<_ProfessionalMealCard>
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
+                              gradient: LinearGradient(
                                 colors: [
-                                  AppColors.deepTeal,
-                                  AppColors.tealAqua
+                                  Theme.of(context).colorScheme.primary,
+                                  Theme.of(context).colorScheme.secondary,
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
                                   color:
-                                      AppColors.primaryAccent.withOpacity(0.3),
+                                      Theme.of(context).colorScheme.primary.withOpacity(0.3),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
                             child: Text(
-                              '$discount% OFF',
+                              AppLocalizations.of(context)!.discountOff(discount),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 11,
@@ -757,7 +761,7 @@ class _ProfessionalMealCardState extends State<_ProfessionalMealCard>
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    '${offer.minutesLeft} min left',
+                                    AppLocalizations.of(context)!.minutesLeft(offer.minutesLeft),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 11,
@@ -787,10 +791,10 @@ class _ProfessionalMealCardState extends State<_ProfessionalMealCard>
                                 offer.title,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.darkText,
+                                  color: Theme.of(context).textTheme.bodyLarge?.color,
                                   letterSpacing: -0.3,
                                 ),
                               ),
@@ -798,10 +802,10 @@ class _ProfessionalMealCardState extends State<_ProfessionalMealCard>
                               Row(
                                 children: [
                                   Icon(
-                                    Icons.location_on,
-                                    size: 12,
-                                    color: Colors.grey[600],
-                                  ),
+                                      Icons.location_on,
+                                      size: 12,
+                                      color: Theme.of(context).hintColor,
+                                    ),
                                   const SizedBox(width: 4),
                                   Expanded(
                                     child: Text(
@@ -810,7 +814,7 @@ class _ProfessionalMealCardState extends State<_ProfessionalMealCard>
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontSize: 11,
-                                        color: Colors.grey[600],
+                                        color: Theme.of(context).textTheme.bodyMedium?.color,
                                       ),
                                     ),
                                   ),
@@ -836,20 +840,20 @@ class _ProfessionalMealCardState extends State<_ProfessionalMealCard>
                                       Text(
                                         offer.restaurant.rating
                                             .toStringAsFixed(1),
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
-                                          color: AppColors.darkText,
+                                          color: Theme.of(context).textTheme.bodyLarge?.color,
                                         ),
                                       ),
                                     ],
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '${offer.quantity} left',
+                                    AppLocalizations.of(context)!.quantityLeft(offer.quantity),
                                     style: TextStyle(
                                       fontSize: 10,
-                                      color: Colors.grey[600],
+                                      color: Theme.of(context).textTheme.bodySmall?.color,
                                     ),
                                   ),
                                 ],
@@ -858,19 +862,19 @@ class _ProfessionalMealCardState extends State<_ProfessionalMealCard>
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    '\$${offer.originalPrice.toStringAsFixed(0)}',
+                                    AppLocalizations.of(context)!.priceFormat(offer.originalPrice.toStringAsFixed(0)),
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: Colors.grey[500],
+                                      color: Theme.of(context).textTheme.bodySmall?.color,
                                       decoration: TextDecoration.lineThrough,
                                     ),
                                   ),
                                   Text(
-                                    '\$${offer.donationPrice.toStringAsFixed(0)}',
-                                    style: const TextStyle(
+                                    AppLocalizations.of(context)!.priceFormat(offer.donationPrice.toStringAsFixed(0)),
+                                    style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w900,
-                                      color: AppColors.primaryAccent,
+                                      color: Theme.of(context).colorScheme.primary,
                                       letterSpacing: -0.5,
                                     ),
                                   ),

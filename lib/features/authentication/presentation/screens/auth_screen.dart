@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:kathir_final/core/utils/user_role.dart';
 import 'package:kathir_final/features/_shared/widgets/custom_input_field.dart';
 import 'package:kathir_final/features/authentication/presentation/screens/verification_screen.dart';
@@ -9,10 +8,11 @@ import 'package:supabase_flutter/supabase_flutter.dart' as s;
 import '../../domain/usecases/sign_up_usecase.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'verification_screen.dart';
 import 'package:file_picker/file_picker.dart';
 
+
 import 'package:kathir_final/features/_shared/providers/theme_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class AuthScreen extends StatefulWidget {
   static const routeName = '/auth';
@@ -29,14 +29,6 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isLoading = false;
   final _formKey = GlobalKey<FormState>();
   List<int>? _legalDocBytes;
-
-  // Colors - Using teal palette
-  final Color _headerTealTop = AppColors.deepTeal;
-  final Color _headerTealBottom = AppColors.tealAqua;
-  final Color _creamyInputFill = const Color(0xFFF3F1EB);
-  final Color _tealBtnStart = AppColors.tealAqua;
-  final Color _tealBtnEnd = AppColors.aquaCyan;
-  final Color _textColorDark = AppColors.darkText;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -75,6 +67,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> _handleSignUp() async {
     if (!_formKey.currentState!.validate()) return;
+    final l10n = AppLocalizations.of(context)!;
 
     if (_selectedRole == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -131,22 +124,22 @@ class _AuthScreenState extends State<AuthScreen> {
           GoRouter.of(context).go('/home');
         }
       } else {
-        if (mounted) {
+          if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Check your email to verify your account'),
-              backgroundColor: AppColors.primaryAccent,
+              backgroundColor: Colors.teal,
             ),
           );
           GoRouter.of(context).go('${VerificationScreen.routeName}?mode=signup',
               extra: _emailController.text.trim());
-        }
+          }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(l10n.errorLabel(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -210,7 +203,7 @@ class _AuthScreenState extends State<AuthScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Documents selected'),
-            backgroundColor: AppColors.primaryAccent,
+            backgroundColor: Colors.teal,
           ),
         );
       }
@@ -219,6 +212,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> _handleSocialLogin(String platform) async {
     final vm = Provider.of<AuthViewModel>(context, listen: false);
+    final l10n = AppLocalizations.of(context)!;
     bool ok = false;
     try {
       switch (platform.toLowerCase()) {
@@ -242,7 +236,7 @@ class _AuthScreenState extends State<AuthScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(l10n.errorLabel(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -253,11 +247,20 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final l10n = AppLocalizations.of(context)!;
     final isDark = themeProvider.isDarkMode;
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+    
+    // Colors
+    const Color headerTealTop = Color(0xFF00695C);
+    const Color headerTealBottom = Color(0xFF4DB6AC);
+    const Color creamyInputFill = Color(0xFFF3F1EB);
+    const Color tealBtnStart = Color(0xFF4DB6AC);
+    const Color tealBtnEnd = Color(0xFF00BCD4);
+    final Color textColorDark = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
 
     return Scaffold(
-      backgroundColor: _headerTealBottom,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const ClampingScrollPhysics(),
@@ -266,11 +269,11 @@ class _AuthScreenState extends State<AuthScreen> {
               // Header Section
               Container(
                 width: double.infinity,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [_headerTealTop, _headerTealBottom],
+                    colors: [headerTealTop, headerTealBottom],
                   ),
                 ),
                 child: Padding(
@@ -283,8 +286,8 @@ class _AuthScreenState extends State<AuthScreen> {
                         children: [
                           Text(
                             isLogin
-                                ? "Launch Your\nIdeas."
-                                : "Create\nAccount.",
+                                ? l10n.launchIdeas
+                                : l10n.createAccount,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 34,
@@ -364,7 +367,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           child: Text(
                             isLogin ? "Welcome Back" : "Welcome!",
                             style: TextStyle(
-                              color: isDark ? Colors.white : _textColorDark,
+                              color: isDark ? Colors.white : textColorDark,
                               fontSize: 28,
                               fontWeight: FontWeight.w900,
                             ),
@@ -375,9 +378,9 @@ class _AuthScreenState extends State<AuthScreen> {
                         // Role Selection (Sign Up Only)
                         if (!isLogin) ...[
                           Text(
-                            'Select Your Role',
+                            l10n.selectYourRole,
                             style: TextStyle(
-                              color: isDark ? Colors.white : _textColorDark,
+                              color: isDark ? Colors.white : textColorDark,
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
@@ -388,7 +391,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               Expanded(
                                 child: _buildRoleButton(
                                   UserRole.user,
-                                  'User',
+                                  l10n.roleUser,
                                   Icons.person,
                                   isDark,
                                 ),
@@ -397,7 +400,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               Expanded(
                                 child: _buildRoleButton(
                                   UserRole.ngo,
-                                  'Organization',
+                                  l10n.roleOrg,
                                   Icons.handshake,
                                   isDark,
                                 ),
@@ -406,7 +409,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               Expanded(
                                 child: _buildRoleButton(
                                   UserRole.restaurant,
-                                  'Restaurant',
+                                  l10n.roleRest,
                                   Icons.restaurant,
                                   isDark,
                                 ),
@@ -421,10 +424,10 @@ class _AuthScreenState extends State<AuthScreen> {
                             (_selectedRole == UserRole.ngo ||
                                 _selectedRole == UserRole.restaurant)) ...[
                           CustomInputField(
-                            hintText: "Organization Name",
+                            hintText: l10n.orgNameLabel,
                             fillColor: isDark
                                 ? const Color(0xFF2C2C2C)
-                                : _creamyInputFill,
+                                : creamyInputFill,
                             controller: _orgNameController,
                           ),
                           const SizedBox(height: 20),
@@ -433,10 +436,10 @@ class _AuthScreenState extends State<AuthScreen> {
                         // Name Field (Sign Up Only)
                         if (!isLogin) ...[
                           CustomInputField(
-                            hintText: "Full Name",
+                            hintText: l10n.fullNameLabel,
                             fillColor: isDark
                                 ? const Color(0xFF2C2C2C)
-                                : _creamyInputFill,
+                                : creamyInputFill,
                             controller: _nameController,
                           ),
                           const SizedBox(height: 20),
@@ -444,10 +447,10 @@ class _AuthScreenState extends State<AuthScreen> {
 
                         // Email Field
                         CustomInputField(
-                          hintText: "Email",
+                          hintText: l10n.emailLabel,
                           fillColor: isDark
                               ? const Color(0xFF2C2C2C)
-                              : _creamyInputFill,
+                              : creamyInputFill,
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                         ),
@@ -459,7 +462,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             hintText: "Phone Number (Optional)",
                             fillColor: isDark
                                 ? const Color(0xFF2C2C2C)
-                                : _creamyInputFill,
+                                : creamyInputFill,
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
                           ),
@@ -468,10 +471,10 @@ class _AuthScreenState extends State<AuthScreen> {
 
                         // Password Field
                         CustomInputField(
-                          hintText: "Password",
+                          hintText: l10n.passwordLabel,
                           fillColor: isDark
                               ? const Color(0xFF2C2C2C)
-                              : _creamyInputFill,
+                              : creamyInputFill,
                           isPassword: true,
                           controller: _passwordController,
                         ),
@@ -485,9 +488,9 @@ class _AuthScreenState extends State<AuthScreen> {
                               onTap: () {
                                 GoRouter.of(context).go('/forgot-password');
                               },
-                              child: const Text(
-                                'Forgot Password?',
-                                style: TextStyle(
+                              child: Text(
+                                l10n.forgotPasswordLink,
+                                style: const TextStyle(
                                   color: Color(0xFF0099A6),
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -506,10 +509,13 @@ class _AuthScreenState extends State<AuthScreen> {
                               onTap: () async {
                                 final messenger = ScaffoldMessenger.of(context);
                                 final email = _emailController.text.trim();
+                                final primaryColor = Theme.of(context).colorScheme.primary;
+                                final errorColor = Theme.of(context).colorScheme.error;
+
                                 if (email.isEmpty) {
                                   messenger.showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Enter your email first'),
+                                    SnackBar(
+                                      content: Text(l10n.enterEmailFirst),
                                       backgroundColor: Colors.red,
                                     ),
                                   );
@@ -524,24 +530,24 @@ class _AuthScreenState extends State<AuthScreen> {
                                         : 'io.supabase.flutter://login-callback/',
                                   );
                                   messenger.showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Verification email sent'),
-                                      backgroundColor: AppColors.primaryAccent,
+                                    SnackBar(
+                                      content: Text(l10n.verificationSent),
+                                      backgroundColor: primaryColor,
                                     ),
                                   );
                                 } catch (e) {
                                   messenger.showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                          'Resend failed: ${e.toString()}'),
-                                      backgroundColor: Colors.red,
+                                          l10n.resendFailed(e.toString())),
+                                      backgroundColor: errorColor,
                                     ),
                                   );
                                 }
                               },
-                              child: const Text(
-                                'Resend verification email',
-                                style: TextStyle(
+                              child: Text(
+                                l10n.resendVerificationLink,
+                                style: const TextStyle(
                                   color: Color(0xFF0099A6),
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -566,14 +572,14 @@ class _AuthScreenState extends State<AuthScreen> {
                           height: 55,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(28),
-                            gradient: LinearGradient(
-                              colors: [_tealBtnStart, _tealBtnEnd],
+                            gradient: const LinearGradient(
+                              colors: [tealBtnStart, tealBtnEnd],
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: _tealBtnStart.withOpacity(0.3),
+                                color: tealBtnStart.withOpacity(0.3),
                                 blurRadius: 15,
                                 offset: const Offset(0, 8),
                               )
@@ -660,8 +666,8 @@ class _AuthScreenState extends State<AuthScreen> {
                             child: RichText(
                               text: TextSpan(
                                 text: isLogin
-                                    ? "Don't have an account? "
-                                    : "Already have an account? ",
+                                    ? l10n.noAccount
+                                    : l10n.hasAccount,
                                 style: TextStyle(
                                   color: isDark
                                       ? Colors.grey[400]
@@ -670,11 +676,11 @@ class _AuthScreenState extends State<AuthScreen> {
                                 ),
                                 children: [
                                   TextSpan(
-                                    text: isLogin ? "Sign Up" : "Log In",
+                                    text: isLogin ? l10n.signupBtn : l10n.loginBtn,
                                     style: TextStyle(
                                       color: isDark
                                           ? Colors.white
-                                          : _textColorDark,
+                                          : textColorDark,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -699,6 +705,9 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget _buildRoleButton(
       UserRole role, String label, IconData icon, bool isDark) {
     final isSelected = _selectedRole == role;
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final textColorDark = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -713,12 +722,12 @@ class _AuthScreenState extends State<AuthScreen> {
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
           decoration: BoxDecoration(
             color: isSelected
-                ? AppColors.primaryAccent.withOpacity(0.2)
+                ? primaryColor.withOpacity(0.2)
                 : (isDark ? const Color(0xFF2C2C2C) : Colors.white),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isSelected
-                  ? AppColors.primaryAccent
+                  ? primaryColor
                   : (isDark ? Colors.grey[700]! : Colors.grey[300]!),
               width: isSelected ? 2 : 1,
             ),
@@ -728,7 +737,7 @@ class _AuthScreenState extends State<AuthScreen> {
               Icon(
                 icon,
                 color: isSelected
-                    ? AppColors.primaryAccent
+                    ? primaryColor
                     : (isDark ? Colors.grey[400] : Colors.grey[600]),
                 size: 28,
               ),
@@ -737,8 +746,8 @@ class _AuthScreenState extends State<AuthScreen> {
                 label,
                 style: TextStyle(
                   color: isSelected
-                      ? AppColors.primaryAccent
-                      : (isDark ? Colors.white : _textColorDark),
+                      ? primaryColor
+                      : (isDark ? Colors.white : textColorDark),
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 ),
@@ -790,6 +799,9 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Widget _buildDocumentUploadSection(bool isDark) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final textColorDark = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -797,7 +809,7 @@ class _AuthScreenState extends State<AuthScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: _documentsUploaded
-              ? AppColors.primaryAccent
+              ? primaryColor
               : (isDark ? Colors.grey[700]! : Colors.grey[300]!),
           width: 2,
         ),
@@ -807,9 +819,9 @@ class _AuthScreenState extends State<AuthScreen> {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.description,
-                color: AppColors.primaryAccent,
+                color: primaryColor,
                 size: 24,
               ),
               const SizedBox(width: 12),
@@ -817,7 +829,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 child: Text(
                   'Legal Documents Required',
                   style: TextStyle(
-                    color: isDark ? Colors.white : _textColorDark,
+                    color: isDark ? Colors.white : textColorDark,
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
@@ -828,22 +840,22 @@ class _AuthScreenState extends State<AuthScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryAccent.withOpacity(0.2),
+                    color: primaryColor.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         Icons.check_circle,
-                        color: AppColors.primaryAccent,
+                        color: primaryColor,
                         size: 16,
                       ),
-                      SizedBox(width: 6),
+                      const SizedBox(width: 6),
                       Text(
                         'Uploaded',
                         style: TextStyle(
-                          color: AppColors.primaryAccent,
+                          color: primaryColor,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -855,7 +867,7 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Please upload your legal documents (Business License, Registration Certificate, etc.)',
+            AppLocalizations.of(context)!.legalDocsHint,
             style: TextStyle(
               color: isDark ? Colors.grey[400] : Colors.grey[600],
               fontSize: 13,
@@ -866,10 +878,10 @@ class _AuthScreenState extends State<AuthScreen> {
             OutlinedButton.icon(
               onPressed: _uploadDocuments,
               icon: const Icon(Icons.upload_file),
-              label: const Text('Upload Documents'),
+              label: Text(AppLocalizations.of(context)!.uploadDocsBtn),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primaryAccent,
-                side: const BorderSide(color: AppColors.primaryAccent),
+                foregroundColor: primaryColor,
+                side: BorderSide(color: primaryColor),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 12,

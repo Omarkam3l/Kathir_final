@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ChooseAddressScreen extends StatefulWidget {
   static const routeName = '/choose-address';
@@ -12,32 +12,34 @@ class ChooseAddressScreen extends StatefulWidget {
 
 class _ChooseAddressScreenState extends State<ChooseAddressScreen> {
   int _selectedIndex = 0;
+  List<AddressModel> _addresses = [];
 
-  final List<AddressModel> _addresses = [
-    const AddressModel(
-      label: 'My Home Address',
-      type: 'Home',
-      phone: '(503) 338-5200',
-      address: '15612 Fisher Island Dr Miami Beach, Florida(FL), 33109',
-    ),
-    const AddressModel(
-      label: 'My Office Address',
-      type: 'Office',
-      phone: '(503) 338-5200',
-      address: '15612 Fisher Island Dr Miami Beach, Florida(FL), 33109',
-    ),
-  ];
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final l10n = AppLocalizations.of(context)!;
+    _addresses = [
+      AddressModel(
+        label: l10n.addressHomeLabel,
+        type: l10n.addressHomeType,
+        phone: '(503) 338-5200',
+        address: '15612 Fisher Island Dr Miami Beach, Florida(FL), 33109',
+      ),
+      AddressModel(
+        label: l10n.addressOfficeLabel,
+        type: l10n.addressOfficeType,
+        phone: '(503) 338-5200',
+        address: '15612 Fisher Island Dr Miami Beach, Florida(FL), 33109',
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDarkMode ? const Color(0xFF121212) : AppColors.lightBackground;
-    final textColor = isDarkMode ? AppColors.white : AppColors.darkText;
-    final cardColor = isDarkMode ? const Color(0xFF1E1E1E) : AppColors.white;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -56,16 +58,15 @@ class _ChooseAddressScreenState extends State<ChooseAddressScreen> {
                         router.go('/home');
                       }
                     },
-                    isDarkMode: isDarkMode,
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
-                      'Choose Address',
+                      l10n.chooseAddressTitle,
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w800,
-                        color: textColor,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                   ),
@@ -82,9 +83,6 @@ class _ChooseAddressScreenState extends State<ChooseAddressScreen> {
                       address: _addresses[index],
                       isSelected: _selectedIndex == index,
                       onTap: () => setState(() => _selectedIndex = index),
-                      isDarkMode: isDarkMode,
-                      cardColor: cardColor,
-                      textColor: textColor,
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -92,13 +90,13 @@ class _ChooseAddressScreenState extends State<ChooseAddressScreen> {
                     onPressed: () {
                       // TODO: Navigate to add new address
                     },
-                    icon: const Icon(Icons.add, color: Colors.red),
-                    label: const Text(
-                      'Add New Address',
-                      style: TextStyle(color: Colors.red),
+                    icon: Icon(Icons.add, color: Theme.of(context).colorScheme.primary),
+                    label: Text(
+                      l10n.addNewAddress,
+                      style: TextStyle(color: Theme.of(context).colorScheme.primary),
                     ),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.red, width: 2),
+                      side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18),
@@ -111,11 +109,11 @@ class _ChooseAddressScreenState extends State<ChooseAddressScreen> {
             Container(
               padding: const EdgeInsets.fromLTRB(18, 18, 18, 30),
               decoration: BoxDecoration(
-                color: cardColor,
+                color: Theme.of(context).cardColor,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.1),
+                    color: Colors.black.withOpacity(0.1),
                     blurRadius: 16,
                     offset: const Offset(0, -4),
                   ),
@@ -126,15 +124,15 @@ class _ChooseAddressScreenState extends State<ChooseAddressScreen> {
                 height: 58,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18),
                     ),
                   ),
                   onPressed: () => Navigator.of(context).pop(_addresses[_selectedIndex]),
-                  child: const Text(
-                    'Done',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.doneAction,
+                    style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 18,
                       color: Colors.white,
@@ -153,7 +151,6 @@ class _ChooseAddressScreenState extends State<ChooseAddressScreen> {
     BuildContext context, {
     required IconData icon,
     required VoidCallback onTap,
-    required bool isDarkMode,
   }) {
     return Transform.rotate(
       angle: 0.78,
@@ -164,11 +161,11 @@ class _ChooseAddressScreenState extends State<ChooseAddressScreen> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF1E1E1E) : AppColors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isDarkMode ? 0.4 : 0.08),
+                color: Colors.black.withOpacity(0.08),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -178,7 +175,7 @@ class _ChooseAddressScreenState extends State<ChooseAddressScreen> {
             angle: -0.78,
             child: Icon(
               icon,
-              color: isDarkMode ? AppColors.white : AppColors.darkText,
+              color: Theme.of(context).iconTheme.color,
             ),
           ),
         ),
@@ -192,17 +189,11 @@ class _AddressCard extends StatelessWidget {
     required this.address,
     required this.isSelected,
     required this.onTap,
-    required this.isDarkMode,
-    required this.cardColor,
-    required this.textColor,
   });
 
   final AddressModel address;
   final bool isSelected;
   final VoidCallback onTap;
-  final bool isDarkMode;
-  final Color cardColor;
-  final Color textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -212,11 +203,11 @@ class _AddressCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 18),
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: cardColor,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.04),
+              color: Colors.black.withOpacity(0.04),
               blurRadius: 16,
               offset: const Offset(0, 8),
             ),
@@ -233,7 +224,7 @@ class _AddressCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: textColor,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -241,7 +232,7 @@ class _AddressCard extends StatelessWidget {
                     address.type,
                     style: TextStyle(
                       fontSize: 14,
-                      color: textColor.withOpacity(0.7),
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -249,7 +240,7 @@ class _AddressCard extends StatelessWidget {
                     address.phone,
                     style: TextStyle(
                       fontSize: 14,
-                      color: textColor.withOpacity(0.7),
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -257,7 +248,7 @@ class _AddressCard extends StatelessWidget {
                     address.address,
                     style: TextStyle(
                       fontSize: 14,
-                      color: textColor.withOpacity(0.7),
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                     ),
                   ),
                 ],
@@ -267,7 +258,7 @@ class _AddressCard extends StatelessWidget {
               value: isSelected ? 1 : 0,
               groupValue: isSelected ? 1 : 0,
               onChanged: (_) => onTap(),
-              activeColor: Colors.red,
+              activeColor: Theme.of(context).colorScheme.primary,
             ),
           ],
         ),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../profile/presentation/providers/foodie_state.dart';
 import '../../../user_home/domain/entities/meal_offer.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final MealOffer product;
@@ -18,6 +19,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final a = widget.product;
     final price = a.donationPrice * qty;
 
@@ -53,7 +55,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                  fav ? 'Removed from favourites' : 'Added to favourites'),
+                                  fav ? l10n.removedFromFavourites : l10n.addedToFavourites),
                               duration: const Duration(seconds: 1),
                             ),
                           );
@@ -145,7 +147,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Fast food',
+                                l10n.fastFood,
                                 style: TextStyle(
                                   color: Theme.of(context).textTheme.bodySmall?.color,
                                   fontSize: 13,
@@ -177,7 +179,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam at mi vitae augue feugiat scelerisque in a eros.',
+                                l10n.mealDescription,
                                 style: TextStyle(
                                     color: Theme.of(context).textTheme.bodySmall?.color, height: 1.4),
                               ),
@@ -189,7 +191,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text('Delivery Time',
+                                        Text(l10n.deliveryTime,
                                             style: TextStyle(
                                                 color: Theme.of(context).textTheme.bodySmall?.color)),
                                         const SizedBox(height: 4),
@@ -199,8 +201,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                                 size: 18,
                                                 color: Theme.of(context).colorScheme.primary),
                                             const SizedBox(width: 6),
-                                            Text(
-                                                '${max(5, a.minutesLeft)} mins'),
+                                            Text(l10n.minutesShort(max(5, a.minutesLeft))),
                                           ],
                                         ),
                                       ],
@@ -210,7 +211,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
-                                      Text('Total Price',
+                                      Text(l10n.totalPrice,
                                           style: TextStyle(
                                               color: Theme.of(context).textTheme.bodySmall?.color)),
                                       const SizedBox(height: 6),
@@ -241,9 +242,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         ),
       ),
       floatingActionButton: _floatingCartButton(onTap: () {
+        final foodie = context.read<FoodieState>();
+        foodie.addToCart(a, qty: qty);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Added $qty x ${a.title} to cart')),
+          SnackBar(content: Text(l10n.addedToCartWithQty(qty, a.title))),
         );
+        context.push('/cart');
       }),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
       bottomNavigationBar: const SizedBox(height: 16),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../models/figma_models.dart';
 import 'foodie_product_detail_screen.dart';
@@ -13,11 +14,12 @@ class RestaurantDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final data = story ?? DemoData.featuredRestaurants().first;
-    final menu = DemoData.cartItems();
+    final l10n = AppLocalizations.of(context)!;
+    final data = story ?? DemoData.featuredRestaurants(l10n).first;
+    final menu = DemoData.cartItems(l10n);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: AppColors.lightBackground,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -40,8 +42,8 @@ class RestaurantDetailScreen extends StatelessWidget {
                     const Spacer(),
                     IconButton(
                       onPressed: () {},
-                      icon: Icon(Icons.more_vert,
-                          color: Theme.of(context).iconTheme.color),
+                      icon: const Icon(Icons.more_vert,
+                          color: AppColors.darkText),
                     ),
                   ],
                 ),
@@ -71,9 +73,9 @@ class RestaurantDetailScreen extends StatelessWidget {
                           data.heroImage,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
-                            color: Theme.of(context).inputDecorationTheme.fillColor ?? const Color(0xFF2A2A2A),
-                            child: Icon(Icons.restaurant,
-                                size: 48, color: Theme.of(context).colorScheme.primary),
+                            color: AppColors.lightBackground,
+                            child: const Icon(Icons.restaurant,
+                                size: 48, color: AppColors.primaryAccent),
                           ),
                         ),
                       ),
@@ -90,10 +92,10 @@ class RestaurantDetailScreen extends StatelessWidget {
                   children: [
                     Text(
                       data.name,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.w800,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                        color: AppColors.darkText,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -133,7 +135,7 @@ class RestaurantDetailScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
+                        color: AppColors.white,
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
@@ -143,12 +145,18 @@ class RestaurantDetailScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _InfoStat(label: 'Delivery', value: '25 min'),
-                          _InfoStat(label: 'Distance', value: '1.3 km'),
-                          _InfoStat(label: 'Open', value: '10:00 - 22:00'),
+                          _InfoStat(
+                              label: AppLocalizations.of(context)!.deliveryLabel,
+                              value: AppLocalizations.of(context)!.deliveryTimeValue),
+                          _InfoStat(
+                              label: AppLocalizations.of(context)!.distanceLabel,
+                              value: AppLocalizations.of(context)!.distanceValue),
+                          _InfoStat(
+                              label: AppLocalizations.of(context)!.openLabel,
+                              value: AppLocalizations.of(context)!.openTimeValue),
                         ],
                       ),
                     ),
@@ -157,21 +165,21 @@ class RestaurantDetailScreen extends StatelessWidget {
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
                     Text(
-                      'Signature menu',
-                      style: TextStyle(
+                      AppLocalizations.of(context)!.signatureMenuTitle,
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: AppColors.darkText,
                       ),
                     ),
-                    Spacer(),
-                    Icon(Icons.tune, color: Colors.white70),
+                    const Spacer(),
+                    const Icon(Icons.tune, color: AppColors.darkText),
                   ],
                 ),
               ),
@@ -192,7 +200,7 @@ class RestaurantDetailScreen extends StatelessWidget {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
+                        color: AppColors.white,
                         borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
@@ -216,9 +224,9 @@ class RestaurantDetailScreen extends StatelessWidget {
                                 errorBuilder: (_, __, ___) => Container(
                                   width: 90,
                                   height: 90,
-                                  color: Theme.of(context).inputDecorationTheme.fillColor ?? const Color(0xFF2A2A2A),
-                                  child: Icon(Icons.fastfood,
-                                      color: Theme.of(context).colorScheme.primary),
+                                  color: AppColors.lightBackground,
+                                  child: const Icon(Icons.fastfood,
+                                      color: AppColors.primaryAccent),
                                 ),
                               ),
                             ),
@@ -232,7 +240,7 @@ class RestaurantDetailScreen extends StatelessWidget {
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 18,
-                                      color: Colors.white,
+                                      color: AppColors.darkText,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -242,16 +250,16 @@ class RestaurantDetailScreen extends StatelessWidget {
                                         color: Colors.grey, fontSize: 13),
                                   ),
                                   const SizedBox(height: 8),
-                                  const Row(
+                                  Row(
                                     children: [
-                                      Icon(Icons.star,
+                                      const Icon(Icons.star,
                                           size: 16, color: Colors.amber),
-                                      SizedBox(width: 4),
+                                      const SizedBox(width: 4),
                                       Text(
-                                        '4.8',
-                                        style: TextStyle(
+                                        item.rating.toStringAsFixed(1),
+                                        style: const TextStyle(
                                           fontWeight: FontWeight.w600,
-                                          color: Colors.white,
+                                          color: AppColors.darkText,
                                         ),
                                       ),
                                     ],
@@ -264,13 +272,13 @@ class RestaurantDetailScreen extends StatelessWidget {
                                   horizontal: 16, vertical: 10),
                               decoration: BoxDecoration(
                                 color:
-                                    Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                                    AppColors.primaryAccent.withOpacity(0.12),
                                 borderRadius: BorderRadius.circular(18),
                               ),
                               child: Text(
                                 '\$${item.price.toStringAsFixed(0)}',
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary,
+                                style: const TextStyle(
+                                  color: AppColors.primaryAccent,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),

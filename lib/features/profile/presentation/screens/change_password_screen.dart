@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../authentication/presentation/blocs/auth_provider.dart';
 
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 class ChangePasswordScreen extends StatefulWidget {
-  static const routeName = '/change-password';
+  static const routeName = '/profile/change-password';
   const ChangePasswordScreen({super.key});
 
   @override
@@ -33,6 +34,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
     setState(() => _loading = true);
     final auth = Provider.of<AuthProvider>(context, listen: false);
+    final l10n = AppLocalizations.of(context)!;
 
     try {
       final success = await auth.changePassword(
@@ -56,8 +58,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Current password is incorrect'),
+            SnackBar(
+              content: Text(l10n.currentPasswordIncorrectError),
               backgroundColor: Colors.red,
             ),
           );
@@ -68,8 +70,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            content: Text(l10n.errorLabel(e.toString())),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -78,11 +80,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDarkMode ? const Color(0xFF121212) : AppColors.white;
-    final textColor = isDarkMode ? AppColors.white : AppColors.darkText;
-    final cardColor = isDarkMode ? const Color(0xFF1E1E1E) : AppColors.white;
+    final l10n = AppLocalizations.of(context)!;
+    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    final textColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
+    final cardColor = Theme.of(context).cardColor;
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final onPrimaryColor = Theme.of(context).colorScheme.onPrimary;
 
     if (_showSuccess) {
       return Scaffold(
@@ -101,17 +104,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         Container(
                           width: 140,
                           height: 140,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFF5E6FF),
+                          decoration: BoxDecoration(
+                            color: primaryColor.withOpacity(0.15),
                             shape: BoxShape.circle,
                           ),
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.lock_outline,
                                 size: 64,
-                                color: AppColors.secondaryAccent,
+                                color: primaryColor,
                               ),
                               Positioned(
                                 bottom: 20,
@@ -119,13 +122,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                 child: Container(
                                   width: 32,
                                   height: 32,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.secondaryAccent,
+                                  decoration: BoxDecoration(
+                                    color: primaryColor,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.check,
-                                    color: AppColors.white,
+                                    color: onPrimaryColor,
                                     size: 20,
                                   ),
                                 ),
@@ -134,12 +137,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        const Text(
-                          'Your password changed',
+                        Text(
+                          l10n.passwordChangedTitle,
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.secondaryAccent,
+                            color: primaryColor,
                           ),
                         ),
                         const SizedBox(height: 40),
@@ -147,7 +150,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           width: double.infinity,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.secondaryAccent,
+                              backgroundColor: primaryColor,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18),
@@ -161,12 +164,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                 router.go('/home');
                               }
                             },
-                            child: const Text(
-                              'Done',
+                            child: Text(
+                              l10n.doneAction,
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,
-                                color: AppColors.white,
+                                color: onPrimaryColor,
                               ),
                             ),
                           ),
@@ -197,17 +200,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     Container(
                       width: 140,
                       height: 140,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF5E6FF),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withOpacity(0.15),
                         shape: BoxShape.circle,
                       ),
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.lock_outline,
                             size: 64,
-                            color: AppColors.secondaryAccent,
+                            color: primaryColor,
                           ),
                           Positioned(
                             top: 20,
@@ -215,13 +218,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                             child: Container(
                               width: 40,
                               height: 40,
-                              decoration: const BoxDecoration(
-                                color: AppColors.secondaryAccent,
+                              decoration: BoxDecoration(
+                                color: primaryColor,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.refresh,
-                                color: AppColors.white,
+                                color: onPrimaryColor,
                                 size: 24,
                               ),
                             ),
@@ -230,19 +233,19 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    const Text(
-                      'Change Password',
+                    Text(
+                      l10n.changePassword,
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.secondaryAccent,
+                        color: primaryColor,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Create your new password',
+                      l10n.createNewPassword,
                       style: TextStyle(
-                        color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
+                        color: Theme.of(context).textTheme.bodySmall?.color,
                         fontSize: 14,
                       ),
                     ),
@@ -253,26 +256,26 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         children: [
                           _PasswordField(
                             controller: _currentPasswordController,
-                            label: 'Current Password',
+                            label: l10n.currentPasswordLabel,
                             cardColor: cardColor,
                             textColor: textColor,
                           ),
                           const SizedBox(height: 16),
                           _PasswordField(
                             controller: _newPasswordController,
-                            label: 'New Password',
+                            label: l10n.newPasswordLabel,
                             cardColor: cardColor,
                             textColor: textColor,
                           ),
                           const SizedBox(height: 16),
                           _PasswordField(
                             controller: _confirmPasswordController,
-                            label: 'Confirm New Password',
+                            label: l10n.confirmNewPasswordLabel,
                             cardColor: cardColor,
                             textColor: textColor,
                             validator: (value) {
                               if (value != _newPasswordController.text) {
-                                return 'Passwords do not match';
+                                return l10n.passwordsNoMatch;
                               }
                               return null;
                             },
@@ -286,7 +289,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       height: 56,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.secondaryAccent,
+                          backgroundColor: primaryColor,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(18),
                           ),
@@ -299,15 +302,15 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                      AppColors.white),
+                                      Colors.white),
                                 ),
                               )
-                            : const Text(
-                                'Change',
+                            : Text(
+                                l10n.changeAction,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 18,
-                                  color: AppColors.white,
+                                  color: onPrimaryColor,
                                 ),
                               ),
                       ),
@@ -349,7 +352,7 @@ class _ChangePasswordAppBar extends StatelessWidget {
           const SizedBox(width: 16),
           Expanded(
             child: Text(
-              'Change Password',
+              AppLocalizations.of(context)!.changePassword,
               style: TextStyle(
                 color: textColor,
                 fontSize: 22,
@@ -365,12 +368,9 @@ class _ChangePasswordAppBar extends StatelessWidget {
 
   Widget _diamondButton(BuildContext context,
       {required IconData icon, required VoidCallback onTap}) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final buttonColor = isDarkMode ? const Color(0xFF1E1E1E) : AppColors.white;
-    final iconColor = isDarkMode ? AppColors.white : AppColors.darkText;
-    final shadowColor = isDarkMode
-        ? Colors.black.withOpacity(0.4)
-        : Colors.black.withOpacity(0.08);
+    final buttonColor = Theme.of(context).cardColor;
+    final iconColor = Theme.of(context).iconTheme.color;
+    final shadowColor = Colors.black.withOpacity(0.08);
 
     return Transform.rotate(
       angle: 0.78,
@@ -425,9 +425,7 @@ class _PasswordFieldState extends State<_PasswordField> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final fieldColor =
-        isDarkMode ? const Color(0xFF2A2A2A) : AppColors.lightBackground;
+    final fieldColor = Theme.of(context).inputDecorationTheme.fillColor ?? Theme.of(context).cardColor;
 
     return TextFormField(
       controller: widget.controller,
@@ -435,10 +433,10 @@ class _PasswordFieldState extends State<_PasswordField> {
       validator: widget.validator ??
           (value) {
             if (value == null || value.isEmpty) {
-              return 'Please enter ${widget.label.toLowerCase()}';
+              return AppLocalizations.of(context)!.pleaseEnterField(widget.label.toLowerCase());
             }
             if (value.length < 6) {
-              return 'Password must be at least 6 characters';
+              return AppLocalizations.of(context)!.passwordLengthError;
             }
             return null;
           },
@@ -446,7 +444,7 @@ class _PasswordFieldState extends State<_PasswordField> {
       decoration: InputDecoration(
         labelText: widget.label,
         labelStyle: TextStyle(
-          color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
+          color: Theme.of(context).textTheme.bodySmall?.color,
         ),
         filled: true,
         fillColor: fieldColor,
@@ -461,7 +459,7 @@ class _PasswordFieldState extends State<_PasswordField> {
             _obscureText
                 ? Icons.visibility_outlined
                 : Icons.visibility_off_outlined,
-            color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
+            color: Theme.of(context).textTheme.bodySmall?.color,
           ),
           onPressed: () => setState(() => _obscureText = !_obscureText),
         ),

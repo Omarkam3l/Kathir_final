@@ -78,4 +78,9 @@ class FoodieState extends ChangeNotifier {
     _cart.removeWhere((c) => c.meal.id == id);
     notifyListeners();
   }
+
+  void clearCart() {
+    _cart.clear();
+    notifyListeners();
+  }
 }

@@ -1,6 +1,5 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import 'package:supabase_flutter/supabase_flutter.dart' as s;
+
 import '../../../../core/errors/failure.dart';
 import '../../../../core/utils/either.dart';
 import '../../domain/entities/user_entity.dart';

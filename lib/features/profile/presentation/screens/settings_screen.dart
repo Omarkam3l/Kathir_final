@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:provider/provider.dart';
-import '../../../authentication/presentation/blocs/auth_provider.dart';
 import 'package:go_router/go_router.dart';
+import '../../../authentication/presentation/blocs/auth_provider.dart';
 import 'package:kathir_final/features/_shared/providers/theme_provider.dart';
+import 'package:kathir_final/features/_shared/providers/locale_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'change_password_screen.dart';
 import 'package:kathir_final/features/_shared/router/app_router.dart';
@@ -23,6 +24,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
+    final localeProvider = context.watch<LocaleProvider>();
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -44,13 +48,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Settings',
+                      l10n.settings,
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.darkText,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                   ),
@@ -62,90 +66,170 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.fromLTRB(18, 10, 18, 24),
                 children: [
                   _Section(
-                    title: 'Notifications',
+                    title: l10n.notifications,
                     children: [
                       SwitchListTile(
                         value: _notifications,
                         onChanged: (value) =>
                             setState(() => _notifications = value),
-                        title: const Text('Push notifications'),
+                        title: Text(l10n.pushNotifications),
                         subtitle: const Text('Order updates & delivery status'),
-                        activeTrackColor: AppColors.primaryAccent,
+                        activeTrackColor: Theme.of(context).colorScheme.primary,
                       ),
                       SwitchListTile(
                         value: _offers,
                         onChanged: (value) => setState(() => _offers = value),
-                        title: const Text('Promotions'),
+                        title: Text(l10n.promotions),
                         subtitle: const Text('Special foodie deals & vouchers'),
-                        activeTrackColor: AppColors.primaryAccent,
+                        activeTrackColor: Theme.of(context).colorScheme.primary,
                       ),
                     ],
                   ),
                   const SizedBox(height: 18),
                   _Section(
-                    title: 'Appearance',
+                    title: l10n.appearance,
                     children: [
                       SwitchListTile(
                         value: themeProvider.isDarkMode,
                         onChanged: (_) => themeProvider.toggleTheme(),
-                        title: const Text('Dark mode'),
+                        title: Text(l10n.darkMode),
                         subtitle: const Text('Sync with Figma design tokens'),
-                        activeTrackColor: AppColors.primaryAccent,
+                        activeTrackColor: Theme.of(context).colorScheme.primary,
                       ),
                       ListTile(
-                        title: const Text(
-                          'Language',
-                          style: TextStyle(fontWeight: FontWeight.w600),
+                        title: Text(
+                          l10n.language,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
-                        subtitle: const Text('English (US)'),
+                        subtitle: Text(localeProvider.locale.languageCode == 'ar' ? 'العربية' : 'English (US)'),
                         trailing: const Icon(Icons.chevron_right),
-                        onTap: () {},
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                            ),
+                            builder: (context) {
+                              return Container(
+                                padding: const EdgeInsets.all(24),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                     Text(
+                                      l10n.language,
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    ListTile(
+                                      title: const Text('English (US)'),
+                                      trailing: localeProvider.locale.languageCode == 'en' 
+                                          ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary) 
+                                          : null,
+                                      onTap: () {
+                                        localeProvider.setLocale(const Locale('en'));
+                                        Navigator.pop(context);
+                                      },
+                                    ),
+                                    ListTile(
+                                      title: const Text('العربية'),
+                                      trailing: localeProvider.locale.languageCode == 'ar' 
+                                          ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary) 
+                                          : null,
+                                      onTap: () {
+                                        localeProvider.setLocale(const Locale('ar'));
+                                        Navigator.pop(context);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        },
                       ),
                     ],
                   ),
                   const SizedBox(height: 18),
                   _Section(
-                    title: 'Security',
+                    title: l10n.security,
                     children: [
                       ListTile(
-                        leading: const Icon(Icons.lock_outline,
-                            color: AppColors.primaryAccent),
-                        title: const Text('Change password'),
+                        leading: Icon(Icons.lock_outline,
+                            color: Theme.of(context).colorScheme.primary),
+                        title: Text(l10n.changePassword),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.pushRoute(ChangePasswordScreen.routeName),
                       ),
-                      const ListTile(
+                      ListTile(
                         leading:
-                            Icon(Icons.devices, color: AppColors.primaryAccent),
-                        title: Text('Devices'),
-                        subtitle: Text('Manage logged in devices'),
-                        trailing: Icon(Icons.chevron_right),
+                            Icon(Icons.devices, color: Theme.of(context).colorScheme.primary),
+                        title: Text(l10n.devices),
+                        subtitle: const Text('Manage logged in devices'),
+                        trailing: const Icon(Icons.chevron_right),
                       ),
                       ListTile(
                         leading: const Icon(Icons.logout, color: Colors.redAccent),
-                        title: const Text(
-                          'Sign out of all devices',
-                          style: TextStyle(color: Colors.redAccent),
+                        title: Text(
+                          l10n.signOut,
+                          style: const TextStyle(
+                            color: Colors.redAccent,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                        onTap: () {},
+                        onTap: () async {
+                          final auth = Provider.of<AuthProvider>(context, listen: false);
+                          await auth.logout();
+                          if (context.mounted) {
+                            GoRouter.of(context).go('/auth');
+                          }
+                        },
                       ),
                       ListTile(
                         leading: const Icon(Icons.delete_forever, color: Colors.red),
-                        title: const Text(
-                          'Delete Account',
-                          style: TextStyle(color: Colors.red),
+                        title: Text(
+                          l10n.deleteAccount,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         onTap: () async {
                           final auth = context.read<AuthProvider>();
                           final router = GoRouter.of(context);
+                          final l10n = AppLocalizations.of(context)!;
                           final confirmed = await showDialog<bool>(
                             context: context,
                             builder: (ctx) => AlertDialog(
-                              title: const Text('Delete Account'),
-                              content: const Text('This action is permanent. Do you want to continue?'),
+                              title: Text(
+                                l10n.deleteAccount,
+                                style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              content: Text(
+                                l10n.deleteAccountConfirm,
+                                style: Theme.of(ctx).textTheme.bodyMedium,
+                              ),
                               actions: [
-                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, false),
+                                  child: Text(
+                                    l10n.cancelAction,
+                                    style: TextStyle(color: Theme.of(ctx).textTheme.bodySmall?.color),
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Theme.of(ctx).colorScheme.primary,
+                                  ),
+                                  child: Text(
+                                    l10n.deleteAccount,
+                                    style: TextStyle(color: Theme.of(ctx).colorScheme.onPrimary),
+                                  ),
+                                ),
                               ],
                             ),
                           );
@@ -176,7 +260,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -188,7 +272,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           child: Transform.rotate(
             angle: -0.78,
-            child: Icon(icon, color: AppColors.darkText),
+            child: Icon(icon, color: Theme.of(context).iconTheme.color),
           ),
         ),
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class OrderStage {
   final IconData icon;
@@ -8,33 +9,33 @@ class OrderStage {
 }
 
 class DemoData {
-  static List<OrderStage> orderTimeline() {
-    return const [
-      OrderStage(icon: Icons.receipt_long, label: 'Order placed', time: '09:12 AM'),
-      OrderStage(icon: Icons.kitchen, label: 'Preparing', time: '09:25 AM'),
-      OrderStage(icon: Icons.delivery_dining, label: 'Out for delivery', time: '09:45 AM'),
-      OrderStage(icon: Icons.check_circle, label: 'Delivered', time: '10:10 AM'),
+  static List<OrderStage> orderTimeline(AppLocalizations l10n) {
+    return [
+      OrderStage(icon: Icons.receipt_long, label: l10n.orderPlacedStage, time: '09:12 AM'),
+      OrderStage(icon: Icons.kitchen, label: l10n.preparingStage, time: '09:25 AM'),
+      OrderStage(icon: Icons.delivery_dining, label: l10n.outForDeliveryStage, time: '09:45 AM'),
+      OrderStage(icon: Icons.check_circle, label: l10n.deliveredStage, time: '10:10 AM'),
     ];
   }
 
-  static List<NotificationItem> notifications() {
-    return const [
+  static List<NotificationItem> notifications(AppLocalizations l10n) {
+    return [
       NotificationItem(
-        title: 'Order #1028 is out for delivery',
-        description: 'Your courier is on the way with your meal.',
-        timeAgo: '2m ago',
+        title: l10n.notificationOrderOutForDeliveryTitle,
+        description: l10n.notificationOrderOutForDeliveryBody,
+        timeAgo: l10n.timeAgoMinutes(2),
         isNew: true,
       ),
       NotificationItem(
-        title: 'Promo: 20% off on top restaurants',
-        description: 'Grab exclusive deals from our best-rated partners.',
-        timeAgo: '1h ago',
+        title: l10n.notificationPromoTitle,
+        description: l10n.notificationPromoBody,
+        timeAgo: l10n.timeAgoHours(1),
         isNew: false,
       ),
       NotificationItem(
-        title: 'Order #1027 delivered',
-        description: 'Hope you enjoyed your meal! Rate the experience.',
-        timeAgo: 'Yesterday',
+        title: l10n.notificationOrderDeliveredTitle,
+        description: l10n.notificationOrderDeliveredBody,
+        timeAgo: l10n.timeAgoYesterday,
         isNew: false,
       ),
     ];

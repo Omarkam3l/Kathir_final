@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kathir_final/core/utils/app_colors.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class PaymentMethodScreen extends StatelessWidget {
   static const routeName = '/payment-method';
@@ -7,32 +7,30 @@ class PaymentMethodScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
-        title: const Text('Payment Method'),
-        backgroundColor: AppColors.white,
-        foregroundColor: AppColors.darkText,
+        title: Text(l10n.paymentMethod),
         elevation: 0,
       ),
       body: ListView(
         padding: const EdgeInsets.all(18),
-        children: const [
+        children: [
           ListTile(
-            leading: Icon(Icons.credit_card, color: AppColors.primaryAccent),
-            title: Text('Credit/Debit Card'),
-            trailing: Icon(Icons.chevron_right),
+            leading: Icon(Icons.credit_card, color: Theme.of(context).colorScheme.primary),
+            title: Text(l10n.creditDebitCard),
+            trailing: const Icon(Icons.chevron_right),
           ),
           ListTile(
             leading: Icon(Icons.account_balance_wallet,
-                color: AppColors.primaryAccent),
-            title: Text('Wallet'),
-            trailing: Icon(Icons.chevron_right),
+                color: Theme.of(context).colorScheme.primary),
+            title: Text(l10n.wallet),
+            trailing: const Icon(Icons.chevron_right),
           ),
           ListTile(
-            leading: Icon(Icons.money, color: AppColors.primaryAccent),
-            title: Text('Cash on Delivery'),
-            trailing: Icon(Icons.chevron_right),
+            leading: Icon(Icons.money, color: Theme.of(context).colorScheme.primary),
+            title: Text(l10n.cashOnDelivery),
+            trailing: const Icon(Icons.chevron_right),
           ),
         ],
       ),
