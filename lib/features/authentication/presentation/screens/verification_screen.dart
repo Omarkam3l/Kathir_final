@@ -68,7 +68,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: AppColors.black.withOpacity(0.05),
                     blurRadius: 16,
                     offset: const Offset(0, 8),
                   ),
@@ -196,7 +196,7 @@ class _DiamondButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: AppColors.black.withOpacity(0.08),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),

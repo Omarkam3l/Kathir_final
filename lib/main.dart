@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kathir_final/core/utils/app_colors.dart';
 import 'app/bootstrap/di_bootstrap.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
@@ -33,7 +34,8 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => AppLocator.I.get<AuthViewModel>()),
+        ChangeNotifierProvider(
+            create: (_) => AppLocator.I.get<AuthViewModel>()),
         ChangeNotifierProvider(create: (_) => OrdersController()),
         ChangeNotifierProvider(create: (_) => FoodieState()),
       ],
@@ -44,39 +46,41 @@ class MyApp extends StatelessWidget {
           final lightBase = ThemeData.light(useMaterial3: true);
           final lightTheme = lightBase.copyWith(
             colorScheme: lightBase.colorScheme.copyWith(
-              primary: const Color(0xFF4DD0E1),
+              primary: AppColors.primary,
             ),
           );
 
           final darkBase = ThemeData.dark(useMaterial3: true);
           final darkTheme = darkBase.copyWith(
-            scaffoldBackgroundColor: const Color(0xFF121212),
-            cardColor: const Color(0xFF1E1E1E),
-            dividerColor: Colors.white12,
+            scaffoldBackgroundColor: AppColors.backgroundDark,
+            cardColor: AppColors.surfaceDark,
+            dividerColor: AppColors.dividerDark,
             colorScheme: darkBase.colorScheme.copyWith(
-              primary: const Color(0xFF4DD0E1),
-              surface: const Color(0xFF1E1E1E),
-              onSurface: Colors.white,
-              onPrimary: Colors.white,
+              primary: AppColors.primary,
+              surface: AppColors.surfaceDark,
+              onSurface: AppColors.white,
+              onPrimary: AppColors.white,
             ),
-            textTheme: darkBase.textTheme.apply(
-              bodyColor: Colors.white,
-              displayColor: Colors.white,
-            ).copyWith(
-              bodyMedium: const TextStyle(color: Colors.white70),
-              bodySmall: const TextStyle(color: Colors.white60),
-              titleSmall: const TextStyle(color: Colors.white70),
-            ),
+            textTheme: darkBase.textTheme
+                .apply(
+                  bodyColor: AppColors.white,
+                  displayColor: AppColors.white,
+                )
+                .copyWith(
+                  bodyMedium: const TextStyle(color: Colors.white70),
+                  bodySmall: const TextStyle(color: Colors.white60),
+                  titleSmall: const TextStyle(color: Colors.white70),
+                ),
             iconTheme: const IconThemeData(color: Colors.white70),
             appBarTheme: const AppBarTheme(
-              backgroundColor: Color(0xFF121212),
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.backgroundDark,
+              foregroundColor: AppColors.white,
               elevation: 0,
             ),
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4DD0E1),
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
                 ),
@@ -84,8 +88,8 @@ class MyApp extends StatelessWidget {
             ),
             outlinedButtonTheme: OutlinedButtonThemeData(
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF4DD0E1),
-                side: const BorderSide(color: Color(0xFF4DD0E1)),
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
                 ),
@@ -93,12 +97,12 @@ class MyApp extends StatelessWidget {
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF4DD0E1),
+                foregroundColor: AppColors.primary,
               ),
             ),
             inputDecorationTheme: const InputDecorationTheme(
               filled: true,
-              fillColor: Color(0xFF1E1E1E),
+              fillColor: AppColors.surfaceDark,
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,

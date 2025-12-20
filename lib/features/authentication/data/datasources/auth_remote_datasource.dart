@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import '../../../../core/utils/user_role.dart';
+import '../../../../core/utils/storage_constants.dart';
 import '../../../../core/supabase/supabase_helper.dart';
 import '../models/user_model.dart';
 
@@ -141,7 +142,7 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
   @override
   Future<String> uploadDocuments(
       String userId, String fileName, List<int> bytes,
-      {String bucket = 'legal_docs'}) {
+      {String bucket = StorageConstants.legalDocsBucket}) {
     final path = '$userId/$fileName';
     return helper.uploadDocument(bucket: bucket, path: path, bytes: bytes);
   }

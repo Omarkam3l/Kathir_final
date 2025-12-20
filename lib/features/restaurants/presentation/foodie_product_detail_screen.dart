@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
-import '../models/figma_models.dart';
+import 'package:kathir_final/features/restaurants/models/figma_models.dart';
 
 class FoodieProductDetailScreen extends StatelessWidget {
   final MenuItem item;

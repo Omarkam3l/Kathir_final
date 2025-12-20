@@ -80,7 +80,7 @@ class _AuthScreenState extends State<AuthScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select a role'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -93,7 +93,7 @@ class _AuthScreenState extends State<AuthScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please upload your legal documents'),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppColors.warning,
         ),
       );
       return;
@@ -120,13 +120,37 @@ class _AuthScreenState extends State<AuthScreen> {
             ? null
             : _phoneController.text.trim(),
       );
-      if (ok) {
-        if (_legalDocBytes != null) {
-          final uid = s.Supabase.instance.client.auth.currentUser?.id;
-          if (uid != null) {
-            await vm.uploadLegalDoc(uid, 'legal.pdf', _legalDocBytes!);
+
+      // Attempt upload if we have a user, regardless of verification status
+      if (_legalDocBytes != null) {
+        // Use vm.user?.id because client.auth.currentUser might be null if email verification is pending (no session)
+        final uid =
+            vm.user?.id ?? s.Supabase.instance.client.auth.currentUser?.id;
+        if (uid != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Uploading legal document...')),
+          );
+          final url =
+              await vm.uploadLegalDoc(uid, 'legal.pdf', _legalDocBytes!);
+          if (mounted) {
+            if (url != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Document uploaded successfully')),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content:
+                      Text('Document upload failed. Please try again later.'),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
           }
         }
+      }
+
+      if (ok) {
         if (mounted) {
           GoRouter.of(context).go('/home');
         }
@@ -147,7 +171,7 @@ class _AuthScreenState extends State<AuthScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -187,7 +211,7 @@ class _AuthScreenState extends State<AuthScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -344,9 +368,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   minHeight: MediaQuery.of(context).size.height * 0.5,
                 ),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF1E1E1E)
-                      : const Color(0xFFFAF9F6),
+                  color: isDark ? AppColors.surfaceDark : AppColors.offWhite,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(40),
                     topRight: Radius.circular(40),
@@ -488,7 +510,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               child: const Text(
                                 'Forgot Password?',
                                 style: TextStyle(
-                                  color: Color(0xFF0099A6),
+                                  color: AppColors.primaryDark,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -534,7 +556,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                     SnackBar(
                                       content: Text(
                                           'Resend failed: ${e.toString()}'),
-                                      backgroundColor: Colors.red,
+                                      backgroundColor: AppColors.error,
                                     ),
                                   );
                                 }
