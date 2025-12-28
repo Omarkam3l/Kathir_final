@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
 import 'app/bootstrap/di_bootstrap.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -14,6 +15,11 @@ import 'core/supabase/supabase_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    // Ignore error
+  }
   final hasConfig = supabaseUrl.isNotEmpty && supabaseKey.isNotEmpty;
   if (hasConfig) {
     await Supabase.initialize(url: supabaseUrl, anonKey: supabaseKey);
@@ -159,17 +165,12 @@ class MissingConfigScreen extends StatelessWidget {
               ),
               SizedBox(height: 12),
               Text(
-                'Run with --dart-define SUPABASE_URL=YOUR_URL and SUPABASE_ANON_KEY=YOUR_KEY',
+                'Please create a .env file in the project root with SUPABASE_URL and SUPABASE_ANON_KEY',
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 8),
               Text(
-                'Example (web-server): flutter run -d web-server --no-devtools --dart-define SUPABASE_URL=YOUR_URL --dart-define SUPABASE_ANON_KEY=XXXX',
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Example (windows): flutter run -d windows --dart-define SUPABASE_URL=YOUR_URL --dart-define SUPABASE_ANON_KEY=XXXX',
+                'SUPABASE_URL=...\nSUPABASE_ANON_KEY=...',
                 textAlign: TextAlign.center,
               ),
             ],
