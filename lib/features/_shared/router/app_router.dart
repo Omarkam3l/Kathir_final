@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kathir_final/features/splash/presentation/screens/splash_screen.dart';
 import 'package:provider/provider.dart';
 import '../../authentication/presentation/blocs/auth_provider.dart';
-import '../screens/splash_screen.dart';
 import '../../meals/presentation/screens/meal_detail.dart';
 import '../../user_home/domain/entities/meal_offer.dart';
 import '../../user_home/domain/entities/restaurant.dart';
@@ -45,9 +45,12 @@ class AppRouter {
           state.matchedLocation == '/forgot-password' ||
           state.matchedLocation == '/verify-otp' ||
           state.matchedLocation == '/new-password';
+
+      // Allow splash screen at '/' if not logged in
       if (!loggedIn && state.matchedLocation == '/') {
-        return '/auth';
+        return null;
       }
+
       if (!loggedIn && state.matchedLocation != '/' && !signingFlow) {
         return '/auth';
       }

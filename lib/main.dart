@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
+import 'package:kathir_final/core/utils/page_transitions.dart';
 import 'app/bootstrap/di_bootstrap.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
@@ -82,6 +83,15 @@ class MyApp extends StatelessWidget {
               backgroundColor: AppColors.backgroundDark,
               foregroundColor: AppColors.white,
               elevation: 0,
+            ),
+            pageTransitionsTheme: const PageTransitionsTheme(
+              builders: {
+                TargetPlatform.android: SlidePushPageTransitionsBuilder(),
+                TargetPlatform.iOS: SlidePushPageTransitionsBuilder(),
+                TargetPlatform.windows: SlidePushPageTransitionsBuilder(),
+                TargetPlatform.macOS: SlidePushPageTransitionsBuilder(),
+                TargetPlatform.linux: SlidePushPageTransitionsBuilder(),
+              },
             ),
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
