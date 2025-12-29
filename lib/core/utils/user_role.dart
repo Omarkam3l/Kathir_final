@@ -18,8 +18,8 @@ enum UserRole {
   String get wireValue {
     return switch (this) {
       UserRole.user => 'user',
-      UserRole.ngo => 'organization',
-      UserRole.restaurant => 'restaurant',
+      UserRole.ngo => 'ngo',
+      UserRole.restaurant => 'rest',
       UserRole.admin => 'admin',
     };
   }

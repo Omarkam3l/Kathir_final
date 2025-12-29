@@ -82,7 +82,12 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
     final res = await client.auth.signUp(
         email: email,
         password: password,
-        data: {'full_name': fullName, 'role': UserRole.restaurant.wireValue},
+        data: {
+          'full_name': fullName,
+          'role': UserRole.restaurant.wireValue,
+          'organization_name': orgName,
+          'phone': phone,
+        },
         emailRedirectTo: kIsWeb
             ? Uri.base.toString()
             : 'io.supabase.flutter://login-callback/');
