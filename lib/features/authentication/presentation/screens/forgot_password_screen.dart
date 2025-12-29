@@ -77,7 +77,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         if (!mounted) return;
                         if (ok) {
                           messenger.showSnackBar(const SnackBar(content: Text('Verification code sent'), backgroundColor: Colors.green));
-                          router.go(VerificationScreen.routeName, extra: value);
+                          router.push(VerificationScreen.routeName, extra: value);
                         } else {
                           messenger.showSnackBar(SnackBar(content: Text(vm.error ?? 'Network error'), backgroundColor: AppColors.brandRed));
                         }

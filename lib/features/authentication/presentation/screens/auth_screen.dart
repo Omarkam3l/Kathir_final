@@ -9,7 +9,6 @@ import 'package:supabase_flutter/supabase_flutter.dart' as s;
 import '../../domain/usecases/sign_up_usecase.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'verification_screen.dart';
 import 'package:file_picker/file_picker.dart';
 
 import 'package:kathir_final/features/_shared/providers/theme_provider.dart';
@@ -505,7 +504,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             alignment: Alignment.centerRight,
                             child: GestureDetector(
                               onTap: () {
-                                GoRouter.of(context).go('/forgot-password');
+                                GoRouter.of(context).push('/forgot-password');
                               },
                               child: const Text(
                                 'Forgot Password?',

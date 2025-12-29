@@ -164,7 +164,7 @@ class RestaurantDetailScreen extends StatelessWidget {
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
                     Text(
@@ -175,7 +175,7 @@ class RestaurantDetailScreen extends StatelessWidget {
                         color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
-                    Spacer(),
+                    const Spacer(),
                     Icon(Icons.tune,
                         color: Theme.of(context)
                             .iconTheme

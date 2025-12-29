@@ -49,6 +49,11 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoggedIn => _loggedIn;
   bool get isPasswordRecovery => _passwordRecovery;
 
+  void endPasswordRecovery() {
+    _passwordRecovery = false;
+    notifyListeners();
+  }
+
   AuthUserView? get user {
     final u = _client.auth.currentUser;
     if (u == null) return null;

@@ -5,6 +5,8 @@ import '../viewmodels/new_password_viewmodel.dart';
 import '../../../../di/global_injection/app_locator.dart';
 import '../../../_shared/widgets/custom_input_field.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../blocs/auth_provider.dart';
+import '../viewmodels/auth_viewmodel.dart';
 
 class NewPasswordScreen extends StatefulWidget {
   static const routeName = '/new-password';
@@ -85,6 +87,13 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                         if (!mounted) return;
                         if (ok) {
                           messenger.showSnackBar(const SnackBar(content: Text('Password updated'), backgroundColor: Colors.green));
+                          // Ensure recovery redirect flag is cleared and login mode is active
+                          try {
+                            Provider.of<AuthProvider>(context, listen: false).endPasswordRecovery();
+                          } catch (_) {}
+                          try {
+                            Provider.of<AuthViewModel>(context, listen: false).setMode(true);
+                          } catch (_) {}
                           router.go('/auth');
                         } else {
                           messenger.showSnackBar(SnackBar(content: Text(vm.error ?? 'Weak password'), backgroundColor: AppColors.brandRed));
