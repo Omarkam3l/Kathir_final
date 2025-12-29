@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kathir_final/features/admin_dashboard/presentation/screens/admin_dashboard_screen.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_dashboard_screen.dart';
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_dashboard_screen.dart';
 import 'package:kathir_final/features/splash/presentation/screens/splash_screen.dart';
 import 'package:provider/provider.dart';
 import '../../authentication/presentation/blocs/auth_provider.dart';
@@ -18,6 +21,9 @@ class RouteNames {
   static const auth = 'auth';
   static const role = 'role';
   static const home = 'home';
+  static const restaurantDashboard = 'restaurant_dashboard';
+  static const ngoDashboard = 'ngo_dashboard';
+  static const adminDashboard = 'admin_dashboard';
   static const product = 'product';
   static const cart = 'cart';
   static const checkout = 'checkout';
@@ -55,6 +61,14 @@ class AppRouter {
         return '/auth';
       }
       if (loggedIn && (signingFlow || state.matchedLocation == '/')) {
+        final role = auth.user?.role;
+        if (role == 'restaurant') {
+          return '/restaurant-dashboard';
+        } else if (role == 'organization') {
+          return '/ngo-dashboard';
+        } else if (role == 'admin') {
+          return '/admin-dashboard';
+        }
         return '/home';
       }
       return null;
@@ -64,6 +78,21 @@ class AppRouter {
         name: RouteNames.splash,
         path: '/',
         builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.restaurantDashboard,
+        path: '/restaurant-dashboard',
+        builder: (context, state) => const RestaurantDashboardScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.ngoDashboard,
+        path: '/ngo-dashboard',
+        builder: (context, state) => const NgoDashboardScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.adminDashboard,
+        path: '/admin-dashboard',
+        builder: (context, state) => const AdminDashboardScreen(),
       ),
       GoRoute(
         name: RouteNames.product,

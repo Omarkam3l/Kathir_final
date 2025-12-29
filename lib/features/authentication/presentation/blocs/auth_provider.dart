@@ -27,10 +27,11 @@ class AuthProvider extends ChangeNotifier {
   final SupabaseClient _client = AppLocator.I.get<SupabaseClient>();
   bool _loggedIn = false;
   bool _passwordRecovery = false;
+  Map<String, dynamic>? _userProfile;
   AuthProvider() {
     _loggedIn = _client.auth.currentSession != null;
     if (_loggedIn) {
-      _ensureProfileExists();
+      _syncUserProfile();
     }
     _client.auth.onAuthStateChange.listen((data) {
       final ev = data.event;
@@ -41,7 +42,7 @@ class AuthProvider extends ChangeNotifier {
       }
       _loggedIn = _client.auth.currentSession != null;
       if (_loggedIn) {
-        _ensureProfileExists();
+        _syncUserProfile();
       }
       notifyListeners();
     });
@@ -58,9 +59,20 @@ class AuthProvider extends ChangeNotifier {
     final u = _client.auth.currentUser;
     if (u == null) return null;
     final meta = u.userMetadata ?? const <String, dynamic>{};
-    final addresses = (meta['addresses'] as List?)?.map((e) => e.toString()).toList() ?? const [];
-    final cards = (meta['cards'] as List?)?.map((e) => (e as Map).map((k, v) => MapEntry(k.toString(), v))).toList().cast<Map<String, dynamic>>() ?? const [];
+    final addresses =
+        (meta['addresses'] as List?)?.map((e) => e.toString()).toList() ??
+            const [];
+    final cards = (meta['cards'] as List?)
+            ?.map((e) => (e as Map).map((k, v) => MapEntry(k.toString(), v)))
+            .toList()
+            .cast<Map<String, dynamic>>() ??
+        const [];
     final model = UserModelFactory.fromAuthUser(u);
+
+    final role = (_userProfile?['role'] as String?) ??
+        (meta['role'] as String?) ??
+        'user';
+
     return AuthUserView(
       id: model.id,
       name: model.fullName,
@@ -68,7 +80,7 @@ class AuthProvider extends ChangeNotifier {
       phone: model.phoneNumber,
       addresses: addresses,
       cards: cards,
-      role: (meta['role'] as String?) ?? 'user',
+      role: role,
     );
   }
 
@@ -115,7 +127,7 @@ class AuthProvider extends ChangeNotifier {
     final ok = res.session != null;
     _loggedIn = ok;
     if (ok) {
-      await _ensureProfileExists();
+      await _syncUserProfile();
     }
     notifyListeners();
     return ok;
@@ -126,7 +138,7 @@ class AuthProvider extends ChangeNotifier {
     final ok = _client.auth.currentSession != null;
     _loggedIn = ok;
     if (ok) {
-      await _ensureProfileExists();
+      await _syncUserProfile();
     }
     notifyListeners();
     return ok;
@@ -137,7 +149,7 @@ class AuthProvider extends ChangeNotifier {
     final ok = _client.auth.currentSession != null;
     _loggedIn = ok;
     if (ok) {
-      await _ensureProfileExists();
+      await _syncUserProfile();
     }
     notifyListeners();
     return ok;
@@ -148,7 +160,7 @@ class AuthProvider extends ChangeNotifier {
     final ok = _client.auth.currentSession != null;
     _loggedIn = ok;
     if (ok) {
-      await _ensureProfileExists();
+      await _syncUserProfile();
     }
     notifyListeners();
     return ok;
@@ -163,25 +175,34 @@ class AuthProvider extends ChangeNotifier {
     return true;
   }
 
-  Future<void> _ensureProfileExists() async {
+  Future<void> _syncUserProfile() async {
     final current = _client.auth.currentUser;
-    if (current == null) return;
+    if (current == null) {
+      _userProfile = null;
+      return;
+    }
     try {
       final existing = await _client
           .from('profiles')
-          .select('id')
+          .select()
           .eq('id', current.id)
           .maybeSingle();
+
       if (existing == null) {
-        await _client.from('profiles').upsert({
+        final newProfile = {
           'id': current.id,
           'email': current.email ?? '',
           'full_name': (current.userMetadata?['full_name'] as String?) ?? '',
           'role': (current.userMetadata?['role'] as String?) ?? 'user',
           'phone_number': (current.userMetadata?['phone_number'] as String?),
           'is_verified': current.emailConfirmedAt != null,
-        });
+        };
+        await _client.from('profiles').upsert(newProfile);
+        _userProfile = newProfile;
+      } else {
+        _userProfile = existing;
       }
+      notifyListeners();
     } catch (_) {
       // ignore
     }
@@ -240,7 +261,8 @@ class AuthProvider extends ChangeNotifier {
     final current = _client.auth.currentUser;
     if (current == null) return;
     final meta = Map<String, dynamic>.from(current.userMetadata ?? {});
-    final List<dynamic> list = List<dynamic>.from(meta['addresses'] as List? ?? const []);
+    final List<dynamic> list =
+        List<dynamic>.from(meta['addresses'] as List? ?? const []);
     list.add(address);
     meta['addresses'] = list;
     await _client.auth.updateUser(UserAttributes(data: meta));
@@ -250,13 +272,15 @@ class AuthProvider extends ChangeNotifier {
     final current = _client.auth.currentUser;
     if (current == null) return;
     final meta = Map<String, dynamic>.from(current.userMetadata ?? {});
-    final List<dynamic> list = List<dynamic>.from(meta['cards'] as List? ?? const []);
+    final List<dynamic> list =
+        List<dynamic>.from(meta['cards'] as List? ?? const []);
     list.add(card);
     meta['cards'] = list;
     await _client.auth.updateUser(UserAttributes(data: meta));
   }
 
-  Future<bool> changePassword(String currentPassword, String newPassword) async {
+  Future<bool> changePassword(
+      String currentPassword, String newPassword) async {
     // Supabase updates password for the current session user
     await _client.auth.updateUser(UserAttributes(password: newPassword));
     return true;
