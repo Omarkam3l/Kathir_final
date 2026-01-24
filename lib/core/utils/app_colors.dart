@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 
 /// Centralized color constants for the entire application
 class AppColors {
-  // Primary Color Palette
+  // Primary Color Palette (RED-based as per design)
   static const Color richNavy = Color(0xFF08314A);
   static const Color deepTeal = Color(0xFF005F7B);
   static const Color tealAqua = Color(0xFF00A0A9);
   static const Color aquaCyan = Color(0xFF04E4D8);
   static const Color mintAqua = Color(0xFF7FEDD9);
 
-  // Theme Specific Colors
-  static const Color primary = Color(0xFF4DD0E1); // Sky Blue/Cyan
-  static const Color primaryDark = Color(0xFF0099A6); // Darker cyan
+  // Theme Specific Colors — RED primary and gradient (dark red / soft red)
+  static const Color primary = Color(0xFFD32F2F); // Red 700
+  static const Color primaryDark = Color(0xFFB71C1C); // Red 900 — dark red for gradients
+  static const Color primarySoft = Color(0xFFEF5350); // Red 400 — soft red for gradients
 
   // Base Colors
   static const Color white = Color(0xFFFFFFFF);
@@ -30,9 +31,9 @@ class AppColors {
   static const Color inputFillDark = Color(0xFF2C2C2C);
   static const Color inputFillDarker = Color(0xFF1E1E1E);
 
-  // Semantic Colors
-  static const Color primaryAccent = tealAqua;
-  static const Color secondaryAccent = deepTeal;
+  // Semantic Colors (aligned with RED primary)
+  static const Color primaryAccent = primary;
+  static const Color secondaryAccent = primaryDark;
   static const Color darkText = richNavy;
   static const Color lightText = white;
   static const Color lightBackground = backgroundLight;
@@ -48,8 +49,8 @@ class AppColors {
   // Search Background
   static const Color searchBackground = Color(0xFFF3F4F6);
 
-  // Brand Color
-  static const Color brandRed = Color(0xFFE60023);
+  // Brand Color (unified with primary red)
+  static const Color brandRed = primary;
 
   // Divider
   static const Color dividerDark = Colors.white12;

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kathir - Restaurant Home</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3ce619",
+                        "primary-dark": "#2ab810",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#142111",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e2e1a",
+                        "text-primary-light": "#101b0e",
+                        "text-primary-dark": "#f0fdf4",
+                        "text-secondary-light": "#5a974e",
+                        "text-secondary-dark": "#8fc785",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.75rem",
+                        "xl": "1rem",
+                        "2xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for horizontal scrolling */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-primary-light dark:text-text-primary-dark antialiased transition-colors duration-200">
+<div class="relative flex flex-col min-h-screen w-full max-w-md mx-auto bg-background-light dark:bg-background-dark overflow-x-hidden shadow-2xl">
+<!-- Header Section -->
+<header class="sticky top-0 z-30 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-gray-200 dark:border-gray-800">
+<div class="flex items-center gap-3">
+<div class="relative">
+<div class="w-10 h-10 rounded-full bg-cover bg-center ring-2 ring-primary/30" data-alt="Restaurant logo or profile picture showing interior" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA4bzmgzUm2eK-CTXWPAQOIjEQ3a2vqc0FB21Cuv2gKGl8b9mMm3957bu4nKbpFcdAKd39QX9TgtBRqJlsybHlL6OLg7CEmxXWTBm9iJJJOeqOFvZI_fOAliEM3vQyjSZ3bfbzADMTX9Bv1W0CqTC6sE4nuENv_I7p7SypUAnJDWujoZX4xuwq2vMMz0c3rJTlly7Sw0wgxTUp2VGKMquVEChsjV1nPZpVXoS3geBK63-qjp-1gKU_sEIVNPczNYdXUgyRlTclzXgQ");'></div>
+<span class="absolute bottom-0 right-0 w-3 h-3 bg-primary border-2 border-white dark:border-background-dark rounded-full"></span>
+</div>
+<div>
+<h2 class="text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark">Hello,</h2>
+<h1 class="text-base font-bold leading-tight">Kathir Kitchen</h1>
+</div>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-gray-700 text-text-primary-light dark:text-text-primary-dark">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<!-- Main Content Scroll Area -->
+<main class="flex-1 overflow-y-auto pb-24">
+<!-- Stats Summary -->
+<section class="px-4 py-6">
+<div class="grid grid-cols-3 gap-3">
+<div class="bg-white dark:bg-surface-dark p-3 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col items-center justify-center text-center">
+<span class="text-2xl font-bold text-primary mb-1">12</span>
+<span class="text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark">Active Listings</span>
+</div>
+<div class="bg-white dark:bg-surface-dark p-3 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col items-center justify-center text-center">
+<span class="text-2xl font-bold text-text-primary-light dark:text-text-primary-dark mb-1">56</span>
+<span class="text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark">Meals Shared</span>
+</div>
+<div class="bg-white dark:bg-surface-dark p-3 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col items-center justify-center text-center">
+<div class="flex items-center gap-1 mb-1">
+<span class="text-2xl font-bold text-text-primary-light dark:text-text-primary-dark">4.8</span>
+<span class="material-symbols-outlined text-yellow-400 text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<span class="text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark">Rating</span>
+</div>
+</div>
+</section>
+<!-- Listing Form Title -->
+<div class="px-4 mb-2">
+<h3 class="text-xl font-bold">New Surplus Listing</h3>
+<p class="text-sm text-text-secondary-light dark:text-text-secondary-dark">Share your extra food with the community.</p>
+</div>
+<!-- Image Upload Section -->
+<section class="px-4 py-4">
+<div class="relative w-full h-48 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 dark:bg-primary/10 flex flex-col items-center justify-center gap-3 transition-all hover:bg-primary/10 cursor-pointer group">
+<div class="w-16 h-16 rounded-full bg-white dark:bg-surface-dark flex items-center justify-center shadow-md text-primary group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl">add_a_photo</span>
+</div>
+<p class="text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark">Tap to add food photos</p>
+</div>
+</section>
+<!-- Form Fields -->
+<form class="flex flex-col gap-6 px-4">
+<!-- Title Input -->
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">Food Title</label>
+<input class="w-full h-14 px-4 rounded-xl bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 text-base" placeholder="e.g. Grilled Chicken Salad" type="text"/>
+</div>
+<!-- Description Input -->
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">Description</label>
+<textarea class="w-full p-4 rounded-xl bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600 resize-none text-base" placeholder="Briefly describe ingredients and allergens..." rows="3"></textarea>
+</div>
+<!-- Category Chips -->
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">Category</label>
+<div class="flex gap-3 overflow-x-auto hide-scrollbar pb-1 -mx-4 px-4">
+<label class="cursor-pointer group">
+<input checked="" class="peer sr-only" name="category" type="radio"/>
+<div class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-text-secondary-light dark:text-text-secondary-dark peer-checked:bg-primary peer-checked:text-black peer-checked:border-primary transition-all whitespace-nowrap shadow-sm">
+<span class="material-symbols-outlined text-lg">restaurant</span>
+<span class="text-sm font-medium">Meals</span>
+</div>
+</label>
+<label class="cursor-pointer group">
+<input class="peer sr-only" name="category" type="radio"/>
+<div class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-text-secondary-light dark:text-text-secondary-dark peer-checked:bg-primary peer-checked:text-black peer-checked:border-primary transition-all whitespace-nowrap shadow-sm">
+<span class="material-symbols-outlined text-lg">bakery_dining</span>
+<span class="text-sm font-medium">Bakery</span>
+</div>
+</label>
+<label class="cursor-pointer group">
+<input class="peer sr-only" name="category" type="radio"/>
+<div class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-text-secondary-light dark:text-text-secondary-dark peer-checked:bg-primary peer-checked:text-black peer-checked:border-primary transition-all whitespace-nowrap shadow-sm">
+<span class="material-symbols-outlined text-lg">grocery</span>
+<span class="text-sm font-medium">Raw Ingredients</span>
+</div>
+</label>
+<label class="cursor-pointer group">
+<input class="peer sr-only" name="category" type="radio"/>
+<div class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-text-secondary-light dark:text-text-secondary-dark peer-checked:bg-primary peer-checked:text-black peer-checked:border-primary transition-all whitespace-nowrap shadow-sm">
+<span class="material-symbols-outlined text-lg">eco</span>
+<span class="text-sm font-medium">Vegan</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Quantity & Unit -->
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">Quantity</label>
+<div class="flex items-center rounded-xl bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 overflow-hidden h-14">
+<button class="w-12 h-full flex items-center justify-center text-text-secondary-light hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" type="button">
+<span class="material-symbols-outlined">remove</span>
+</button>
+<input class="w-full text-center bg-transparent outline-none font-bold text-lg" readonly="" type="number" value="5"/>
+<button class="w-12 h-full flex items-center justify-center text-text-secondary-light hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" type="button">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">Unit</label>
+<div class="relative">
+<select class="w-full h-14 px-4 rounded-xl bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary focus:border-transparent outline-none appearance-none transition-all text-base">
+<option>Portions</option>
+<option>Kilograms</option>
+<option>Items</option>
+<option>Boxes</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Time Pickers -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark flex items-center gap-1">
+                            Pickup Deadline 
+                            <span class="material-symbols-outlined text-base text-text-secondary-light" title="Must be collected by">info</span>
+</label>
+<div class="relative">
+<input class="w-full h-14 px-4 rounded-xl bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-base [color-scheme:light] dark:[color-scheme:dark]" type="time"/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">Best Before</label>
+<div class="relative">
+<input class="w-full h-14 px-4 rounded-xl bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-base [color-scheme:light] dark:[color-scheme:dark]" type="datetime-local"/>
+</div>
+</div>
+</div>
+<!-- Logistics (Delivery/Pickup) -->
+<div class="flex flex-col gap-3 py-2">
+<label class="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark">Fulfillment Method</label>
+<div class="bg-white dark:bg-surface-dark p-1 rounded-xl border border-gray-200 dark:border-gray-700 flex relative">
+<input checked="" class="peer/pickup sr-only" id="pickup" name="fulfillment" type="radio"/>
+<label class="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg cursor-pointer text-text-secondary-light dark:text-text-secondary-dark font-medium transition-all z-10 peer-checked/pickup:bg-primary/20 peer-checked/pickup:text-primary-dark dark:peer-checked/pickup:text-primary" for="pickup">
+<span class="material-symbols-outlined text-xl">storefront</span>
+                            Pickup Only
+                        </label>
+<input class="peer/delivery sr-only" id="delivery" name="fulfillment" type="radio"/>
+<label class="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg cursor-pointer text-text-secondary-light dark:text-text-secondary-dark font-medium transition-all z-10 peer-checked/delivery:bg-primary/20 peer-checked/delivery:text-primary-dark dark:peer-checked/delivery:text-primary" for="delivery">
+<span class="material-symbols-outlined text-xl">local_shipping</span>
+                            Delivery
+                        </label>
+</div>
+<p class="text-xs text-text-secondary-light dark:text-text-secondary-dark px-1">NGOs will be notified based on your selection.</p>
+</div>
+<div class="h-4"></div> <!-- Spacer -->
+</form>
+</main>
+<!-- Fixed Bottom Action Bar -->
+<div class="absolute bottom-0 w-full p-4 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 z-40 pb-6">
+<button class="w-full h-14 bg-primary hover:bg-primary-dark text-black font-bold text-lg rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center gap-2 transition-transform active:scale-[0.98]">
+<span>Publish Listing</span>
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 w-full max-w-md bg-white dark:bg-surface-dark border-t border-gray-200 dark:border-gray-800 pb-safe pt-2 px-6 flex justify-between items-center z-50 hidden">
+<!-- Hidden by default as per request for "single page design", but included structurally if needed later. For this preview, the CTA is the focus.
+                 The request mentions "Bottom Navigation Bar", so let's actually position it correctly and make the CTA sit above it or integrate it. 
+                 Since "Form factor: phone", standard pattern is Nav Bar at absolute bottom, CTA scrolling or floating above. 
+                 Let's adjust: CTA is sticky inside the main view or fixed above nav. 
+                 
+                 Revised Plan: 
+                 1. Main CTA stays sticky at bottom of form content area (inside scroll) OR fixed above Nav.
+                 2. Bottom Nav stays fixed at bottom of screen.
+                 
+                 However, usually "Post Listing" is a modal or a focused flow that hides the main nav. 
+                 Given the prompt "Main home page... to upload food items", it suggests the upload IS the main action on the home screen or easily accessible. 
+                 Let's assume the Dashboard *is* the upload screen for high efficiency.
+            -->
+</nav>
+<!-- Actual Bottom Navigation for Context -->
+<div class="sticky bottom-0 w-full bg-white dark:bg-surface-dark border-t border-gray-200 dark:border-gray-800 flex justify-between items-center px-6 py-3 z-50">
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">history</span>
+<span class="text-[10px] font-medium">History</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">person</span>
+<span class="text-[10px] font-medium">Profile</span>
+</button>
+</div>
+</div>
+</body></html>

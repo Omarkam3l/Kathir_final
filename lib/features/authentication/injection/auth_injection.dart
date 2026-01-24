@@ -15,6 +15,7 @@ import '../../authentication/domain/usecases/send_password_reset_usecase.dart';
 import '../../authentication/domain/usecases/verify_signup_otp_usecase.dart';
 import '../../authentication/domain/usecases/verify_recovery_otp_usecase.dart';
 import '../../authentication/domain/usecases/update_password_usecase.dart';
+import '../../authentication/domain/usecases/update_profile_legal_docs_usecase.dart';
 import '../../authentication/presentation/viewmodels/auth_viewmodel.dart';
 import '../../authentication/presentation/viewmodels/forgot_password_viewmodel.dart';
 import '../../authentication/presentation/viewmodels/verification_viewmodel.dart';
@@ -53,6 +54,8 @@ void registerAuthDependencies() {
       () => VerifyRecoveryOtpUseCase(authRepo));
   AppLocator.I.registerFactory<UpdatePasswordUseCase>(
       () => UpdatePasswordUseCase(authRepo));
+  AppLocator.I.registerFactory<UpdateProfileLegalDocsUseCase>(
+      () => UpdateProfileLegalDocsUseCase(profileRepo));
 
   AppLocator.I.registerFactory<AuthViewModel>(() => AuthViewModel(
         signIn: AppLocator.I.get<SignInUseCase>(),
@@ -64,6 +67,7 @@ void registerAuthDependencies() {
         verifySignupOtp: AppLocator.I.get<VerifySignupOtpUseCase>(),
         verifyRecoveryOtp: AppLocator.I.get<VerifyRecoveryOtpUseCase>(),
         updatePassword: AppLocator.I.get<UpdatePasswordUseCase>(),
+        updateProfileLegalDocs: AppLocator.I.get<UpdateProfileLegalDocsUseCase>(),
       ));
 
   AppLocator.I.registerFactory<ForgotPasswordViewModel>(

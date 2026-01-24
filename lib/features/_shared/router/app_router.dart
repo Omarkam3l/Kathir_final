@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kathir_final/features/admin_dashboard/presentation/screens/admin_dashboard_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_dashboard_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_dashboard_screen.dart';
-import 'package:kathir_final/features/splash/presentation/screens/splash_screen.dart';
+import 'package:kathir_final/features/onboarding/presentation/screens/onboarding_flow_screen.dart';
 import 'package:provider/provider.dart';
 import '../../authentication/presentation/blocs/auth_provider.dart';
 import '../../meals/presentation/screens/meal_detail.dart';
@@ -17,7 +17,7 @@ import '../../profile/routes.dart';
 import '../../authentication/routes.dart';
 
 class RouteNames {
-  static const splash = 'splash';
+  static const onboarding = 'onboarding';
   static const auth = 'auth';
   static const role = 'role';
   static const home = 'home';
@@ -52,7 +52,7 @@ class AppRouter {
           state.matchedLocation == '/verify-otp' ||
           state.matchedLocation == '/new-password';
 
-      // Allow splash screen at '/' if not logged in
+      // Allow onboarding / auth redirect at '/' if not logged in
       if (!loggedIn && state.matchedLocation == '/') {
         return null;
       }
@@ -75,9 +75,9 @@ class AppRouter {
     },
     routes: [
       GoRoute(
-        name: RouteNames.splash,
+        name: RouteNames.onboarding,
         path: '/',
-        builder: (context, state) => const SplashScreen(),
+        builder: (context, state) => const OnboardingFlowScreen(),
       ),
       GoRoute(
         name: RouteNames.restaurantDashboard,

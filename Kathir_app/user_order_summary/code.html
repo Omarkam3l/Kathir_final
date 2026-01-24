@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kathir - Order Summary</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#37cc19",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#142111",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2c15",
+                        "border-light": "#d4e6d0",
+                        "border-dark": "#2a4025",
+                        "text-main": "#101b0e",
+                        "text-secondary": "#5b964f",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem", 
+                        "lg": "0.5rem", 
+                        "xl": "0.75rem", 
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-text-main dark:text-white font-display antialiased selection:bg-primary selection:text-white">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto bg-background-light dark:bg-background-dark shadow-xl">
+<!-- TopAppBar -->
+<div class="sticky top-0 z-50 flex items-center bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm p-4 pb-2 justify-between border-b border-border-light dark:border-border-dark">
+<button class="text-text-main dark:text-white flex size-12 shrink-0 items-center justify-start hover:opacity-70 transition-opacity">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="text-text-main dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12">Order Summary</h2>
+</div>
+<!-- Success Hero Section -->
+<div class="p-4 pb-0">
+<div class="relative w-full h-48 rounded-xl overflow-hidden bg-surface-dark group">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="Abstract green leaves and sunlight background representing nature and freshness" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCRQV7qW-7PljqTSvHwDmsQ9DXr-gsc5sjzwxfw4gP0ezVRztuxkH7QYvVManLBGQMw0pWYieYPEmbwFLjjRfixXKXJsfKv22dRZWtA0ZbxZwTw6tjaN1TE2VHq35-ma0ytlB_Y82aSbUQ7lJ7TkdjNua3179jvNHEbaLH_wWjC6X6a22f_xH_UFzYjTCl1yfUPh91-voNHMmZc4Uo4ZQ0UDVq_d08GObxXtElUONgArv8rAglYGFcdxc0LrH92f8_XzQjdoz0KlA0");'>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-5 w-full">
+<div class="flex items-center gap-3 mb-2">
+<div class="bg-primary rounded-full p-1">
+<span class="material-symbols-outlined text-white text-[20px] icon-filled">check</span>
+</div>
+<span class="text-primary font-bold text-sm tracking-wide uppercase bg-black/30 backdrop-blur-md px-2 py-1 rounded">Confirmed</span>
+</div>
+<h1 class="text-white text-2xl font-bold leading-tight mb-1">Order Placed Successfully!</h1>
+<p class="text-white/80 text-sm">Thank you for your donation.</p>
+</div>
+</div>
+</div>
+<!-- Impact Badge -->
+<div class="px-4 mt-4">
+<div class="bg-primary/10 dark:bg-primary/5 border border-primary/20 rounded-lg p-3 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">eco</span>
+<p class="text-text-main dark:text-gray-200 text-sm font-medium leading-tight">
+                    Your contribution saved approx. <span class="font-bold text-primary">1.2kg</span> of food from waste.
+                </p>
+</div>
+</div>
+<!-- Live Tracker Widget -->
+<div class="p-4 pb-0">
+<h3 class="text-text-main dark:text-white text-base font-bold mb-4">Tracking Order</h3>
+<div class="flex flex-col gap-0 pl-2">
+<!-- Step 1: Completed -->
+<div class="flex gap-4 min-h-[3rem]">
+<div class="flex flex-col items-center">
+<div class="h-6 w-6 rounded-full bg-primary flex items-center justify-center shrink-0 z-10 ring-4 ring-background-light dark:ring-background-dark">
+<span class="material-symbols-outlined text-white text-[14px] icon-filled">check</span>
+</div>
+<div class="w-0.5 h-full bg-primary -my-1"></div>
+</div>
+<div class="pb-6 pt-0.5">
+<p class="text-text-main dark:text-white text-sm font-bold leading-none">Order Accepted</p>
+<p class="text-text-secondary text-xs mt-1">Restaurant has confirmed your order.</p>
+</div>
+</div>
+<!-- Step 2: Active -->
+<div class="flex gap-4 min-h-[3rem]">
+<div class="flex flex-col items-center">
+<div class="h-6 w-6 rounded-full border-[3px] border-primary bg-background-light dark:bg-background-dark flex items-center justify-center shrink-0 z-10 ring-4 ring-background-light dark:ring-background-dark">
+<div class="h-2 w-2 rounded-full bg-primary animate-pulse"></div>
+</div>
+<div class="w-0.5 h-full bg-border-light dark:bg-border-dark -my-1"></div>
+</div>
+<div class="pb-6 pt-0.5">
+<p class="text-text-main dark:text-white text-sm font-bold leading-none">Food Being Packed</p>
+<p class="text-text-secondary text-xs mt-1">Preparing for handover.</p>
+</div>
+</div>
+<!-- Step 3: Pending -->
+<div class="flex gap-4 min-h-[3rem]">
+<div class="flex flex-col items-center">
+<div class="h-6 w-6 rounded-full bg-border-light dark:bg-white/10 flex items-center justify-center shrink-0 z-10 ring-4 ring-background-light dark:ring-background-dark">
+</div>
+<div class="w-0.5 h-full bg-border-light dark:bg-border-dark -my-1"></div>
+</div>
+<div class="pb-6 pt-0.5 opacity-50">
+<p class="text-text-main dark:text-white text-sm font-medium leading-none">Driver on the way</p>
+</div>
+</div>
+<!-- Step 4: Pending -->
+<div class="flex gap-4">
+<div class="flex flex-col items-center">
+<div class="h-6 w-6 rounded-full bg-border-light dark:bg-white/10 flex items-center justify-center shrink-0 z-10 ring-4 ring-background-light dark:ring-background-dark">
+</div>
+</div>
+<div class="pt-0.5 opacity-50">
+<p class="text-text-main dark:text-white text-sm font-medium leading-none">Delivered / Donated</p>
+</div>
+</div>
+</div>
+</div>
+<!-- ActionPanel: Donation Notice -->
+<div class="p-4">
+<div class="flex flex-col items-start justify-between gap-4 rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark shadow-sm p-5">
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">verified_user</span>
+<p class="text-text-main dark:text-white text-base font-bold leading-tight">Donation Verification</p>
+</div>
+<p class="text-text-secondary text-sm font-normal leading-normal">
+                        You've donated to <span class="font-semibold text-text-main dark:text-gray-200">Hope Foundation</span>. An auto-email with OTP has been sent to the restaurant and NGO to ensure safe handover. You do not need to take any action.
+                    </p>
+</div>
+<button class="w-full h-9 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium transition-colors flex items-center justify-center gap-2">
+<span>How it works</span>
+<span class="material-symbols-outlined text-base">open_in_new</span>
+</button>
+</div>
+</div>
+<div class="h-2 bg-background-light dark:bg-background-dark w-full"></div>
+<!-- Driver / Partner Info -->
+<div class="px-4 py-2">
+<h3 class="text-text-main dark:text-white text-base font-bold mb-3">Delivery Partner</h3>
+<div class="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-surface-dark border border-border-light dark:border-border-dark">
+<div class="flex items-center gap-3">
+<div class="h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden relative" data-alt="Portrait of the delivery driver smiling">
+<img alt="Driver" class="object-cover w-full h-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9-Ux3wClWGxrcWI41H-rgdiqczXT5j5tJ-Wo2oZzntc_W2jdCEmYKjMOk-GuTIkZ4xUeHh70SKcpyPv8nGMeBgY7duHdecbBfxvUO4dlEYqktIVQAjo794l_Ha242bB0q6VKi2b6Aaqd81x_rlY-w6zpLiudKakr8A-IEBbG7QEn8u7gYgLsi3kQpeDeqwsJUlGqCjNSPpBfSXT2ICpCogJih1r2A3J9MTfaGFOkkrneSDZJNeYJrNlPZHfsr9qzeijxZtS0F23w"/>
+</div>
+<div>
+<p class="text-sm font-bold text-text-main dark:text-white">Rajesh Kumar</p>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-yellow-500 text-[14px] icon-filled">star</span>
+<span class="text-xs text-text-secondary">4.8 • Kathir Partner</span>
+</div>
+</div>
+</div>
+<button class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined">call</span>
+</button>
+</div>
+</div>
+<!-- Order Summary List -->
+<div class="p-4 pt-2">
+<h3 class="text-text-main dark:text-white text-base font-bold mb-3">Order Details</h3>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark overflow-hidden">
+<!-- Items -->
+<div class="p-4 pb-2 border-b border-border-light dark:border-border-dark border-dashed">
+<div class="flex justify-between items-start mb-3">
+<div class="flex gap-3">
+<div class="h-6 w-6 rounded bg-green-100 flex items-center justify-center text-xs font-bold text-green-700">2x</div>
+<div>
+<p class="text-sm font-semibold text-text-main dark:text-white">Veg Surplus Meal Box</p>
+<p class="text-xs text-text-secondary">Rice, Dal, Seasonal Curry</p>
+</div>
+</div>
+<p class="text-sm font-medium text-text-main dark:text-white">₹120</p>
+</div>
+<div class="flex justify-between items-start">
+<div class="flex gap-3">
+<div class="h-6 w-6 rounded bg-green-100 flex items-center justify-center text-xs font-bold text-green-700">1x</div>
+<div>
+<p class="text-sm font-semibold text-text-main dark:text-white">Bread Basket</p>
+<p class="text-xs text-text-secondary">Assorted Breads</p>
+</div>
+</div>
+<p class="text-sm font-medium text-text-main dark:text-white">₹40</p>
+</div>
+</div>
+<!-- Meta Data -->
+<div class="p-4 grid grid-cols-[30%_1fr] gap-y-3 gap-x-4 bg-background-light/50 dark:bg-white/5">
+<p class="text-text-secondary text-xs font-medium uppercase tracking-wide">Order ID</p>
+<p class="text-text-main dark:text-white text-sm font-medium text-right">#KATH-8921</p>
+<p class="text-text-secondary text-xs font-medium uppercase tracking-wide">Date</p>
+<p class="text-text-main dark:text-white text-sm font-medium text-right">Oct 24, 2023, 10:30 AM</p>
+<p class="text-text-secondary text-xs font-medium uppercase tracking-wide">Payment</p>
+<p class="text-text-main dark:text-white text-sm font-medium text-right">Paid via UPI</p>
+<div class="col-span-2 h-px bg-border-light dark:bg-border-dark border-dashed my-1"></div>
+<p class="text-text-main dark:text-white text-sm font-bold">Total Amount</p>
+<p class="text-primary text-base font-bold text-right">₹160.00</p>
+</div>
+</div>
+</div>
+<div class="h-20"></div>
+<!-- Sticky Bottom Actions -->
+<div class="fixed bottom-0 left-0 right-0 p-4 bg-background-light dark:bg-background-dark border-t border-border-light dark:border-border-dark max-w-md mx-auto">
+<div class="flex gap-3">
+<button class="flex-1 h-12 rounded-lg border border-border-light dark:border-border-dark bg-transparent text-text-main dark:text-white text-sm font-bold hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+                    Need Help?
+                </button>
+<button class="flex-[2] h-12 rounded-lg bg-primary text-white text-sm font-bold shadow-lg shadow-primary/30 flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors">
+<span class="material-symbols-outlined text-[20px]">map</span>
+                    Track Live Map
+                </button>
+</div>
+<div class="text-center mt-3">
+<a class="text-xs font-medium text-text-secondary hover:text-primary transition-colors" href="#">Back to Home</a>
+</div>
+</div>
+</div>
+</body></html>

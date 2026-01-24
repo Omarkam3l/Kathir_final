@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:kathir_final/core/utils/user_role.dart';
-import 'package:kathir_final/features/_shared/widgets/custom_input_field.dart';
 import 'package:kathir_final/features/authentication/presentation/screens/verification_screen.dart';
 import 'package:kathir_final/features/authentication/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as s;
@@ -10,7 +9,7 @@ import '../../domain/usecases/sign_up_usecase.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 import 'package:kathir_final/features/_shared/providers/theme_provider.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -26,16 +25,9 @@ class _AuthScreenState extends State<AuthScreen> {
   UserRole? _selectedRole;
   bool _documentsUploaded = false;
   bool _isLoading = false;
+  bool _obscurePassword = true;
   final _formKey = GlobalKey<FormState>();
   List<int>? _legalDocBytes;
-
-  // Colors - Using teal palette
-  final Color _headerTealTop = AppColors.deepTeal;
-  final Color _headerTealBottom = AppColors.tealAqua;
-  final Color _creamyInputFill = const Color(0xFFF3F1EB);
-  final Color _tealBtnStart = AppColors.tealAqua;
-  final Color _tealBtnEnd = AppColors.aquaCyan;
-  final Color _textColorDark = AppColors.darkText;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -74,32 +66,19 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> _handleSignUp() async {
     if (!_formKey.currentState!.validate()) return;
-
     if (_selectedRole == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a role'),
-          backgroundColor: AppColors.error,
-        ),
+        const SnackBar(content: Text('Please select a role'), backgroundColor: AppColors.error),
       );
       return;
     }
-
-    // Check if NGO or Restaurant needs documents
-    if ((_selectedRole == UserRole.ngo ||
-            _selectedRole == UserRole.restaurant) &&
-        !_documentsUploaded) {
+    if ((_selectedRole == UserRole.ngo || _selectedRole == UserRole.restaurant) && !_documentsUploaded) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please upload your legal documents'),
-          backgroundColor: AppColors.warning,
-        ),
+        const SnackBar(content: Text('Please upload your legal documents'), backgroundColor: AppColors.warning),
       );
       return;
     }
-
     setState(() => _isLoading = true);
-
     try {
       final vm = Provider.of<AuthViewModel>(context, listen: false);
       final role = _selectedRole == UserRole.user
@@ -112,112 +91,74 @@ class _AuthScreenState extends State<AuthScreen> {
         _nameController.text.trim(),
         _emailController.text.trim(),
         _passwordController.text,
-        organizationName: _orgNameController.text.trim().isEmpty
-            ? null
-            : _orgNameController.text.trim(),
-        phone: _phoneController.text.trim().isEmpty
-            ? null
-            : _phoneController.text.trim(),
+        organizationName: _orgNameController.text.trim().isEmpty ? null : _orgNameController.text.trim(),
+        phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
       );
-
-      // Attempt upload if we have a user, regardless of verification status
       if (_legalDocBytes != null) {
-        // Use vm.user?.id because client.auth.currentUser might be null if email verification is pending (no session)
-        final uid =
-            vm.user?.id ?? s.Supabase.instance.client.auth.currentUser?.id;
+        final uid = vm.user?.id ?? s.Supabase.instance.client.auth.currentUser?.id;
         if (uid != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Uploading legal document...')),
-          );
-          final url =
-              await vm.uploadLegalDoc(uid, 'legal.pdf', _legalDocBytes!);
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Uploading legal document...')));
+          final url = await vm.uploadLegalDoc(uid, 'legal.pdf', _legalDocBytes!);
           if (mounted) {
             if (url != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Document uploaded successfully')),
-              );
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Document uploaded successfully')));
             } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content:
-                      Text('Document upload failed. Please try again later.'),
-                  backgroundColor: AppColors.error,
-                ),
-              );
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Document upload failed. Please try again later.'),
+                backgroundColor: AppColors.error,
+              ));
             }
           }
         }
       }
-
       if (ok) {
-        if (mounted) {
-          GoRouter.of(context).go('/home');
-        }
+        if (mounted) GoRouter.of(context).go('/home');
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Check your email to verify your account'),
-              backgroundColor: AppColors.primaryAccent,
-            ),
-          );
-          GoRouter.of(context).go('${VerificationScreen.routeName}?mode=signup',
-              extra: _emailController.text.trim());
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Check your email to verify your account'),
+            backgroundColor: AppColors.primary,
+          ));
+          GoRouter.of(context).go('${VerificationScreen.routeName}?mode=signup', extra: _emailController.text.trim());
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+        ));
       }
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
-
     try {
       final vm = Provider.of<AuthViewModel>(context, listen: false);
-      final success = await vm.login(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
-
+      final success = await vm.login(_emailController.text.trim(), _passwordController.text);
       if (mounted) {
         if (success) {
           GoRouter.of(context).go('/home');
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Invalid email or password'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Invalid email or password'),
+            backgroundColor: AppColors.error,
+          ));
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+        ));
       }
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -227,15 +168,8 @@ class _AuthScreenState extends State<AuthScreen> {
     if (res != null && res.files.isNotEmpty) {
       _legalDocBytes = res.files.first.bytes;
       if (_legalDocBytes != null) {
-        setState(() {
-          _documentsUploaded = true;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Documents selected'),
-            backgroundColor: AppColors.primaryAccent,
-          ),
-        );
+        setState(() => _documentsUploaded = true);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Documents selected'), backgroundColor: AppColors.primary));
       }
     }
   }
@@ -258,17 +192,13 @@ class _AuthScreenState extends State<AuthScreen> {
           ok = true;
           break;
       }
-      if (ok && mounted) {
-        GoRouter.of(context).go('/home');
-      }
+      if (ok && mounted) GoRouter.of(context).go('/home');
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+        ));
       }
     }
   }
@@ -277,81 +207,200 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final isDark = themeProvider.isDarkMode;
-    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+    final bg = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
+    final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
+    final textPrimary = isDark ? AppColors.white : AppColors.darkText;
+    final textMuted = AppColors.grey;
+    final border = isDark ? AppColors.dividerDark : AppColors.dividerLight;
 
     return Scaffold(
-      backgroundColor: _headerTealBottom,
+      backgroundColor: bg,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const ClampingScrollPhysics(),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header Section
+              if (isLogin) _buildLoginHeader(isDark, themeProvider) else _buildSignUpHeader(isDark, themeProvider),
               Container(
                 width: double.infinity,
+                constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height * 0.5),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [_headerTealTop, _headerTealBottom],
-                  ),
+                  color: surface,
+                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(30, 40, 30, 30),
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                child: Form(
+                  key: _formKey,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            isLogin
-                                ? "Launch Your\nIdeas."
-                                : "Create\nAccount.",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 34,
-                              fontWeight: FontWeight.bold,
-                              height: 1.2,
-                            ),
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              isDark ? Icons.light_mode : Icons.dark_mode,
-                              color: Colors.white,
-                            ),
-                            onPressed: () {
-                              themeProvider.toggleTheme();
-                            },
-                          ),
-                        ],
+                      Text(
+                        isLogin ? 'Welcome Back' : 'Join Kathir',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: textPrimary,
+                        ),
                       ),
-                      const SizedBox(height: 20),
-                      Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxHeight: 200,
-                            minHeight: 100,
+                      const SizedBox(height: 6),
+                      Text(
+                        isLogin ? 'Log in to your account to start helping.' : 'Connect, donate, and help end food waste.',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 14, color: textMuted, height: 1.4),
+                      ),
+                      const SizedBox(height: 24),
+                      if (!isLogin) ...[
+                        Text('Select your role', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                        const SizedBox(height: 10),
+                        _buildRoleSegments(isDark, textPrimary, textMuted),
+                        const SizedBox(height: 20),
+                      ],
+                      if (!isLogin && (_selectedRole == UserRole.ngo || _selectedRole == UserRole.restaurant)) ...[
+                        _AuthInput(
+                          label: 'Organization Name',
+                          hint: 'e.g. Green Earth Foundation',
+                          controller: _orgNameController,
+                          prefixIcon: Icons.business,
+                          isDark: isDark,
+                          textPrimary: textPrimary,
+                          textMuted: textMuted,
+                          surface: surface,
+                          border: border,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      if (!isLogin)
+                        _AuthInput(
+                          label: 'Full Name',
+                          hint: 'Enter your name',
+                          controller: _nameController,
+                          prefixIcon: Icons.person_outline,
+                          isDark: isDark,
+                          textPrimary: textPrimary,
+                          textMuted: textMuted,
+                          surface: surface,
+                          border: border,
+                          validator: (v) => (v ?? '').trim().isEmpty ? 'Required' : null,
+                        ),
+                      if (!isLogin) const SizedBox(height: 16),
+                      _AuthInput(
+                        label: 'Email Address',
+                        hint: 'Enter your email',
+                        controller: _emailController,
+                        prefixIcon: Icons.mail_outline,
+                        keyboardType: TextInputType.emailAddress,
+                        isDark: isDark,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                        surface: surface,
+                        border: border,
+                        validator: (v) => (v ?? '').trim().isEmpty ? 'Required' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      if (!isLogin)
+                        _AuthInput(
+                          label: 'Phone Number',
+                          hint: '+1 (555) 000-0000',
+                          controller: _phoneController,
+                          prefixIcon: Icons.call_outlined,
+                          keyboardType: TextInputType.phone,
+                          isDark: isDark,
+                          textPrimary: textPrimary,
+                          textMuted: textMuted,
+                          surface: surface,
+                          border: border,
+                        ),
+                      if (!isLogin) const SizedBox(height: 16),
+                      _AuthInput(
+                        label: 'Password',
+                        hint: isLogin ? 'Enter your password' : 'Create a password',
+                        controller: _passwordController,
+                        prefixIcon: Icons.lock_outline,
+                        obscureText: _obscurePassword,
+                        suffixIcon: IconButton(
+                          icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: AppColors.primary, size: 22),
+                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        ),
+                        isDark: isDark,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                        surface: surface,
+                        border: border,
+                        validator: (v) => (v ?? '').isEmpty ? 'Required' : null,
+                      ),
+                      if (!isLogin) ...[
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: GestureDetector(
+                            onTap: () async {
+                              final messenger = ScaffoldMessenger.of(context);
+                              final email = _emailController.text.trim();
+                              if (email.isEmpty) {
+                                messenger.showSnackBar(const SnackBar(content: Text('Enter your email first'), backgroundColor: AppColors.error));
+                                return;
+                              }
+                              try {
+                                await s.Supabase.instance.client.auth.resend(
+                                  type: s.OtpType.signup,
+                                  email: email,
+                                  emailRedirectTo: kIsWeb ? Uri.base.toString() : 'io.supabase.flutter://login-callback/',
+                                );
+                                messenger.showSnackBar(const SnackBar(content: Text('Verification email sent'), backgroundColor: AppColors.primary));
+                              } catch (e) {
+                                messenger.showSnackBar(SnackBar(content: Text('Resend failed: ${e.toString()}'), backgroundColor: AppColors.error));
+                              }
+                            },
+                            child: Text('Resend verification email', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
                           ),
-                          child: Image.asset(
-                            'lib/resources/assets/images/kathir_edit.png',
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
-                              width: 160,
-                              height: 160,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.image,
-                                  color: Colors.white,
-                                  size: 48,
-                                ),
-                              ),
-                            ),
+                        ),
+                      ],
+                      if (isLogin) ...[
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: GestureDetector(
+                            onTap: () => GoRouter.of(context).push('/forgot-password'),
+                            child: Text('Forgot Password?', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                          ),
+                        ),
+                      ],
+                      if (!isLogin && (_selectedRole == UserRole.ngo || _selectedRole == UserRole.restaurant)) ...[
+                        const SizedBox(height: 20),
+                        _buildDocumentUploadSection(isDark, textPrimary, textMuted, surface, border),
+                      ],
+                      const SizedBox(height: 28),
+                      _PrimaryButton(
+                        label: isLogin ? 'Sign In' : 'Create Account',
+                        loading: _isLoading,
+                        onPressed: isLogin ? _handleLogin : _handleSignUp,
+                      ),
+                      if (isLogin) ...[
+                        const SizedBox(height: 20),
+                        _buildDivider(textMuted, bg),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _SocialButton(icon: Icons.g_mobiledata, label: 'Google', onTap: () => _handleSocialLogin('Google'), isDark: isDark, textPrimary: textPrimary, surface: surface, border: border),
+                            const SizedBox(width: 12),
+                            _SocialButton(icon: Icons.facebook, label: 'Facebook', onTap: () => _handleSocialLogin('Facebook'), isDark: isDark, textPrimary: textPrimary, surface: surface, border: border),
+                            const SizedBox(width: 12),
+                            _SocialButton(icon: Icons.apple, label: 'Apple', onTap: () => _handleSocialLogin('Apple'), isDark: isDark, textPrimary: textPrimary, surface: surface, border: border),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+                      GestureDetector(
+                        onTap: toggleState,
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            style: GoogleFonts.plusJakartaSans(fontSize: 14, color: textMuted),
+                            children: [
+                              TextSpan(text: isLogin ? "Don't have an account? " : 'Already have an account? '),
+                              TextSpan(text: isLogin ? 'Sign Up' : 'Sign In', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: AppColors.primary)),
+                            ],
                           ),
                         ),
                       ),
@@ -359,548 +408,330 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-              // Form Section
-              Container(
-                width: double.infinity,
-                constraints: BoxConstraints(
-                  minHeight: MediaQuery.of(context).size.height * 0.5,
-                ),
+  Widget _buildLoginHeader(bool isDark, ThemeProvider themeProvider) {
+    return Container(
+      width: double.infinity,
+      height: 220,
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: AppColors.black.withOpacity(0.15), blurRadius: 12, offset: const Offset(0, 4))],
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.asset(
+              'lib/resources/assets/images/8040836.jpg',
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(color: AppColors.primary.withOpacity(0.2), child: Icon(Icons.eco, size: 64, color: AppColors.primary)),
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [AppColors.transparent, AppColors.black.withOpacity(0.6)]),
+            ),
+          ),
+          Positioned(
+            left: 24,
+            right: 24,
+            bottom: 24,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Kathir', style: GoogleFonts.plusJakartaSans(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.white)),
+                Text('Connecting food to people.', style: GoogleFonts.plusJakartaSans(fontSize: 14, color: AppColors.white.withOpacity(0.9))),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: IconButton(
+              icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode, color: AppColors.white),
+              onPressed: () => themeProvider.toggleTheme(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSignUpHeader(bool isDark, ThemeProvider themeProvider) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Row(
+        children: [
+          const SizedBox(width: 40),
+          Expanded(child: Center(child: Text('Sign Up', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: isDark ? AppColors.white : AppColors.darkText)))),
+          IconButton(
+            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode, color: isDark ? AppColors.white : AppColors.darkText),
+            onPressed: () => themeProvider.toggleTheme(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoleSegments(bool isDark, Color textPrimary, Color textMuted) {
+    final segments = [
+      (UserRole.user, 'Individual', Icons.person_outline),
+      (UserRole.restaurant, 'Restaurant', Icons.restaurant_outlined),
+      (UserRole.ngo, 'NGO', Icons.handshake_outlined),
+    ];
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.primary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: segments.map((e) {
+          final sel = _selectedRole == e.$1;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() {
+                _selectedRole = e.$1;
+                _documentsUploaded = false;
+              }),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.surfaceDark : AppColors.offWhite,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(40),
-                    topRight: Radius.circular(40),
-                  ),
+                  color: sel ? AppColors.primary : AppColors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: sel ? [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 6)] : null,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(30.0),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 10),
-                        Center(
-                          child: Text(
-                            isLogin ? "Welcome Back" : "Welcome!",
-                            style: TextStyle(
-                              color: isDark ? Colors.white : _textColorDark,
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-
-                        // Role Selection (Sign Up Only)
-                        if (!isLogin) ...[
-                          Text(
-                            'Select Your Role',
-                            style: TextStyle(
-                              color: isDark ? Colors.white : _textColorDark,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildRoleButton(
-                                  UserRole.user,
-                                  'User',
-                                  Icons.person,
-                                  isDark,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildRoleButton(
-                                  UserRole.ngo,
-                                  'Organization',
-                                  Icons.handshake,
-                                  isDark,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildRoleButton(
-                                  UserRole.restaurant,
-                                  'Restaurant',
-                                  Icons.restaurant,
-                                  isDark,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                        ],
-
-                        // Organization Name (Organization/Restaurant Only)
-                        if (!isLogin &&
-                            (_selectedRole == UserRole.ngo ||
-                                _selectedRole == UserRole.restaurant)) ...[
-                          CustomInputField(
-                            hintText: "Organization Name",
-                            fillColor: isDark
-                                ? const Color(0xFF2C2C2C)
-                                : _creamyInputFill,
-                            controller: _orgNameController,
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-
-                        // Name Field (Sign Up Only)
-                        if (!isLogin) ...[
-                          CustomInputField(
-                            hintText: "Full Name",
-                            fillColor: isDark
-                                ? const Color(0xFF2C2C2C)
-                                : _creamyInputFill,
-                            controller: _nameController,
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-
-                        // Email Field
-                        CustomInputField(
-                          hintText: "Email",
-                          fillColor: isDark
-                              ? const Color(0xFF2C2C2C)
-                              : _creamyInputFill,
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Phone Field (Sign Up Only)
-                        if (!isLogin) ...[
-                          CustomInputField(
-                            hintText: "Phone Number (Optional)",
-                            fillColor: isDark
-                                ? const Color(0xFF2C2C2C)
-                                : _creamyInputFill,
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-
-                        // Password Field
-                        CustomInputField(
-                          hintText: "Password",
-                          fillColor: isDark
-                              ? const Color(0xFF2C2C2C)
-                              : _creamyInputFill,
-                          isPassword: true,
-                          controller: _passwordController,
-                        ),
-
-                        // Forgot Password Link (Login Only)
-                        if (isLogin) ...[
-                          const SizedBox(height: 12),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: GestureDetector(
-                              onTap: () {
-                                GoRouter.of(context).push('/forgot-password');
-                              },
-                              child: const Text(
-                                'Forgot Password?',
-                                style: TextStyle(
-                                  color: AppColors.primaryDark,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-
-                        // Resend Verification (Sign Up Only)
-                        if (!isLogin) ...[
-                          const SizedBox(height: 12),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: GestureDetector(
-                              onTap: () async {
-                                final messenger = ScaffoldMessenger.of(context);
-                                final email = _emailController.text.trim();
-                                if (email.isEmpty) {
-                                  messenger.showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Enter your email first'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                  return;
-                                }
-                                try {
-                                  await s.Supabase.instance.client.auth.resend(
-                                    type: s.OtpType.signup,
-                                    email: email,
-                                    emailRedirectTo: kIsWeb
-                                        ? Uri.base.toString()
-                                        : 'io.supabase.flutter://login-callback/',
-                                  );
-                                  messenger.showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Verification email sent'),
-                                      backgroundColor: AppColors.primaryAccent,
-                                    ),
-                                  );
-                                } catch (e) {
-                                  messenger.showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          'Resend failed: ${e.toString()}'),
-                                      backgroundColor: AppColors.error,
-                                    ),
-                                  );
-                                }
-                              },
-                              child: const Text(
-                                'Resend verification email',
-                                style: TextStyle(
-                                  color: Color(0xFF0099A6),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-
-                        // Document Upload (NGO/Restaurant Only)
-                        if (!isLogin &&
-                            (_selectedRole == UserRole.ngo ||
-                                _selectedRole == UserRole.restaurant)) ...[
-                          const SizedBox(height: 24),
-                          _buildDocumentUploadSection(isDark),
-                        ],
-
-                        const SizedBox(height: 30),
-
-                        // Action Button
-                        Container(
-                          height: 55,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(28),
-                            gradient: LinearGradient(
-                              colors: [_tealBtnStart, _tealBtnEnd],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: _tealBtnStart.withOpacity(0.3),
-                                blurRadius: 15,
-                                offset: const Offset(0, 8),
-                              )
-                            ],
-                          ),
-                          child: ElevatedButton(
-                            onPressed: _isLoading
-                                ? null
-                                : (isLogin ? _handleLogin : _handleSignUp),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(28),
-                              ),
-                            ),
-                            child: _isLoading
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                          Colors.white),
-                                    ),
-                                  )
-                                : Text(
-                                    isLogin ? "Log In" : "Sign Up",
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Social Media Login Section (Login Only)
-                        if (isLogin) ...[
-                          const Center(
-                            child: Text(
-                              'Or continue with',
-                              style: TextStyle(
-                                color: Color(0xFF607d8b),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 15),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildSocialMediaButton(
-                                icon: Icons.g_mobiledata,
-                                label: 'Google',
-                                onTap: () => _handleSocialLogin('Google'),
-                                isDark: isDark,
-                              ),
-                              const SizedBox(width: 16),
-                              _buildSocialMediaButton(
-                                icon: Icons.facebook,
-                                label: 'Facebook',
-                                onTap: () => _handleSocialLogin('Facebook'),
-                                isDark: isDark,
-                              ),
-                              const SizedBox(width: 16),
-                              _buildSocialMediaButton(
-                                icon: Icons.apple,
-                                label: 'Apple',
-                                onTap: () => _handleSocialLogin('Apple'),
-                                isDark: isDark,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-
-                        // Toggle Text
-                        Center(
-                          child: GestureDetector(
-                            onTap: toggleState,
-                            child: RichText(
-                              text: TextSpan(
-                                text: isLogin
-                                    ? "Don't have an account? "
-                                    : "Already have an account? ",
-                                style: TextStyle(
-                                  color: isDark
-                                      ? Colors.grey[400]
-                                      : Colors.grey[600],
-                                  fontSize: 14,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: isLogin ? "Sign Up" : "Log In",
-                                    style: TextStyle(
-                                      color: isDark
-                                          ? Colors.white
-                                          : _textColorDark,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: bottomPadding),
-                      ],
+                child: Center(
+                  child: Text(
+                    e.$2,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: sel ? AppColors.darkText : textMuted,
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRoleButton(
-      UserRole role, String label, IconData icon, bool isDark) {
-    final isSelected = _selectedRole == role;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _selectedRole = role;
-            _documentsUploaded = false;
-          });
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? AppColors.primaryAccent.withOpacity(0.2)
-                : (isDark ? const Color(0xFF2C2C2C) : Colors.white),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected
-                  ? AppColors.primaryAccent
-                  : (isDark ? Colors.grey[700]! : Colors.grey[300]!),
-              width: isSelected ? 2 : 1,
             ),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                icon,
-                color: isSelected
-                    ? AppColors.primaryAccent
-                    : (isDark ? Colors.grey[400] : Colors.grey[600]),
-                size: 28,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isSelected
-                      ? AppColors.primaryAccent
-                      : (isDark ? Colors.white : _textColorDark),
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
+          );
+        }).toList(),
       ),
     );
   }
 
-  Widget _buildSocialMediaButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    required bool isDark,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              )
-            ],
-          ),
-          child: Icon(
-            icon,
-            color: isDark ? Colors.grey[300] : Colors.grey[700],
-            size: 24,
-          ),
+  Widget _buildDivider(Color textMuted, Color bg) {
+    return Row(
+      children: [
+        Expanded(child: Divider(color: AppColors.dividerLight)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text('Or continue with', style: GoogleFonts.plusJakartaSans(fontSize: 13, color: textMuted)),
         ),
-      ),
+        Expanded(child: Divider(color: AppColors.dividerLight)),
+      ],
     );
   }
 
-  Widget _buildDocumentUploadSection(bool isDark) {
+  Widget _buildDocumentUploadSection(bool isDark, Color textPrimary, Color textMuted, Color surface, Color border) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+        color: isDark ? AppColors.inputFillDark : AppColors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _documentsUploaded
-              ? AppColors.primaryAccent
-              : (isDark ? Colors.grey[700]! : Colors.grey[300]!),
-          width: 2,
-        ),
+        border: Border.all(color: _documentsUploaded ? AppColors.primary : border, width: _documentsUploaded ? 2 : 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.description,
-                color: AppColors.primaryAccent,
-                size: 24,
-              ),
-              const SizedBox(width: 12),
+              Icon(Icons.description_outlined, color: AppColors.primary, size: 22),
+              const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  'Legal Documents Required',
-                  style: TextStyle(
-                    color: isDark ? Colors.white : _textColorDark,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                child: Text('Legal Documents Required', style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w700, color: textPrimary)),
               ),
               if (_documentsUploaded)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryAccent.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Row(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.check_circle,
-                        color: AppColors.primaryAccent,
-                        size: 16,
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        'Uploaded',
-                        style: TextStyle(
-                          color: AppColors.primaryAccent,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      Icon(Icons.check_circle, color: AppColors.primary, size: 14),
+                      const SizedBox(width: 4),
+                      Text('Uploaded', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primary)),
                     ],
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             'Please upload your legal documents (Business License, Registration Certificate, etc.)',
-            style: TextStyle(
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
-              fontSize: 13,
-            ),
+            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: textMuted),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           if (!_documentsUploaded)
-            OutlinedButton.icon(
-              onPressed: _uploadDocuments,
-              icon: const Icon(Icons.upload_file),
-              label: const Text('Upload Documents'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primaryAccent,
-                side: const BorderSide(color: AppColors.primaryAccent),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
+            GestureDetector(
+              onTap: _uploadDocuments,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.primary, style: BorderStyle.solid),
                   borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.cloud_upload_outlined, color: AppColors.primary, size: 20),
+                    const SizedBox(width: 8),
+                    Text('Upload Documents', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                  ],
                 ),
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _AuthInput extends StatelessWidget {
+  final String label;
+  final String hint;
+  final TextEditingController controller;
+  final IconData prefixIcon;
+  final TextInputType? keyboardType;
+  final bool obscureText;
+  final Widget? suffixIcon;
+  final bool isDark;
+  final Color textPrimary;
+  final Color textMuted;
+  final Color surface;
+  final Color border;
+  final String? Function(String?)? validator;
+
+  const _AuthInput({
+    required this.label,
+    required this.hint,
+    required this.controller,
+    required this.prefixIcon,
+    this.keyboardType,
+    this.obscureText = false,
+    this.suffixIcon,
+    required this.isDark,
+    required this.textPrimary,
+    required this.textMuted,
+    required this.surface,
+    required this.border,
+    this.validator,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          obscureText: obscureText,
+          validator: validator,
+          style: GoogleFonts.plusJakartaSans(fontSize: 15, color: textPrimary),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: GoogleFonts.plusJakartaSans(fontSize: 15, color: textMuted),
+            prefixIcon: Icon(prefixIcon, color: AppColors.primary, size: 22),
+            suffixIcon: suffixIcon,
+            filled: true,
+            fillColor: surface,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: border)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: border)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PrimaryButton extends StatelessWidget {
+  final String label;
+  final bool loading;
+  final VoidCallback onPressed;
+
+  const _PrimaryButton({required this.label, required this.loading, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 56,
+      child: ElevatedButton(
+        onPressed: loading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.darkText,
+          disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
+          disabledForegroundColor: AppColors.darkText,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+        child: loading
+            ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(AppColors.darkText)))
+            : Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700)),
+      ),
+    );
+  }
+}
+
+class _SocialButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool isDark;
+  final Color textPrimary;
+  final Color surface;
+  final Color border;
+
+  const _SocialButton({required this.icon, required this.label, required this.onTap, required this.isDark, required this.textPrimary, required this.surface, required this.border});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Material(
+        color: AppColors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: border),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 22, color: textPrimary),
+                const SizedBox(width: 8),
+                Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

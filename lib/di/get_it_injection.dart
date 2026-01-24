@@ -2,8 +2,11 @@ import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/supabase/supabase_helper.dart';
 import '../features/authentication/data/datasources/auth_remote_datasource.dart';
+import '../features/authentication/data/datasources/profile_remote_datasource.dart';
 import '../features/authentication/data/repositories/auth_repository_impl.dart';
+import '../features/authentication/data/repositories/profile_repository_impl.dart';
 import '../features/authentication/domain/repositories/auth_repository.dart';
+import '../features/authentication/domain/repositories/profile_repository.dart';
 import '../features/authentication/domain/usecases/sign_in_usecase.dart';
 import '../features/authentication/domain/usecases/sign_up_usecase.dart';
 import '../features/authentication/domain/usecases/upload_legal_documents_usecase.dart';
@@ -13,6 +16,7 @@ import '../features/authentication/domain/usecases/send_password_reset_usecase.d
 import '../features/authentication/domain/usecases/verify_signup_otp_usecase.dart';
 import '../features/authentication/domain/usecases/verify_recovery_otp_usecase.dart';
 import '../features/authentication/domain/usecases/update_password_usecase.dart';
+import '../features/authentication/domain/usecases/update_profile_legal_docs_usecase.dart';
 import '../features/meals/data/datasources/meal_remote_datasource.dart';
 import '../features/meals/data/repositories/meal_repository_impl.dart';
 import '../features/meals/domain/repositories/meal_repository.dart';
@@ -31,7 +35,10 @@ Future<void> registerGetItDependencies() async {
 
   sl.registerLazySingleton<AuthRemoteDataSource>(
       () => SupabaseAuthRemoteDataSource(sl(), sl()));
+  sl.registerLazySingleton<ProfileRemoteDataSource>(
+      () => SupabaseProfileRemoteDataSource(sl(), sl()));
   sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
+  sl.registerLazySingleton<ProfileRepository>(() => ProfileRepositoryImpl(sl()));
   sl.registerFactory<SignInUseCase>(() => SignInUseCase(sl()));
   sl.registerFactory<SignUpUseCase>(() => SignUpUseCase(sl()));
   sl.registerFactory<UploadLegalDocumentsUseCase>(
@@ -42,6 +49,8 @@ Future<void> registerGetItDependencies() async {
   sl.registerFactory<VerifySignupOtpUseCase>(() => VerifySignupOtpUseCase(sl()));
   sl.registerFactory<VerifyRecoveryOtpUseCase>(() => VerifyRecoveryOtpUseCase(sl()));
   sl.registerFactory<UpdatePasswordUseCase>(() => UpdatePasswordUseCase(sl()));
+  sl.registerFactory<UpdateProfileLegalDocsUseCase>(
+      () => UpdateProfileLegalDocsUseCase(sl()));
 
   sl.registerLazySingleton<MealRemoteDataSource>(
       () => SupabaseMealRemoteDataSource(sl()));
@@ -66,5 +75,6 @@ Future<void> registerGetItDependencies() async {
         verifySignupOtp: sl(),
         verifyRecoveryOtp: sl(),
         updatePassword: sl(),
+        updateProfileLegalDocs: sl(),
       ));
 }

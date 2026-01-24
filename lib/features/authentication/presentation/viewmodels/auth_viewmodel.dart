@@ -12,6 +12,7 @@ import '../../domain/usecases/send_password_reset_usecase.dart';
 import '../../domain/usecases/verify_signup_otp_usecase.dart';
 import '../../domain/usecases/verify_recovery_otp_usecase.dart';
 import '../../domain/usecases/update_password_usecase.dart';
+import '../../domain/usecases/update_profile_legal_docs_usecase.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final SignInUseCase signIn;
@@ -23,6 +24,7 @@ class AuthViewModel extends ChangeNotifier {
   final VerifySignupOtpUseCase verifySignupOtp;
   final VerifyRecoveryOtpUseCase verifyRecoveryOtp;
   final UpdatePasswordUseCase updatePassword;
+  final UpdateProfileLegalDocsUseCase updateProfileLegalDocs;
 
   bool loading = false;
   Failure? failure;
@@ -41,6 +43,7 @@ class AuthViewModel extends ChangeNotifier {
     required this.verifySignupOtp,
     required this.verifyRecoveryOtp,
     required this.updatePassword,
+    required this.updateProfileLegalDocs,
   });
 
   Future<bool> login(String email, String password) async {
@@ -108,7 +111,13 @@ class AuthViewModel extends ChangeNotifier {
 
   Future<String?> uploadLegalDoc(String userId, String fileName, List<int> bytes) async {
     final res = await uploadDocs(userId, fileName, bytes);
-    return res.fold((l) => null, (r) => r);
+    final url = res.fold((l) => null, (r) => r);
+    if (url != null) {
+      try {
+        await updateProfileLegalDocs(userId, url);
+      } catch (_) {}
+    }
+    return url;
   }
 
   Future<bool> requestPasswordReset(String email) async {

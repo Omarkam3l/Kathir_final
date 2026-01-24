@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Restaurant Leaderboard</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<!-- Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec7f13",
+                        "background-light": "#f8f7f6",
+                        "background-dark": "#221910",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#2d241b",
+                        "text-main": "#1b140d",
+                        "text-secondary": "#9a734c",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar hiding for clean UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display bg-background-light dark:bg-background-dark text-text-main dark:text-gray-100 transition-colors duration-200">
+<div class="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto shadow-2xl bg-background-light dark:bg-background-dark">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-20 flex items-center bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md p-4 pb-2 justify-between border-b border-stone-200 dark:border-stone-800">
+<div class="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer transition-colors">
+<span class="material-symbols-outlined text-text-main dark:text-white" style="font-size: 24px;">arrow_back</span>
+</div>
+<h2 class="text-text-main dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Leaderboard</h2>
+<div class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer transition-colors">
+<span class="material-symbols-outlined text-text-main dark:text-white" style="font-size: 24px;">filter_list</span>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 pb-32"> <!-- Padding bottom for sticky footer -->
+<!-- Filters -->
+<div class="sticky top-[60px] z-10 bg-background-light dark:bg-background-dark pt-2 pb-4">
+<div class="flex gap-3 px-4 overflow-x-auto no-scrollbar">
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary pl-4 pr-3 shadow-md shadow-primary/20 transition-transform active:scale-95">
+<p class="text-white text-sm font-bold leading-normal">This Week</p>
+<span class="material-symbols-outlined text-white" style="font-size: 20px;">check</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-surface-dark border border-stone-200 dark:border-stone-700 pl-4 pr-3 transition-transform active:scale-95">
+<p class="text-text-main dark:text-gray-200 text-sm font-medium leading-normal">This Month</p>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-surface-dark border border-stone-200 dark:border-stone-700 pl-4 pr-3 transition-transform active:scale-95">
+<p class="text-text-main dark:text-gray-200 text-sm font-medium leading-normal">All Time</p>
+</button>
+</div>
+</div>
+<!-- Podium Section -->
+<section class="flex items-end justify-center px-4 py-6 gap-2 sm:gap-4 mb-4">
+<!-- Rank 2 -->
+<div class="flex flex-col items-center gap-2 pb-4 w-1/3 z-0">
+<div class="relative">
+<div class="w-20 h-20 sm:w-24 sm:h-24 bg-center bg-no-repeat bg-cover rounded-full border-4 border-[#C0C0C0] shadow-lg" data-alt="Profile picture of Green Eats restaurant" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCqI2bL-wtN48uXX_PMfOfe7aqTlfkTb73y3EcDXE7ow8XuE22pyM1WdIXEgosfAZC7mfwNCvDQYRiJw2aVVP18eiBSxbQnXqhtCQ9gV96vFZJdAwHwzARIyujcbJoVOzHtIA3MY116hi0-XTri8i2UROK0UhKf1Avs37pxkUMiIK0BysQF1Y0VYAuofTVFh6A3KSjWFcnXXQNa4wNVh1YhENCX8bWI740DxNmP5rV8vr5AqFinp1lVraCsh5HRt8-ruVv80n3im2c");'>
+</div>
+<div class="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#C0C0C0] text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full shadow-sm border-2 border-white dark:border-background-dark">
+                            2
+                        </div>
+</div>
+<div class="text-center mt-1">
+<p class="text-text-main dark:text-white text-sm font-bold leading-tight line-clamp-1">Green Eats</p>
+<p class="text-primary text-xs font-semibold">980 kg</p>
+</div>
+</div>
+<!-- Rank 1 -->
+<div class="flex flex-col items-center gap-3 w-1/3 z-10 -mt-8">
+<div class="relative">
+<span class="material-symbols-outlined text-[#FFD700] absolute -top-8 left-1/2 -translate-x-1/2 animate-bounce" style="font-size: 32px; font-variation-settings: 'FILL' 1;">crown</span>
+<div class="w-24 h-24 sm:w-28 sm:h-28 bg-center bg-no-repeat bg-cover rounded-full border-4 border-[#FFD700] shadow-[0_0_20px_rgba(236,127,19,0.3)]" data-alt="Profile picture of Tasty Bistro restaurant" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBBUWpCEYnjdlx68ailCfzA-Ou6Hx1XgKdeYJQC8__sHdc4g9qLEc4JK7W7H9YlF8T7uFAd9YDY5MgFynDX_WcBFR4AEhLT8QgtP9S8RHrb5IWzmk0NkI1sRtMPrPgZFQ6bK39uQK31ppI7d8JDSpb8JYpZkILS6UUjxjMKXNJcANFP8vYBOkxkD7fWTtptaCw1gUSR_CHPF2S7G07RYvOco3pdFz2Be-1lDWXeIuxPTp3_CfkD9jRvn-QlUWGJKn5gH4sKNkXOZyY");'>
+</div>
+<div class="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#FFD700] text-text-main text-sm font-bold w-8 h-8 flex items-center justify-center rounded-full shadow-sm border-2 border-white dark:border-background-dark">
+                            1
+                        </div>
+</div>
+<div class="text-center mt-1">
+<p class="text-text-main dark:text-white text-base font-bold leading-tight line-clamp-1">Tasty Bistro</p>
+<p class="text-primary text-sm font-bold">1,250 kg</p>
+<div class="inline-flex items-center gap-1 bg-primary/10 px-2 py-0.5 rounded-full mt-1">
+<span class="material-symbols-outlined text-primary" style="font-size: 12px;">verified</span>
+<span class="text-[10px] font-bold text-primary uppercase">Hero</span>
+</div>
+</div>
+</div>
+<!-- Rank 3 -->
+<div class="flex flex-col items-center gap-2 pb-4 w-1/3 z-0">
+<div class="relative">
+<div class="w-20 h-20 sm:w-24 sm:h-24 bg-center bg-no-repeat bg-cover rounded-full border-4 border-[#CD7F32] shadow-lg" data-alt="Profile picture of Urban Spice restaurant" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAuesRl2QB-RlbbRsWJrGyS0id8imgyh7O_pXw9q9fcsBP5ZjIjlIvAYL29vwqX87yuyEGsBWM8zKUUTBIvpHltWqf4M6EIPe6KDJIdVVmcrzYp2zg0tbS8hBaPX3h4w95JYK6QLEcE4u_-motjg2WSjulOME_nHG2X0R2ZdHAiCUIzgGZ5uIQJkq0s5sdzioug7BCYz0dZd5jkm5mbVGPqyTEsWElHewqkVbMUucmCYmJRgVMNYVmq89oQOV8nXhsedFahTM5aA34");'>
+</div>
+<div class="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#CD7F32] text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full shadow-sm border-2 border-white dark:border-background-dark">
+                            3
+                        </div>
+</div>
+<div class="text-center mt-1">
+<p class="text-text-main dark:text-white text-sm font-bold leading-tight line-clamp-1">Urban Spice</p>
+<p class="text-primary text-xs font-semibold">850 kg</p>
+</div>
+</div>
+</section>
+<!-- Leaderboard List -->
+<div class="flex flex-col bg-white dark:bg-surface-dark rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.03)] min-h-[400px]">
+<div class="p-4 pb-2">
+<p class="text-text-secondary dark:text-gray-400 text-xs font-bold uppercase tracking-wider pl-4">Rest of the Best</p>
+</div>
+<div class="flex flex-col px-4 gap-2">
+<!-- List Item 4 -->
+<div class="flex items-center p-3 rounded-xl bg-background-light dark:bg-background-dark/50 border border-transparent hover:border-primary/20 transition-colors">
+<span class="w-8 text-center text-text-secondary font-bold text-sm">4</span>
+<div class="w-10 h-10 rounded-full bg-cover bg-center ml-2 mr-3" data-alt="Small avatar of The Soup Kitchen" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDa7-ltmPr6wHtIQF2a7RPQCrslRwSFy6nrEBkWv4lGP6L7QTrbKI85HuEueATZIrCHz-ZbNL_Gy9lOeHyHo03Nt4BAA8B_jNOB0GHx0NEcldMnuiNgR2l7YVkHZbZ-6DyV8BUzNWdw55sug4lM-BIzedzN9kKDpQl_ZDnluh1l8hlQhPV0WRehlatAdaxNNSdgxLbEMuUD0ISWZ0pZQB0VKEAcsTYSsRYiN8yE3f1Fw1KKrGDfOesrZ9LgYxF4J_3nPXS6ihu0YSY");'></div>
+<div class="flex-1">
+<p class="text-text-main dark:text-white font-bold text-sm">The Soup Kitchen</p>
+<p class="text-text-secondary text-xs">720 meals distributed</p>
+</div>
+<div class="text-right">
+<p class="text-primary font-bold text-sm">720 kg</p>
+</div>
+</div>
+<!-- List Item 5 -->
+<div class="flex items-center p-3 rounded-xl bg-background-light dark:bg-background-dark/50 border border-transparent hover:border-primary/20 transition-colors">
+<span class="w-8 text-center text-text-secondary font-bold text-sm">5</span>
+<div class="w-10 h-10 rounded-full bg-cover bg-center ml-2 mr-3" data-alt="Small avatar of Daily Bread" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAmaA2W19Oy5IVMhQcTRma0WL7P2s7aU5pmEVmum7hBuHD_aiML1AM2eu5kc2hJn0lsxbfLsvP1RX8CClGVKvkAyxQhnog-my71YYBH5vzyAL1ABYLnuw-Cy9jv21rAhe9ctjHP3bL3QAujAakvQHUdb5gKmKF2XVAXdiRBsTGn6MZOOt0ENLvMwI_YA-UopSeASiHoyOgGWkHR5QXaDAJfGlh6ATyxlDzkpP5wP5tgfIWndAdIogoJuEq6QtZi_dkTlnap1I2ipnA");'></div>
+<div class="flex-1">
+<p class="text-text-main dark:text-white font-bold text-sm">Daily Bread</p>
+<p class="text-text-secondary text-xs">Zero Waste Partner</p>
+</div>
+<div class="text-right">
+<p class="text-primary font-bold text-sm">645 kg</p>
+</div>
+</div>
+<!-- List Item 6 -->
+<div class="flex items-center p-3 rounded-xl bg-background-light dark:bg-background-dark/50 border border-transparent hover:border-primary/20 transition-colors">
+<span class="w-8 text-center text-text-secondary font-bold text-sm">6</span>
+<div class="w-10 h-10 rounded-full bg-cover bg-center ml-2 mr-3" data-alt="Small avatar of Spice Garden" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDcs72V7ZuURpz23X9SDIF-XsA8LD-pXT9DfwmgorJAvcdS-ptRlEKG-V0H92ZVEbBSs5DoL2vMByqI9GDlpIVlEci6yS7KlE2iStnVZ1cqJYqNEbA6p1ds7PiAetec-KFYMe8-1sQtmZb7Ytu-ZyASjdj1comXBJRrv35o-spBMjscfF7poMdB6uhAzTVoDnwcpmERu9PYJBuvjhwaq5op_8gPZP8wHTE5xKT4Y_uXp65xt4kE-ZQ3IR6O2fsHdeTwq5bUbCiAUTg");'></div>
+<div class="flex-1">
+<p class="text-text-main dark:text-white font-bold text-sm">Spice Garden</p>
+<p class="text-text-secondary text-xs">550 meals distributed</p>
+</div>
+<div class="text-right">
+<p class="text-primary font-bold text-sm">550 kg</p>
+</div>
+</div>
+<!-- List Item 7 -->
+<div class="flex items-center p-3 rounded-xl bg-background-light dark:bg-background-dark/50 border border-transparent hover:border-primary/20 transition-colors">
+<span class="w-8 text-center text-text-secondary font-bold text-sm">7</span>
+<div class="w-10 h-10 rounded-full bg-cover bg-center ml-2 mr-3" data-alt="Small avatar of Veggie Delight" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBdXSGVuygtk5XXe6iz0u0Yssq-ATw1MxhZt7n5wexd-bcjnFWV8hIJbDvlGv4FqsXckSfD8GzN0TXxFNgHrA0AHUwjEHgm6krhOyF4kd-2m3fudAl67HXiIzLVh7Ve-pfNvaqLrCfXbePNqexh5-7rHxuQENfCIpj0c-WzHaechjPaKnbnNuLvUw5eUFYC_m63IRvcA2oEUfqhFqii5Y4EfAcqXnIN5Oiw9aa5KgHUDnADJmLc2P79Tb-sdT5NebppobuDOUGr_4A");'></div>
+<div class="flex-1">
+<p class="text-text-main dark:text-white font-bold text-sm">Veggie Delight</p>
+<p class="text-text-secondary text-xs">New Contributor</p>
+</div>
+<div class="text-right">
+<p class="text-primary font-bold text-sm">420 kg</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Sticky User Rank Card -->
+<div class="fixed bottom-[80px] left-0 right-0 max-w-md mx-auto px-4 z-20">
+<div class="flex items-center justify-between p-4 rounded-2xl bg-primary text-white shadow-xl shadow-primary/30 backdrop-blur-sm border border-white/10 transform transition-transform hover:-translate-y-1">
+<div class="flex items-center gap-4">
+<div class="flex flex-col items-center justify-center min-w-[32px]">
+<span class="text-xs font-medium opacity-80">RANK</span>
+<span class="text-xl font-bold leading-none">12</span>
+</div>
+<div class="h-8 w-px bg-white/20"></div>
+<div>
+<p class="font-bold text-sm">Your Impact</p>
+<p class="text-xs opacity-90 text-white/80">You saved 250 meals!</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-lg font-bold">250 kg</span>
+<span class="material-symbols-outlined" style="font-size: 20px;">trending_up</span>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 left-0 right-0 z-30 bg-surface-light dark:bg-surface-dark border-t border-stone-200 dark:border-stone-800 pb-safe pt-2 max-w-md mx-auto">
+<div class="flex justify-around items-center px-2 pb-2">
+<a class="flex flex-col items-center p-2 text-text-secondary hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">home</span>
+<span class="text-[10px] font-medium mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center p-2 text-text-secondary hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">volunteer_activism</span>
+<span class="text-[10px] font-medium mt-1">Donate</span>
+</a>
+<a class="flex flex-col items-center p-2 text-primary transition-colors" href="#">
+<div class="bg-primary/10 px-4 py-1 rounded-full flex flex-col items-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">leaderboard</span>
+<span class="text-[10px] font-bold mt-0.5">Rank</span>
+</div>
+</a>
+<a class="flex flex-col items-center p-2 text-text-secondary hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">person</span>
+<span class="text-[10px] font-medium mt-1">Profile</span>
+</a>
+</div>
+</nav>
+</div>
+</body></html>
