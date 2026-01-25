@@ -14,7 +14,7 @@ class SupabaseMealRemoteDataSource implements MealRemoteDataSource {
   @override
   Future<List<MealModel>> fetchAvailableMeals() async {
     final res = await client.from('meals').select(
-        'id,title,location,image_url,original_price,donation_price,quantity,expiry,restaurant:restaurants(id,name,rating)');
+        'id,title,location,image_url,original_price,donation_price,quantity,expiry,description,ingredients,allergens,co2_savings,pickup_time,restaurant:restaurants(id,name,rating,logo_url,verified,reviews_count)');
     final data = (res as List).cast<Map<String, dynamic>>();
     return data.map((e) => MealModel.fromJson(e)).toList();
   }
@@ -24,7 +24,7 @@ class SupabaseMealRemoteDataSource implements MealRemoteDataSource {
     final res = await client
         .from('meals')
         .select(
-            'id,title,location,image_url,original_price,donation_price,quantity,expiry,restaurant:restaurants(id,name,rating)')
+            'id,title,location,image_url,original_price,donation_price,quantity,expiry,description,ingredients,allergens,co2_savings,pickup_time,restaurant:restaurants(id,name,rating,logo_url,verified,reviews_count)')
         .lte('expiry',
             DateTime.now().add(const Duration(hours: 6)).toIso8601String());
     final data = (res as List).cast<Map<String, dynamic>>();
@@ -36,7 +36,7 @@ class SupabaseMealRemoteDataSource implements MealRemoteDataSource {
     final res = await client
         .from('meals')
         .select(
-            'id,title,location,image_url,original_price,donation_price,quantity,expiry,restaurant:restaurants(id,name,rating)')
+            'id,title,location,image_url,original_price,donation_price,quantity,expiry,description,ingredients,allergens,co2_savings,pickup_time,restaurant:restaurants(id,name,rating,logo_url,verified,reviews_count)')
         .ilike('title', '%$query%');
     final data = (res as List).cast<Map<String, dynamic>>();
     return data.map((e) => MealModel.fromJson(e)).toList();
