@@ -1,19 +1,20 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
-import '../../../../core/utils/app_colors.dart';
-import '../../../../core/utils/app_dimensions.dart';
-import '../../../../core/shared/widgets/diamond_clipper.dart';
 import 'package:provider/provider.dart';
-import '../../presentation/viewmodels/home_viewmodel.dart';
-import '../../domain/entities/meal_offer.dart';
-import '../../../meals/presentation/screens/all_meals_screen.dart';
-import '../../../meals/presentation/screens/meal_detail.dart';
-import '../widgets/home_header.dart';
-import '../widgets/highlights_section.dart';
-import '../widgets/meal_card_compact.dart';
-import '../widgets/profile_drawer.dart';
+import 'package:kathir_final/core/utils/app_colors.dart';
+import 'package:kathir_final/features/authentication/presentation/blocs/auth_provider.dart';
+import 'package:kathir_final/features/user_home/domain/entities/meal_offer.dart';
+import 'package:kathir_final/features/user_home/presentation/viewmodels/home_viewmodel.dart';
+import 'package:kathir_final/features/meals/presentation/screens/all_meals_screen.dart';
+import '../widgets/home_header_widget.dart';
+import '../widgets/location_bar_widget.dart';
+import '../widgets/search_bar_widget.dart';
+import '../widgets/category_chips_widget.dart';
+import '../widgets/flash_deals_section.dart';
+import '../widgets/top_rated_partners_section.dart';
+import '../widgets/available_meals_grid_section.dart';
 
-/// Main home dashboard screen displaying meal offers and highlights
+/// Home dashboard matching the Kathir user_home_page design.
+/// Composed of small widgets; uses AppColors and clean architecture.
 class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
 
@@ -22,248 +23,126 @@ class HomeDashboardScreen extends StatefulWidget {
 }
 
 class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String _query = '';
+  String _category = 'All';
 
-  @override
-  void initState() {
-    super.initState();
-  }
+  List<MealOffer> get _filteredMeals {
+    final vm = context.watch<HomeViewModel>();
+    var list = List<MealOffer>.from(vm.meals);
 
-  /// Filters and sorts offers based on search query
-  List<MealOffer> get _visibleOffers {
+    // Search
     final q = _query.trim().toLowerCase();
-    final all = context.watch<HomeViewModel>().meals;
-    final list = all.where((m) {
-      if (q.isEmpty) return true;
-      return m.title.toLowerCase().contains(q) ||
-          m.restaurant.name.toLowerCase().contains(q) ||
-          m.location.toLowerCase().contains(q);
-    }).toList();
+    if (q.isNotEmpty) {
+      list = list.where((m) {
+        return m.title.toLowerCase().contains(q) ||
+            m.restaurant.name.toLowerCase().contains(q) ||
+            m.location.toLowerCase().contains(q);
+      }).toList();
+    }
 
-    // Sort by urgency, then discount, then rating
-    list.sort((a, b) {
-      final urgencyA = a.minutesLeft;
-      final urgencyB = b.minutesLeft;
-      if (urgencyA != urgencyB) return urgencyA.compareTo(urgencyB);
-
-      final discountA = (a.originalPrice - a.donationPrice) / a.originalPrice;
-      final discountB = (b.originalPrice - b.donationPrice) / b.originalPrice;
-      if (discountA != discountB) return discountB.compareTo(discountA);
-
-      return b.restaurant.rating.compareTo(a.restaurant.rating);
-    });
+    // Category (keyword-based until we have real categories)
+    if (_category != 'All') {
+      final k = _categoryKeywords(_category);
+      list = list.where((m) {
+        final t = '${m.title} ${m.restaurant.name}'.toLowerCase();
+        return k.any((w) => t.contains(w));
+      }).toList();
+    }
 
     return list;
   }
 
-  void _onCardTap(MealOffer offer) {
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            ProductDetailPage(product: offer),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.1),
-                end: Offset.zero,
-              ).animate(CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOutCubic,
-              )),
-              child: child,
-            ),
-          );
-        },
-        transitionDuration: const Duration(
-          milliseconds: AppDimensions.animationDurationPageTransition,
-        ),
-      ),
-    );
+  List<String> _categoryKeywords(String c) {
+    switch (c) {
+      case 'Vegetarian':
+        return ['veg', 'vegetarian', 'vegan'];
+      case 'Bakery':
+        return ['bakery', 'bread', 'pastry', 'cake', 'sweet'];
+      case 'Produce':
+        return ['produce', 'fruit', 'vegetable', 'green', 'salad'];
+      case 'Under 5km':
+        return []; // no filter; show all
+      default:
+        return [];
+    }
+  }
+
+  List<MealOffer> get _flashDeals {
+    final vm = context.watch<HomeViewModel>();
+    final list = List<MealOffer>.from(vm.meals);
+    list.sort((a, b) {
+      final dA = a.originalPrice > 0
+          ? (a.originalPrice - a.donationPrice) / a.originalPrice
+          : 0.0;
+      final dB = b.originalPrice > 0
+          ? (b.originalPrice - b.donationPrice) / b.originalPrice
+          : 0.0;
+      return dB.compareTo(dA);
+    });
+    return list.take(4).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      drawer: null,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            _buildHeaderSection(),
-            SliverToBoxAdapter(
-              child: HomeHeader(onQueryChanged: (q) => setState(() => _query = q)),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: AppDimensions.paddingMedium)),
-            const SliverToBoxAdapter(child: HighlightsSection()),
-            const SliverToBoxAdapter(child: SizedBox(height: AppDimensions.paddingLarge)),
-            _buildMealsSection(),
-            _buildMealsList(),
-            const SliverToBoxAdapter(child: SizedBox(height: 80)),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Chatbot coming soon...')),
-        ),
-        child: const Icon(Icons.chat_bubble_rounded, color: Colors.white),
-      ),
-      bottomNavigationBar: null,
-    );
-  }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
+    final vm = context.watch<HomeViewModel>();
 
-  Widget _buildHeaderSection() {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppDimensions.paddingXLarge,
-          AppDimensions.paddingLarge,
-          AppDimensions.paddingXLarge,
-          AppDimensions.paddingSmall,
-        ),
-        child: Row(
-          children: [
-            ClipPath(
-              clipper: DiamondClipper(),
-              child: Image.asset(
-                'lib/resources/assets/images/kathir_edit.png',
-                width: AppDimensions.profileImageLarge,
-                height: AppDimensions.profileImageLarge,
-                fit: BoxFit.contain,
-                errorBuilder: (ctx, err, st) => Container(
-                  width: AppDimensions.profileImageLarge,
-                  height: AppDimensions.profileImageLarge,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryAccent.withOpacity(0.1),
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.image_not_supported,
-                      size: 40,
-                      color: AppColors.primaryAccent,
-                    ),
-                  ),
+    return Scaffold(
+      backgroundColor: bg,
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () async => vm.loadAll(),
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              const SliverToBoxAdapter(child: HomeHeaderWidget()),
+              SliverToBoxAdapter(
+                child: LocationBarWidget(
+                  location: context.watch<AuthProvider>().user?.defaultLocation ??
+                      'Downtown, San Francisco',
                 ),
               ),
-            ),
-            const Spacer(),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
-                onTap: () => showProfileDrawer(context),
-                child: Transform.rotate(
-                  angle: 45 * pi / 180,
-                  child: Container(
-                    width: AppDimensions.profileImageMedium,
-                    height: AppDimensions.profileImageMedium,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-                      border: Border.all(color: Colors.white, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        )
-                      ],
-                    ),
-                    child: Transform.rotate(
-                      angle: -45 * pi / 180,
-                      child: ClipPath(
-                        clipper: DiamondClipper(),
-                        child: Container(
-                          width: AppDimensions.profileImageMedium,
-                          height: AppDimensions.profileImageMedium,
-                          color: Theme.of(context).cardColor,
-                          child: const Center(
-                            child: Icon(
-                              Icons.person,
-                              size: AppDimensions.iconXLarge,
-                              color: Colors.white,
-                            ),
-                          ),
+              SliverToBoxAdapter(
+                child: SearchBarWidget(
+                  onQueryChanged: (q) => setState(() => _query = q),
+                  onFilterTap: () {
+                    // Optional: navigate to advanced search
+                  },
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: CategoryChipsWidget(
+                  selectedCategory: _category,
+                  onCategoryChanged: (c) => setState(() => _category = c),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 8)),
+              SliverToBoxAdapter(
+                child: FlashDealsSection(deals: _flashDeals),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              SliverToBoxAdapter(
+                child: TopRatedPartnersSection(restaurants: vm.restaurants),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              SliverToBoxAdapter(
+                child: AvailableMealsGridSection(
+                  meals: _filteredMeals,
+                  onSeeAll: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => AllMealsScreen(
+                          allOffers: vm.meals,
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMealsSection() {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppDimensions.paddingLarge,
-          AppDimensions.paddingSmall,
-          AppDimensions.paddingLarge,
-          AppDimensions.paddingSmall,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                'Available Meals',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
-                ),
-              ),
-            ),
-            GestureDetector(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => AllMealsScreen(
-                      allOffers: context.read<HomeViewModel>().meals,
-                    ),
-                  ),
-                );
-              },
-              child: Text(
-                'See all',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMealsList() {
-    return SliverToBoxAdapter(
-      child: SizedBox(
-        height: 520,
-        child: ListView.separated(
-          padding: const EdgeInsets.fromLTRB(14, 24, 14, 12),
-          scrollDirection: Axis.horizontal,
-          itemCount: _visibleOffers.length,
-          separatorBuilder: (_, __) => const SizedBox(width: AppDimensions.paddingLarge),
-          itemBuilder: (ctx, i) {
-            final offer = _visibleOffers[i];
-            return MealCardCompact(
-              offer: offer,
-              isSelected: false,
-              onTap: () => _onCardTap(offer),
-              index: i,
-            );
-          },
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            ],
+          ),
         ),
       ),
     );

@@ -97,7 +97,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           : () async {
                               final value = _email.text.trim();
                               if (value.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Email must not be empty'), backgroundColor: AppColors.error));
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Email must not be empty', style: TextStyle(color: AppColors.white)), backgroundColor: AppColors.error));
                                 return;
                               }
                               final messenger = ScaffoldMessenger.of(context);
@@ -105,22 +105,22 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               final ok = await vm.submit(value);
                               if (!mounted) return;
                               if (ok) {
-                                messenger.showSnackBar(const SnackBar(content: Text('Verification code sent'), backgroundColor: AppColors.primary));
+                                messenger.showSnackBar(const SnackBar(content: Text('Verification code sent', style: TextStyle(color: AppColors.white)), backgroundColor: AppColors.primary));
                                 router.push(VerificationScreen.routeName, extra: value);
                               } else {
-                                messenger.showSnackBar(SnackBar(content: Text(vm.error ?? 'Network error'), backgroundColor: AppColors.error));
+                                messenger.showSnackBar(SnackBar(content: Text(vm.error ?? 'Network error', style: const TextStyle(color: AppColors.white)), backgroundColor: AppColors.error));
                               }
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.darkText,
+                        foregroundColor: AppColors.white,
                         disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
-                        disabledForegroundColor: AppColors.darkText,
+                        disabledForegroundColor: AppColors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                       child: vm.loading
-                          ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(AppColors.darkText)))
+                          ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(AppColors.white)))
                           : Text('Send Reset Link', style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700)),
                     ),
                   ),

@@ -109,15 +109,19 @@ class AuthViewModel extends ChangeNotifier {
     return ok;
   }
 
-  Future<String?> uploadLegalDoc(String userId, String fileName, List<int> bytes) async {
+  /// Returns (url, error). On success url is set; on failure error contains the message.
+  Future<({String? url, String? error})> uploadLegalDoc(String userId, String fileName, List<int> bytes) async {
     final res = await uploadDocs(userId, fileName, bytes);
-    final url = res.fold((l) => null, (r) => r);
-    if (url != null) {
+    final result = res.fold(
+      (l) => (url: null, error: l.cause?.toString() ?? l.message),
+      (r) => (url: r, error: null),
+    );
+    if (result.url != null) {
       try {
-        await updateProfileLegalDocs(userId, url);
+        await updateProfileLegalDocs(userId, result.url!);
       } catch (_) {}
     }
-    return url;
+    return result;
   }
 
   Future<bool> requestPasswordReset(String email) async {

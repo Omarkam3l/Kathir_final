@@ -22,7 +22,7 @@ class OnboardingPage2 extends StatelessWidget {
     final textColor = isDark ? AppColors.white : AppColors.darkText;
     final mutedColor = AppColors.grey;
     final nextBtnBg = isDark ? AppColors.primary : AppColors.primaryDark;
-    final nextBtnIcon = isDark ? AppColors.darkText : AppColors.white;
+    final nextBtnIcon = AppColors.white;
 
     return SafeArea(
       child: Column(
@@ -136,7 +136,7 @@ class OnboardingPage2 extends StatelessWidget {
                               ),
                               child: Icon(
                                 Icons.volunteer_activism,
-                                color: AppColors.darkText,
+                                color: AppColors.white,
                                 size: 24,
                               ),
                             ),

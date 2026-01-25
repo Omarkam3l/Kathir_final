@@ -14,15 +14,18 @@ class VerificationScreen extends StatefulWidget {
   static const routeName = '/verify-otp';
   final String email;
   final bool forSignup;
-  const VerificationScreen({super.key, this.email = '', this.forSignup = false});
+  const VerificationScreen(
+      {super.key, this.email = '', this.forSignup = false});
 
   @override
   State<VerificationScreen> createState() => _VerificationScreenState();
 }
 
 class _VerificationScreenState extends State<VerificationScreen> {
-  final List<TextEditingController> _controllers = List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  static const int _otpLength = 8;
+  final List<TextEditingController> _controllers =
+      List.generate(_otpLength, (_) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(_otpLength, (_) => FocusNode());
   int _secondsLeft = 0;
   Timer? _timer;
 
@@ -71,7 +74,11 @@ class _VerificationScreenState extends State<VerificationScreen> {
             ),
             backgroundColor: bg,
             elevation: 0,
-            title: Text('Verification', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: textPrimary)),
+            title: Text('Verification',
+                style: GoogleFonts.plusJakartaSans(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: textPrimary)),
             centerTitle: true,
           ),
           body: SafeArea(
@@ -86,59 +93,82 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       width: 64,
                       height: 64,
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.surfaceDark : AppColors.primary.withOpacity(0.12),
+                        color: isDark
+                            ? AppColors.surfaceDark
+                            : AppColors.primary.withOpacity(0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.lock_reset, size: 32, color: AppColors.primary),
+                      child: Icon(Icons.lock_reset,
+                          size: 32, color: AppColors.primary),
                     ),
                   ),
                   const SizedBox(height: 24),
                   Text(
                     'Verify OTP',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.plusJakartaSans(fontSize: 28, fontWeight: FontWeight.w800, color: textPrimary),
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: textPrimary),
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Enter the 6-digit code we sent to your registered email address.',
+                    'Enter the 8-digit code we sent to your registered email address.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.plusJakartaSans(fontSize: 14, color: textMuted, height: 1.5),
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14, color: textMuted, height: 1.5),
                   ),
                   if (email.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     Text(
                       _maskEmail(email),
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary),
+                      style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary),
                     ),
                   ],
                   const SizedBox(height: 32),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(6, (i) {
+                    children: List.generate(_otpLength, (i) {
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
                         child: SizedBox(
-                          width: 44,
-                          height: 52,
+                          width: 34,
+                          height: 48,
                           child: TextFormField(
                             controller: _controllers[i],
                             focusNode: _focusNodes[i],
                             keyboardType: TextInputType.number,
                             textAlign: TextAlign.center,
                             maxLength: 1,
-                            style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: textPrimary),
+                            style: GoogleFonts.plusJakartaSans(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: textPrimary),
                             decoration: InputDecoration(
                               counterText: '',
                               filled: true,
                               fillColor: surface,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: border)),
-                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: border)),
-                              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
-                              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: border)),
+                              enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: border)),
+                              focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                      color: AppColors.primary, width: 2)),
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 12),
                             ),
                             onChanged: (v) {
-                              if (v.length == 1 && i < 5) _focusNodes[i + 1].requestFocus();
+                              if (v.length == 1 && i < _otpLength - 1) {
+                                _focusNodes[i + 1].requestFocus();
+                              }
                             },
                           ),
                         ),
@@ -149,29 +179,52 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   Center(
                     child: Column(
                       children: [
-                        Text("Didn't receive the code?", style: GoogleFonts.plusJakartaSans(fontSize: 13, color: textMuted)),
+                        Text("Didn't receive the code?",
+                            style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13, color: textMuted)),
                         const SizedBox(height: 4),
                         TextButton.icon(
                           onPressed: _secondsLeft > 0
                               ? null
                               : () async {
-                                  final messenger = ScaffoldMessenger.of(context);
+                                  final messenger =
+                                      ScaffoldMessenger.of(context);
                                   try {
-                                    await s.Supabase.instance.client.auth.resend(
-                                      type: widget.forSignup ? s.OtpType.signup : s.OtpType.recovery,
+                                    await s.Supabase.instance.client.auth
+                                        .resend(
+                                      type: widget.forSignup
+                                          ? s.OtpType.signup
+                                          : s.OtpType.recovery,
                                       email: email,
-                                      emailRedirectTo: kIsWeb ? Uri.base.toString() : 'io.supabase.flutter://login-callback/',
+                                      emailRedirectTo: kIsWeb
+                                          ? Uri.base.toString()
+                                          : 'io.supabase.flutter://login-callback/',
                                     );
                                     _startCooldown();
-                                    messenger.showSnackBar(const SnackBar(content: Text('OTP resent'), backgroundColor: AppColors.primary));
+                                    messenger.showSnackBar(const SnackBar(
+                                        content: Text('OTP resent', style: TextStyle(color: AppColors.white)),
+                                        backgroundColor: AppColors.primary));
                                   } catch (e) {
-                                    messenger.showSnackBar(SnackBar(content: Text('Resend failed: ${e.toString()}'), backgroundColor: AppColors.error));
+                                    messenger.showSnackBar(SnackBar(
+                                        content: Text(
+                                            'Resend failed: ${e.toString()}', style: const TextStyle(color: AppColors.white)),
+                                        backgroundColor: AppColors.error));
                                   }
                                 },
-                          icon: Icon(Icons.refresh, size: 18, color: _secondsLeft > 0 ? textMuted : AppColors.primary),
+                          icon: Icon(Icons.refresh,
+                              size: 18,
+                              color: _secondsLeft > 0
+                                  ? textMuted
+                                  : AppColors.primary),
                           label: Text(
-                            _secondsLeft > 0 ? 'Resend in ${_secondsLeft}s' : 'Resend Code',
-                            style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: _secondsLeft > 0 ? textMuted : textPrimary),
+                            _secondsLeft > 0
+                                ? 'Resend in ${_secondsLeft}s'
+                                : 'Resend Code',
+                            style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color:
+                                    _secondsLeft > 0 ? textMuted : textPrimary),
                           ),
                         ),
                       ],
@@ -185,35 +238,54 @@ class _VerificationScreenState extends State<VerificationScreen> {
                           ? null
                           : () async {
                               final code = _otp.trim();
-                              if (code.length != 6) {
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Code required'), backgroundColor: AppColors.error));
+                              if (code.length != _otpLength) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text('Code required'),
+                                        backgroundColor: AppColors.error));
                                 return;
                               }
                               final messenger = ScaffoldMessenger.of(context);
                               final router = GoRouter.of(context);
-                              final ok = widget.forSignup ? await vm.submitSignup(email, code) : await vm.submitRecovery(email, code);
+                              final ok = widget.forSignup
+                                  ? await vm.submitSignup(email, code)
+                                  : await vm.submitRecovery(email, code);
                               if (!mounted) return;
                               if (ok) {
                                 if (widget.forSignup) {
                                   router.go('/home');
                                 } else {
-                                  router.go(NewPasswordScreen.routeName, extra: email);
+                                  router.go(NewPasswordScreen.routeName,
+                                      extra: email);
                                 }
                               } else {
-                                messenger.showSnackBar(SnackBar(content: Text(vm.error ?? 'Wrong/Expired OTP'), backgroundColor: AppColors.error));
+                                messenger.showSnackBar(SnackBar(
+                                    content:
+                                        Text(vm.error ?? 'Wrong/Expired OTP', style: const TextStyle(color: AppColors.white)),
+                                    backgroundColor: AppColors.error));
                               }
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.darkText,
-                        disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
-                        disabledForegroundColor: AppColors.darkText,
+                        foregroundColor: AppColors.white,
+                        disabledBackgroundColor:
+                            AppColors.primary.withOpacity(0.6),
+                        disabledForegroundColor: AppColors.white,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
                       ),
                       child: vm.loading
-                          ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(AppColors.darkText)))
-                          : Text('Verify', style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700)),
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.white)))
+                          : Text('Verify',
+                              style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 16, fontWeight: FontWeight.w700)),
                     ),
                   ),
                   const SizedBox(height: 28),
@@ -222,9 +294,14 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.arrow_back, size: 18, color: AppColors.primary),
+                        Icon(Icons.arrow_back,
+                            size: 18, color: AppColors.primary),
                         const SizedBox(width: 6),
-                        Text('Back to Sign In', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                        Text('Back to Sign In',
+                            style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary)),
                       ],
                     ),
                   ),

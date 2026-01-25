@@ -32,7 +32,8 @@ class SupabaseHomeRemoteDataSource implements HomeRemoteDataSource {
 
   @override
   Future<List<Meal>> getAvailableMeals() async {
-    final res = await client.from('meals').select();
+    final res = await client.from('meals').select(
+        'id,title,location,image_url,original_price,donation_price,quantity,expiry,restaurant:restaurants(id,name,rating)');
     final data = (res as List).cast<Map<String, dynamic>>();
     return data.map((e) => MealModel.fromJson(e)).toList();
   }

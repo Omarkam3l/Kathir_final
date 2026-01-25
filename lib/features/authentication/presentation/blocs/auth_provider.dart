@@ -12,6 +12,7 @@ class AuthUserView {
   final List<String> addresses;
   final List<Map<String, dynamic>> cards;
   final String role;
+  final String? defaultLocation;
   const AuthUserView({
     required this.id,
     required this.name,
@@ -20,6 +21,7 @@ class AuthUserView {
     this.addresses = const [],
     this.cards = const [],
     this.role = 'user',
+    this.defaultLocation,
   });
 }
 
@@ -81,6 +83,7 @@ class AuthProvider extends ChangeNotifier {
       addresses: addresses,
       cards: cards,
       role: role,
+      defaultLocation: _userProfile?['default_location'] as String?,
     );
   }
 

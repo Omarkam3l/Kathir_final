@@ -167,7 +167,7 @@ class OnboardingPage3 extends StatelessWidget {
                     onPressed: onSignUp,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.darkText,
+                      foregroundColor: AppColors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -190,9 +190,10 @@ class OnboardingPage3 extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: onSignIn,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: textColor,
+                      foregroundColor: AppColors.darkText,
+                      backgroundColor: AppColors.white,
                       side: BorderSide(
-                        color: AppColors.primary.withOpacity(0.3),
+                        color: isDark ? AppColors.white.withOpacity(0.3) : AppColors.dividerLight,
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(

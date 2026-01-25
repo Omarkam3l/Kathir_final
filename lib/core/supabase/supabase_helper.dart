@@ -108,7 +108,7 @@ class SupabaseHelper {
           );
       return client.storage.from(bucket).getPublicUrl(fp);
     } catch (e) {
-      throw SupabaseHelperException('uploadDocument failed');
+      throw SupabaseHelperException('uploadDocument failed: $e');
     }
   }
 

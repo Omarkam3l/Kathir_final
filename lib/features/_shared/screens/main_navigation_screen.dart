@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:kathir_final/features/user_home/presentation/screens/home_screen.dart';
-import 'package:kathir_final/features/favorites/presentation/screens/favourites_screen.dart';
+import 'package:kathir_final/features/user_home/presentation/screens/map_placeholder_screen.dart';
 import 'package:kathir_final/features/cart/presentation/screens/cart_screen.dart';
-import 'package:kathir_final/features/profile/presentation/screens/notifications_screen.dart';
+import 'package:kathir_final/features/orders/presentation/screens/my_orders_screen.dart';
 import 'package:kathir_final/features/profile/presentation/screens/profile_overview_screen.dart';
+import 'package:kathir_final/features/_shared/widgets/home_bottom_nav_bar.dart';
 
+/// Main shell: Home, Map, Cart (center), Orders, Profile.
+/// Matches the Kathir user_home_page bottom nav design.
 class MainNavigationScreen extends StatefulWidget {
   final int initialIndex;
+
   const MainNavigationScreen({super.key, this.initialIndex = 0});
 
   @override
@@ -15,18 +19,19 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   late int _index;
-  final List<Widget> _pages = const [
+
+  static const List<Widget> _pages = [
     HomeScreen(),
-    FavouritesScreen(),
+    MapPlaceholderScreen(),
     CartScreen(),
-    NotificationsScreen(),
+    MyOrdersScreen(),
     ProfileOverviewScreen(),
   ];
 
   @override
   void initState() {
     super.initState();
-    _index = widget.initialIndex;
+    _index = widget.initialIndex.clamp(0, _pages.length - 1);
   }
 
   void _select(int i) => setState(() => _index = i);
@@ -35,17 +40,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _index, children: _pages),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
+      bottomNavigationBar: HomeBottomNavBar(
         currentIndex: _index,
         onTap: _select,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite_border), label: 'Favourites'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined), label: 'Cart'),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications_none), label: 'Alerts'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
-        ],
       ),
     );
   }

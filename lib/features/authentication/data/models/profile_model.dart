@@ -11,6 +11,7 @@ class ProfileModel extends ProfileEntity {
     required super.isVerified,
     super.avatarUrl,
     super.legalDocsUrl,
+    super.defaultLocation,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -24,6 +25,7 @@ class ProfileModel extends ProfileEntity {
       isVerified: (json['is_verified'] as bool?) ?? false,
       avatarUrl: json['avatar_url'] as String?,
       legalDocsUrl: json['legal_docs_url'] as String?,
+      defaultLocation: json['default_location'] as String?,
     );
   }
 
@@ -37,5 +39,6 @@ class ProfileModel extends ProfileEntity {
         'is_verified': isVerified,
         'avatar_url': avatarUrl,
         'legal_docs_url': legalDocsUrl,
+        'default_location': defaultLocation,
       };
 }

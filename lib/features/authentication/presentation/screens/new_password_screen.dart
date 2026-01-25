@@ -94,11 +94,11 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                               final p = _pass.text.trim();
                               final c = _confirm.text.trim();
                               if (p.length < 8) {
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password must be at least 8 characters'), backgroundColor: AppColors.error));
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password must be at least 8 characters', style: TextStyle(color: AppColors.white)), backgroundColor: AppColors.error));
                                 return;
                               }
                               if (p != c) {
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Passwords do not match'), backgroundColor: AppColors.error));
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Passwords do not match', style: TextStyle(color: AppColors.white)), backgroundColor: AppColors.error));
                                 return;
                               }
                               final messenger = ScaffoldMessenger.of(context);
@@ -106,7 +106,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                               final ok = await vm.submit(p);
                               if (!mounted) return;
                               if (ok) {
-                                messenger.showSnackBar(const SnackBar(content: Text('Password updated'), backgroundColor: AppColors.primary));
+                                messenger.showSnackBar(const SnackBar(content: Text('Password updated', style: TextStyle(color: AppColors.white)), backgroundColor: AppColors.primary));
                                 try {
                                   Provider.of<AuthProvider>(context, listen: false).endPasswordRecovery();
                                 } catch (_) {}
@@ -115,19 +115,19 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                                 } catch (_) {}
                                 router.go('/auth');
                               } else {
-                                messenger.showSnackBar(SnackBar(content: Text(vm.error ?? 'Weak password'), backgroundColor: AppColors.error));
+                                messenger.showSnackBar(SnackBar(content: Text(vm.error ?? 'Weak password', style: const TextStyle(color: AppColors.white)), backgroundColor: AppColors.error));
                               }
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.darkText,
+                        foregroundColor: AppColors.white,
                         disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
-                        disabledForegroundColor: AppColors.darkText,
+                        disabledForegroundColor: AppColors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                       child: vm.loading
-                          ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(AppColors.darkText)))
+                          ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(AppColors.white)))
                           : Text('Update Password', style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700)),
                     ),
                   ),

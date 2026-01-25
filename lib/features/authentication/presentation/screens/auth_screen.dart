@@ -22,7 +22,7 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   bool isLogin = true;
-  UserRole? _selectedRole;
+  UserRole? _selectedRole = UserRole.user;
   bool _documentsUploaded = false;
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -40,13 +40,13 @@ class _AuthScreenState extends State<AuthScreen> {
     super.initState();
     final vm = Provider.of<AuthViewModel>(context, listen: false);
     isLogin = vm.isLogin;
-    _selectedRole = vm.selectedRole;
+    _selectedRole = vm.selectedRole ?? (isLogin ? null : UserRole.user);
   }
 
   void toggleState() {
     setState(() {
       isLogin = !isLogin;
-      _selectedRole = null;
+      _selectedRole = isLogin ? null : UserRole.user;
       _documentsUploaded = false;
       _formKey.currentState?.reset();
     });
@@ -68,13 +68,19 @@ class _AuthScreenState extends State<AuthScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedRole == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a role'), backgroundColor: AppColors.error),
+        const SnackBar(
+            content: Text('Please select a role', style: TextStyle(color: AppColors.white)),
+            backgroundColor: AppColors.error),
       );
       return;
     }
-    if ((_selectedRole == UserRole.ngo || _selectedRole == UserRole.restaurant) && !_documentsUploaded) {
+    if ((_selectedRole == UserRole.ngo ||
+            _selectedRole == UserRole.restaurant) &&
+        !_documentsUploaded) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please upload your legal documents'), backgroundColor: AppColors.warning),
+        const SnackBar(
+            content: Text('Please upload your legal documents'),
+            backgroundColor: AppColors.warning),
       );
       return;
     }
@@ -91,20 +97,31 @@ class _AuthScreenState extends State<AuthScreen> {
         _nameController.text.trim(),
         _emailController.text.trim(),
         _passwordController.text,
-        organizationName: _orgNameController.text.trim().isEmpty ? null : _orgNameController.text.trim(),
-        phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+        organizationName: _orgNameController.text.trim().isEmpty
+            ? null
+            : _orgNameController.text.trim(),
+        phone: _phoneController.text.trim().isEmpty
+            ? null
+            : _phoneController.text.trim(),
       );
       if (_legalDocBytes != null) {
-        final uid = vm.user?.id ?? s.Supabase.instance.client.auth.currentUser?.id;
+        final uid =
+            vm.user?.id ?? s.Supabase.instance.client.auth.currentUser?.id;
         if (uid != null) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Uploading legal document...')));
-          final url = await vm.uploadLegalDoc(uid, 'legal.pdf', _legalDocBytes!);
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Uploading legal document...')));
+          final result =
+              await vm.uploadLegalDoc(uid, 'legal.pdf', _legalDocBytes!);
           if (mounted) {
-            if (url != null) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Document uploaded successfully')));
-            } else {
+            if (result.url != null) {
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('Document upload failed. Please try again later.'),
+                  content: Text('Document uploaded successfully')));
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(
+                  result.error ?? 'Document upload failed. Please try again later.',
+                  style: const TextStyle(color: AppColors.white),
+                ),
                 backgroundColor: AppColors.error,
               ));
             }
@@ -116,16 +133,18 @@ class _AuthScreenState extends State<AuthScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Check your email to verify your account'),
+            content: Text('Check your email to verify your account', style: TextStyle(color: AppColors.white)),
             backgroundColor: AppColors.primary,
           ));
-          GoRouter.of(context).go('${VerificationScreen.routeName}?mode=signup', extra: _emailController.text.trim());
+          GoRouter.of(context).push(
+              '${VerificationScreen.routeName}?mode=signup',
+              extra: _emailController.text.trim());
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error: ${e.toString()}'),
+          content: Text('Error: ${e.toString()}', style: const TextStyle(color: AppColors.white)),
           backgroundColor: AppColors.error,
         ));
       }
@@ -139,13 +158,14 @@ class _AuthScreenState extends State<AuthScreen> {
     setState(() => _isLoading = true);
     try {
       final vm = Provider.of<AuthViewModel>(context, listen: false);
-      final success = await vm.login(_emailController.text.trim(), _passwordController.text);
+      final success = await vm.login(
+          _emailController.text.trim(), _passwordController.text);
       if (mounted) {
         if (success) {
           GoRouter.of(context).go('/home');
         } else {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Invalid email or password'),
+            content: Text('Invalid email or password', style: TextStyle(color: AppColors.white)),
             backgroundColor: AppColors.error,
           ));
         }
@@ -153,7 +173,7 @@ class _AuthScreenState extends State<AuthScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error: ${e.toString()}'),
+          content: Text('Error: ${e.toString()}', style: const TextStyle(color: AppColors.white)),
           backgroundColor: AppColors.error,
         ));
       }
@@ -169,7 +189,9 @@ class _AuthScreenState extends State<AuthScreen> {
       _legalDocBytes = res.files.first.bytes;
       if (_legalDocBytes != null) {
         setState(() => _documentsUploaded = true);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Documents selected'), backgroundColor: AppColors.primary));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Documents selected', style: TextStyle(color: AppColors.white)),
+            backgroundColor: AppColors.primary));
       }
     }
   }
@@ -221,13 +243,19 @@ class _AuthScreenState extends State<AuthScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (isLogin) _buildLoginHeader(isDark, themeProvider) else _buildSignUpHeader(isDark, themeProvider),
+              if (isLogin)
+                _buildLoginHeader(isDark, themeProvider)
+              else
+                _buildSignUpHeader(isDark, themeProvider),
               Container(
                 width: double.infinity,
-                constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height * 0.5),
+                constraints: BoxConstraints(
+                    minHeight: MediaQuery.of(context).size.height * 0.5),
                 decoration: BoxDecoration(
                   color: surface,
-                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+                  borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24)),
                 ),
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
                 child: Form(
@@ -245,20 +273,33 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        isLogin ? 'Log in to your account to start helping.' : 'Connect, donate, and help end food waste.',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 14, color: textMuted, height: 1.4),
+                        isLogin
+                            ? 'Log in to your account to start helping.'
+                            : 'Connect, donate, and help end food waste.',
+                        style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14, color: textMuted, height: 1.4),
                       ),
                       const SizedBox(height: 24),
                       if (!isLogin) ...[
-                        Text('Select your role', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                        Text('Select your role',
+                            style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: textPrimary)),
                         const SizedBox(height: 10),
                         _buildRoleSegments(isDark, textPrimary, textMuted),
                         const SizedBox(height: 20),
                       ],
-                      if (!isLogin && (_selectedRole == UserRole.ngo || _selectedRole == UserRole.restaurant)) ...[
+                      if (!isLogin &&
+                          (_selectedRole == UserRole.ngo ||
+                              _selectedRole == UserRole.restaurant)) ...[
                         _AuthInput(
-                          label: 'Organization Name',
-                          hint: 'e.g. Green Earth Foundation',
+                          label: _selectedRole == UserRole.restaurant
+                              ? 'Restaurant Name'
+                              : 'Organization Name',
+                          hint: _selectedRole == UserRole.restaurant
+                              ? 'e.g. Green Leaf Bistro'
+                              : 'e.g. Green Earth Foundation',
                           controller: _orgNameController,
                           prefixIcon: Icons.business,
                           isDark: isDark,
@@ -280,7 +321,8 @@ class _AuthScreenState extends State<AuthScreen> {
                           textMuted: textMuted,
                           surface: surface,
                           border: border,
-                          validator: (v) => (v ?? '').trim().isEmpty ? 'Required' : null,
+                          validator: (v) =>
+                              (v ?? '').trim().isEmpty ? 'Required' : null,
                         ),
                       if (!isLogin) const SizedBox(height: 16),
                       _AuthInput(
@@ -294,7 +336,8 @@ class _AuthScreenState extends State<AuthScreen> {
                         textMuted: textMuted,
                         surface: surface,
                         border: border,
-                        validator: (v) => (v ?? '').trim().isEmpty ? 'Required' : null,
+                        validator: (v) =>
+                            (v ?? '').trim().isEmpty ? 'Required' : null,
                       ),
                       const SizedBox(height: 16),
                       if (!isLogin)
@@ -313,13 +356,21 @@ class _AuthScreenState extends State<AuthScreen> {
                       if (!isLogin) const SizedBox(height: 16),
                       _AuthInput(
                         label: 'Password',
-                        hint: isLogin ? 'Enter your password' : 'Create a password',
+                        hint: isLogin
+                            ? 'Enter your password'
+                            : 'Create a password',
                         controller: _passwordController,
                         prefixIcon: Icons.lock_outline,
                         obscureText: _obscurePassword,
                         suffixIcon: IconButton(
-                          icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: AppColors.primary, size: 22),
-                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                          icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              color: AppColors.primary,
+                              size: 22),
+                          onPressed: () => setState(
+                              () => _obscurePassword = !_obscurePassword),
                         ),
                         isDark: isDark,
                         textPrimary: textPrimary,
@@ -337,21 +388,34 @@ class _AuthScreenState extends State<AuthScreen> {
                               final messenger = ScaffoldMessenger.of(context);
                               final email = _emailController.text.trim();
                               if (email.isEmpty) {
-                                messenger.showSnackBar(const SnackBar(content: Text('Enter your email first'), backgroundColor: AppColors.error));
+                                messenger.showSnackBar(const SnackBar(
+                                    content: Text('Enter your email first', style: TextStyle(color: AppColors.white)),
+                                    backgroundColor: AppColors.error));
                                 return;
                               }
                               try {
                                 await s.Supabase.instance.client.auth.resend(
                                   type: s.OtpType.signup,
                                   email: email,
-                                  emailRedirectTo: kIsWeb ? Uri.base.toString() : 'io.supabase.flutter://login-callback/',
+                                  emailRedirectTo: kIsWeb
+                                      ? Uri.base.toString()
+                                      : 'io.supabase.flutter://login-callback/',
                                 );
-                                messenger.showSnackBar(const SnackBar(content: Text('Verification email sent'), backgroundColor: AppColors.primary));
+                                messenger.showSnackBar(const SnackBar(
+                                    content: Text('Verification email sent', style: TextStyle(color: AppColors.white)),
+                                    backgroundColor: AppColors.primary));
                               } catch (e) {
-                                messenger.showSnackBar(SnackBar(content: Text('Resend failed: ${e.toString()}'), backgroundColor: AppColors.error));
+                                messenger.showSnackBar(SnackBar(
+                                    content:
+                                        Text('Resend failed: ${e.toString()}', style: const TextStyle(color: AppColors.white)),
+                                    backgroundColor: AppColors.error));
                               }
                             },
-                            child: Text('Resend verification email', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                            child: Text('Resend verification email',
+                                style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary)),
                           ),
                         ),
                       ],
@@ -360,14 +424,22 @@ class _AuthScreenState extends State<AuthScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: GestureDetector(
-                            onTap: () => GoRouter.of(context).push('/forgot-password'),
-                            child: Text('Forgot Password?', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                            onTap: () =>
+                                GoRouter.of(context).push('/forgot-password'),
+                            child: Text('Forgot Password?',
+                                style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary)),
                           ),
                         ),
                       ],
-                      if (!isLogin && (_selectedRole == UserRole.ngo || _selectedRole == UserRole.restaurant)) ...[
+                      if (!isLogin &&
+                          (_selectedRole == UserRole.ngo ||
+                              _selectedRole == UserRole.restaurant)) ...[
                         const SizedBox(height: 20),
-                        _buildDocumentUploadSection(isDark, textPrimary, textMuted, surface, border),
+                        _buildDocumentUploadSection(
+                            isDark, textPrimary, textMuted, surface, border),
                       ],
                       const SizedBox(height: 28),
                       _PrimaryButton(
@@ -382,11 +454,32 @@ class _AuthScreenState extends State<AuthScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            _SocialButton(icon: Icons.g_mobiledata, label: 'Google', onTap: () => _handleSocialLogin('Google'), isDark: isDark, textPrimary: textPrimary, surface: surface, border: border),
+                            _SocialButton(
+                                icon: Icons.g_mobiledata,
+                                label: 'Google',
+                                onTap: () => _handleSocialLogin('Google'),
+                                isDark: isDark,
+                                textPrimary: textPrimary,
+                                surface: surface,
+                                border: border),
                             const SizedBox(width: 12),
-                            _SocialButton(icon: Icons.facebook, label: 'Facebook', onTap: () => _handleSocialLogin('Facebook'), isDark: isDark, textPrimary: textPrimary, surface: surface, border: border),
+                            _SocialButton(
+                                icon: Icons.facebook,
+                                label: 'Facebook',
+                                onTap: () => _handleSocialLogin('Facebook'),
+                                isDark: isDark,
+                                textPrimary: textPrimary,
+                                surface: surface,
+                                border: border),
                             const SizedBox(width: 12),
-                            _SocialButton(icon: Icons.apple, label: 'Apple', onTap: () => _handleSocialLogin('Apple'), isDark: isDark, textPrimary: textPrimary, surface: surface, border: border),
+                            _SocialButton(
+                                icon: Icons.apple,
+                                label: 'Apple',
+                                onTap: () => _handleSocialLogin('Apple'),
+                                isDark: isDark,
+                                textPrimary: textPrimary,
+                                surface: surface,
+                                border: border),
                           ],
                         ),
                       ],
@@ -396,10 +489,18 @@ class _AuthScreenState extends State<AuthScreen> {
                         child: RichText(
                           textAlign: TextAlign.center,
                           text: TextSpan(
-                            style: GoogleFonts.plusJakartaSans(fontSize: 14, color: textMuted),
+                            style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14, color: textMuted),
                             children: [
-                              TextSpan(text: isLogin ? "Don't have an account? " : 'Already have an account? '),
-                              TextSpan(text: isLogin ? 'Sign Up' : 'Sign In', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: AppColors.primary)),
+                              TextSpan(
+                                  text: isLogin
+                                      ? "Don't have an account? "
+                                      : 'Already have an account? '),
+                              TextSpan(
+                                  text: isLogin ? 'Sign Up' : 'Sign In',
+                                  style: GoogleFonts.plusJakartaSans(
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primary)),
                             ],
                           ),
                         ),
@@ -422,7 +523,12 @@ class _AuthScreenState extends State<AuthScreen> {
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: AppColors.black.withOpacity(0.15), blurRadius: 12, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+              color: AppColors.black.withOpacity(0.15),
+              blurRadius: 12,
+              offset: const Offset(0, 4))
+        ],
       ),
       child: Stack(
         fit: StackFit.expand,
@@ -432,13 +538,21 @@ class _AuthScreenState extends State<AuthScreen> {
             child: Image.asset(
               'lib/resources/assets/images/8040836.jpg',
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(color: AppColors.primary.withOpacity(0.2), child: Icon(Icons.eco, size: 64, color: AppColors.primary)),
+              errorBuilder: (_, __, ___) => Container(
+                  color: AppColors.primary.withOpacity(0.2),
+                  child: Icon(Icons.eco, size: 64, color: AppColors.primary)),
             ),
           ),
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [AppColors.transparent, AppColors.black.withOpacity(0.6)]),
+              gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.transparent,
+                    AppColors.black.withOpacity(0.6)
+                  ]),
             ),
           ),
           Positioned(
@@ -448,8 +562,14 @@ class _AuthScreenState extends State<AuthScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Kathir', style: GoogleFonts.plusJakartaSans(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.white)),
-                Text('Connecting food to people.', style: GoogleFonts.plusJakartaSans(fontSize: 14, color: AppColors.white.withOpacity(0.9))),
+                Text('Kathir',
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.white)),
+                Text('Connecting food to people.',
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14, color: AppColors.white.withOpacity(0.9))),
               ],
             ),
           ),
@@ -457,7 +577,8 @@ class _AuthScreenState extends State<AuthScreen> {
             top: 8,
             right: 8,
             child: IconButton(
-              icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode, color: AppColors.white),
+              icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode,
+                  color: AppColors.white),
               onPressed: () => themeProvider.toggleTheme(),
             ),
           ),
@@ -472,9 +593,17 @@ class _AuthScreenState extends State<AuthScreen> {
       child: Row(
         children: [
           const SizedBox(width: 40),
-          Expanded(child: Center(child: Text('Sign Up', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: isDark ? AppColors.white : AppColors.darkText)))),
+          Expanded(
+              child: Center(
+                  child: Text('Sign Up',
+                      style: GoogleFonts.plusJakartaSans(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color:
+                              isDark ? AppColors.white : AppColors.darkText)))),
           IconButton(
-            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode, color: isDark ? AppColors.white : AppColors.darkText),
+            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode,
+                color: isDark ? AppColors.white : AppColors.darkText),
             onPressed: () => themeProvider.toggleTheme(),
           ),
         ],
@@ -491,7 +620,9 @@ class _AuthScreenState extends State<AuthScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.primary.withOpacity(0.08),
+        color: isDark
+            ? AppColors.surfaceDark
+            : AppColors.primary.withOpacity(0.08),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -508,7 +639,13 @@ class _AuthScreenState extends State<AuthScreen> {
                 decoration: BoxDecoration(
                   color: sel ? AppColors.primary : AppColors.transparent,
                   borderRadius: BorderRadius.circular(8),
-                  boxShadow: sel ? [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 6)] : null,
+                  boxShadow: sel
+                      ? [
+                          BoxShadow(
+                              color: AppColors.primary.withOpacity(0.3),
+                              blurRadius: 6)
+                        ]
+                      : null,
                 ),
                 child: Center(
                   child: Text(
@@ -516,7 +653,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: sel ? AppColors.darkText : textMuted,
+                      color: sel ? AppColors.white : textMuted,
                     ),
                   ),
                 ),
@@ -534,41 +671,59 @@ class _AuthScreenState extends State<AuthScreen> {
         Expanded(child: Divider(color: AppColors.dividerLight)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text('Or continue with', style: GoogleFonts.plusJakartaSans(fontSize: 13, color: textMuted)),
+          child: Text('Or continue with',
+              style:
+                  GoogleFonts.plusJakartaSans(fontSize: 13, color: textMuted)),
         ),
         Expanded(child: Divider(color: AppColors.dividerLight)),
       ],
     );
   }
 
-  Widget _buildDocumentUploadSection(bool isDark, Color textPrimary, Color textMuted, Color surface, Color border) {
+  Widget _buildDocumentUploadSection(bool isDark, Color textPrimary,
+      Color textMuted, Color surface, Color border) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? AppColors.inputFillDark : AppColors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _documentsUploaded ? AppColors.primary : border, width: _documentsUploaded ? 2 : 1),
+        border: Border.all(
+            color: _documentsUploaded ? AppColors.primary : border,
+            width: _documentsUploaded ? 2 : 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.description_outlined, color: AppColors.primary, size: 22),
+              Icon(Icons.description_outlined,
+                  color: AppColors.primary, size: 22),
               const SizedBox(width: 10),
               Expanded(
-                child: Text('Legal Documents Required', style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w700, color: textPrimary)),
+                child: Text('Legal Documents Required',
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: textPrimary)),
               ),
               if (_documentsUploaded)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20)),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.check_circle, color: AppColors.primary, size: 14),
+                      Icon(Icons.check_circle,
+                          color: AppColors.primary, size: 14),
                       const SizedBox(width: 4),
-                      Text('Uploaded', style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                      Text('Uploaded',
+                          style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary)),
                     ],
                   ),
                 ),
@@ -584,17 +739,24 @@ class _AuthScreenState extends State<AuthScreen> {
             GestureDetector(
               onTap: _uploadDocuments,
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.primary, style: BorderStyle.solid),
+                  border: Border.all(
+                      color: AppColors.primary, style: BorderStyle.solid),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.cloud_upload_outlined, color: AppColors.primary, size: 20),
+                    Icon(Icons.cloud_upload_outlined,
+                        color: AppColors.primary, size: 20),
                     const SizedBox(width: 8),
-                    Text('Upload Documents', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                    Text('Upload Documents',
+                        style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary)),
                   ],
                 ),
               ),
@@ -641,7 +803,9 @@ class _AuthInput extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+        Text(label,
+            style: GoogleFonts.plusJakartaSans(
+                fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
@@ -651,15 +815,24 @@ class _AuthInput extends StatelessWidget {
           style: GoogleFonts.plusJakartaSans(fontSize: 15, color: textPrimary),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: GoogleFonts.plusJakartaSans(fontSize: 15, color: textMuted),
+            hintStyle:
+                GoogleFonts.plusJakartaSans(fontSize: 15, color: textMuted),
             prefixIcon: Icon(prefixIcon, color: AppColors.primary, size: 22),
             suffixIcon: suffixIcon,
             filled: true,
             fillColor: surface,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: border)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: border)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: border)),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: border)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                    const BorderSide(color: AppColors.primary, width: 2)),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ),
       ],
@@ -672,7 +845,8 @@ class _PrimaryButton extends StatelessWidget {
   final bool loading;
   final VoidCallback onPressed;
 
-  const _PrimaryButton({required this.label, required this.loading, required this.onPressed});
+  const _PrimaryButton(
+      {required this.label, required this.loading, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -682,15 +856,23 @@ class _PrimaryButton extends StatelessWidget {
         onPressed: loading ? null : onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.darkText,
+          foregroundColor: AppColors.white,
           disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
-          disabledForegroundColor: AppColors.darkText,
+          disabledForegroundColor: AppColors.white,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
         child: loading
-            ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(AppColors.darkText)))
-            : Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700)),
+            ? const SizedBox(
+                height: 22,
+                width: 22,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.white)))
+            : Text(label,
+                style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16, fontWeight: FontWeight.w700)),
       ),
     );
   }
@@ -705,7 +887,14 @@ class _SocialButton extends StatelessWidget {
   final Color surface;
   final Color border;
 
-  const _SocialButton({required this.icon, required this.label, required this.onTap, required this.isDark, required this.textPrimary, required this.surface, required this.border});
+  const _SocialButton(
+      {required this.icon,
+      required this.label,
+      required this.onTap,
+      required this.isDark,
+      required this.textPrimary,
+      required this.surface,
+      required this.border});
 
   @override
   Widget build(BuildContext context) {
@@ -727,7 +916,11 @@ class _SocialButton extends StatelessWidget {
               children: [
                 Icon(icon, size: 22, color: textPrimary),
                 const SizedBox(width: 8),
-                Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+                Text(label,
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary)),
               ],
             ),
           ),
