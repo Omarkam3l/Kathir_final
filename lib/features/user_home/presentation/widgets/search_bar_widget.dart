@@ -20,7 +20,7 @@ class SearchBarWidget extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final card = isDark ? AppColors.surfaceDark : AppColors.white;
     final textMain = isDark ? AppColors.white : AppColors.darkText;
-    final muted = AppColors.grey;
+    const muted = AppColors.grey;
     final border = isDark ? AppColors.dividerDark : AppColors.dividerLight;
 
     return Padding(
@@ -78,7 +78,7 @@ class SearchBarWidget extends StatelessWidget {
                 width: 48,
                 height: 48,
                 alignment: Alignment.center,
-                child: Icon(
+                child: const Icon(
                   Icons.tune,
                   size: 22,
                   color: AppColors.white,

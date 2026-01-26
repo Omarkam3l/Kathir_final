@@ -22,7 +22,7 @@ class MealCardGrid extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final card = isDark ? AppColors.surfaceDark : AppColors.white;
     final textMain = isDark ? AppColors.white : AppColors.darkText;
-    final muted = AppColors.grey;
+    const muted = AppColors.grey;
     final border = isDark ? AppColors.dividerDark : AppColors.dividerLight;
 
     final pickupStr = _pickupString(offer.expiry);
@@ -63,7 +63,7 @@ class MealCardGrid extends StatelessWidget {
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
                           color: AppColors.primary.withOpacity(0.1),
-                          child: Icon(
+                          child: const Icon(
                             Icons.restaurant,
                             size: 40,
                             color: AppColors.primary,
@@ -132,8 +132,7 @@ class MealCardGrid extends StatelessWidget {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(Icons.location_on,
-                              size: 12, color: muted),
+                          Icon(Icons.location_on, size: 12, color: muted),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -225,7 +224,7 @@ class _AddButton extends StatelessWidget {
             color: bg,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(Icons.add, size: 20, color: AppColors.primary),
+          child: const Icon(Icons.add, size: 20, color: AppColors.primary),
         ),
       ),
     );

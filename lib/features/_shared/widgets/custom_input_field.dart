@@ -21,7 +21,8 @@ class CustomInputField extends StatelessWidget {
   Widget build(BuildContext context) {
     final isOptional = hintText.toLowerCase().contains('optional');
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fill = fillColor ?? (isDark ? AppColors.inputFillDark : AppColors.inputFillLight);
+    final fill = fillColor ??
+        (isDark ? AppColors.inputFillDark : AppColors.inputFillLight);
     final border = isDark ? AppColors.dividerDark : AppColors.dividerLight;
     return TextFormField(
       controller: controller,
@@ -35,13 +36,20 @@ class CustomInputField extends StatelessWidget {
       style: TextStyle(color: isDark ? AppColors.white : AppColors.darkText),
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: TextStyle(color: AppColors.grey),
+        hintStyle: const TextStyle(color: AppColors.grey),
         filled: true,
         fillColor: fill,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: border)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: border)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: border)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: border)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.primary, width: 2)),
       ),
     );
   }

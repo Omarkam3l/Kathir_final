@@ -32,7 +32,8 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
+    final bgColor =
+        isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -40,14 +41,14 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
         future: _hasSeenFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
+            return const Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             );
           }
           final hasSeen = snapshot.data ?? false;
           if (hasSeen) {
             _redirectToAuth();
-            return Center(
+            return const Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             );
           }

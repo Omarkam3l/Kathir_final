@@ -18,8 +18,8 @@ class HomeBottomNavBar extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.surfaceDark : AppColors.white;
     final border = isDark ? AppColors.dividerDark : AppColors.dividerLight;
-    final selected = AppColors.primary;
-    final unselected = AppColors.grey;
+    const selected = AppColors.primary;
+    const unselected = AppColors.grey;
 
     return Container(
       padding: EdgeInsets.only(

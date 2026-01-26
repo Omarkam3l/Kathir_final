@@ -98,7 +98,7 @@ class _FlashDealCard extends StatelessWidget {
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Container(
                     color: AppColors.primary.withOpacity(0.15),
-                    child: Icon(
+                    child: const Icon(
                       Icons.restaurant,
                       size: 48,
                       color: AppColors.primary,

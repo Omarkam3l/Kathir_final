@@ -17,6 +17,12 @@ class MealModel extends Meal {
     super.allergens,
     super.co2Savings,
     super.pickupTime,
+    super.category,
+    super.unit,
+    super.fulfillmentMethod,
+    super.status,
+    super.isDonationAvailable,
+    super.pickupDeadline,
   });
 
   factory MealModel.fromJson(Map<String, dynamic> json) {
@@ -34,6 +40,12 @@ class MealModel extends Meal {
       allergens: (json['allergens'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
       co2Savings: (json['co2_savings'] as num?)?.toDouble() ?? 0.0,
       pickupTime: json['pickup_time'] != null ? DateTime.tryParse(json['pickup_time'].toString()) : null,
+      category: json['category'] ?? 'meals',
+      unit: json['unit'] ?? 'portions',
+      fulfillmentMethod: json['fulfillment_method'] ?? 'pickup',
+      status: json['status'] ?? 'active',
+      isDonationAvailable: json['is_donation_available'] ?? false,
+      pickupDeadline: json['pickup_deadline'] != null ? DateTime.tryParse(json['pickup_deadline'].toString()) : null,
       restaurant: RestaurantModel.fromJson(json['restaurant'] is Map<String, dynamic>
           ? json['restaurant'] as Map<String, dynamic>
           : {
@@ -61,6 +73,13 @@ class MealModel extends Meal {
         'allergens': allergens,
         'co2_savings': co2Savings,
         'pickup_time': pickupTime?.toIso8601String(),
+        'category': category,
+        'unit': unit,
+        'fulfillment_method': fulfillmentMethod,
+        'status': status,
+        'is_donation_available': isDonationAvailable,
+        'pickup_deadline': pickupDeadline?.toIso8601String(),
         'restaurant_id': restaurant.id,
       };
 }
+

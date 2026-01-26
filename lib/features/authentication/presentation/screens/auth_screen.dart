@@ -69,7 +69,8 @@ class _AuthScreenState extends State<AuthScreen> {
     if (_selectedRole == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Please select a role', style: TextStyle(color: AppColors.white)),
+            content: Text('Please select a role',
+                style: TextStyle(color: AppColors.white)),
             backgroundColor: AppColors.error),
       );
       return;
@@ -119,7 +120,8 @@ class _AuthScreenState extends State<AuthScreen> {
             } else {
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text(
-                  result.error ?? 'Document upload failed. Please try again later.',
+                  result.error ??
+                      'Document upload failed. Please try again later.',
                   style: const TextStyle(color: AppColors.white),
                 ),
                 backgroundColor: AppColors.error,
@@ -133,7 +135,8 @@ class _AuthScreenState extends State<AuthScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Check your email to verify your account', style: TextStyle(color: AppColors.white)),
+            content: Text('Check your email to verify your account',
+                style: TextStyle(color: AppColors.white)),
             backgroundColor: AppColors.primary,
           ));
           GoRouter.of(context).push(
@@ -144,7 +147,8 @@ class _AuthScreenState extends State<AuthScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error: ${e.toString()}', style: const TextStyle(color: AppColors.white)),
+          content: Text('Error: ${e.toString()}',
+              style: const TextStyle(color: AppColors.white)),
           backgroundColor: AppColors.error,
         ));
       }
@@ -165,7 +169,8 @@ class _AuthScreenState extends State<AuthScreen> {
           GoRouter.of(context).go('/home');
         } else {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Invalid email or password', style: TextStyle(color: AppColors.white)),
+            content: Text('Invalid email or password',
+                style: TextStyle(color: AppColors.white)),
             backgroundColor: AppColors.error,
           ));
         }
@@ -173,7 +178,8 @@ class _AuthScreenState extends State<AuthScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error: ${e.toString()}', style: const TextStyle(color: AppColors.white)),
+          content: Text('Error: ${e.toString()}',
+              style: const TextStyle(color: AppColors.white)),
           backgroundColor: AppColors.error,
         ));
       }
@@ -190,7 +196,8 @@ class _AuthScreenState extends State<AuthScreen> {
       if (_legalDocBytes != null) {
         setState(() => _documentsUploaded = true);
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Documents selected', style: TextStyle(color: AppColors.white)),
+            content: Text('Documents selected',
+                style: TextStyle(color: AppColors.white)),
             backgroundColor: AppColors.primary));
       }
     }
@@ -232,7 +239,7 @@ class _AuthScreenState extends State<AuthScreen> {
     final bg = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
     final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
     final textPrimary = isDark ? AppColors.white : AppColors.darkText;
-    final textMuted = AppColors.grey;
+    const textMuted = AppColors.grey;
     final border = isDark ? AppColors.dividerDark : AppColors.dividerLight;
 
     return Scaffold(
@@ -389,7 +396,9 @@ class _AuthScreenState extends State<AuthScreen> {
                               final email = _emailController.text.trim();
                               if (email.isEmpty) {
                                 messenger.showSnackBar(const SnackBar(
-                                    content: Text('Enter your email first', style: TextStyle(color: AppColors.white)),
+                                    content: Text('Enter your email first',
+                                        style:
+                                            TextStyle(color: AppColors.white)),
                                     backgroundColor: AppColors.error));
                                 return;
                               }
@@ -402,12 +411,16 @@ class _AuthScreenState extends State<AuthScreen> {
                                       : 'io.supabase.flutter://login-callback/',
                                 );
                                 messenger.showSnackBar(const SnackBar(
-                                    content: Text('Verification email sent', style: TextStyle(color: AppColors.white)),
+                                    content: Text('Verification email sent',
+                                        style:
+                                            TextStyle(color: AppColors.white)),
                                     backgroundColor: AppColors.primary));
                               } catch (e) {
                                 messenger.showSnackBar(SnackBar(
-                                    content:
-                                        Text('Resend failed: ${e.toString()}', style: const TextStyle(color: AppColors.white)),
+                                    content: Text(
+                                        'Resend failed: ${e.toString()}',
+                                        style: const TextStyle(
+                                            color: AppColors.white)),
                                     backgroundColor: AppColors.error));
                               }
                             },
@@ -540,7 +553,8 @@ class _AuthScreenState extends State<AuthScreen> {
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
                   color: AppColors.primary.withOpacity(0.2),
-                  child: Icon(Icons.eco, size: 64, color: AppColors.primary)),
+                  child: const Icon(Icons.eco,
+                      size: 64, color: AppColors.primary)),
             ),
           ),
           Container(
@@ -668,14 +682,14 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget _buildDivider(Color textMuted, Color bg) {
     return Row(
       children: [
-        Expanded(child: Divider(color: AppColors.dividerLight)),
+        const Expanded(child: Divider(color: AppColors.dividerLight)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text('Or continue with',
               style:
                   GoogleFonts.plusJakartaSans(fontSize: 13, color: textMuted)),
         ),
-        Expanded(child: Divider(color: AppColors.dividerLight)),
+        const Expanded(child: Divider(color: AppColors.dividerLight)),
       ],
     );
   }
@@ -696,7 +710,7 @@ class _AuthScreenState extends State<AuthScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.description_outlined,
+              const Icon(Icons.description_outlined,
                   color: AppColors.primary, size: 22),
               const SizedBox(width: 10),
               Expanded(
@@ -716,7 +730,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.check_circle,
+                      const Icon(Icons.check_circle,
                           color: AppColors.primary, size: 14),
                       const SizedBox(width: 4),
                       Text('Uploaded',
@@ -749,7 +763,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.cloud_upload_outlined,
+                    const Icon(Icons.cloud_upload_outlined,
                         color: AppColors.primary, size: 20),
                     const SizedBox(width: 8),
                     Text('Upload Documents',

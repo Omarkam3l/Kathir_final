@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../profile/presentation/providers/foodie_state.dart';
 import '../../../../core/utils/app_colors.dart';
-import 'package:go_router/go_router.dart';
-import '../../../../core/utils/user_role.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' as s;
+import '../../../user_home/domain/entities/meal_offer.dart';
+import '../../../orders/presentation/screens/order_summary_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   static const routeName = '/checkout';
@@ -13,435 +15,491 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  late final List<PaymentMethod> _methods;
-  int _selected = 0;
-  int _slot = 0;
-  PurchaseMode _purchaseMode = PurchaseMode.buyer;
-
-  @override
-  void initState() {
-    super.initState();
-    _methods = demoPaymentMethods();
-  }
-
-  /// Checks if current user can choose buyer/donor mode
-  bool _canChooseBuyerDonor(BuildContext context) {
-    final user = s.Supabase.instance.client.auth.currentUser;
-    if (user == null) return false;
-    final role = (user.userMetadata?['role'] as String?) ?? '';
-    return role.toLowerCase() == UserRole.user.name.toLowerCase();
-  }
+  String _paymentMethod = 'card'; // card, wallet, cod
 
   @override
   Widget build(BuildContext context) {
-    const subtotal = 52.5;
-    const delivery = 3.5;
-    const tip = 4.0;
-    const total = subtotal + delivery + tip;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Theme Colors
+    final bgColor = Theme.of(context).scaffoldBackgroundColor;
+    final surfaceColor = Theme.of(context).cardColor;
+    final textColor =
+        Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
+    final subTextColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+    const primaryColor = AppColors.primary;
+    final borderColor = isDark ? Colors.white10 : Colors.grey[200]!;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 16, 18, 4),
-              child: Row(
+      backgroundColor: bgColor,
+      appBar: AppBar(
+        title: Text('Payment',
+            style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.bold, fontSize: 18)),
+        centerTitle: true,
+        backgroundColor: surfaceColor.withOpacity(0.8),
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: textColor),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      bottomNavigationBar: Consumer<FoodieState>(builder: (context, foodie, _) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            border: Border(top: BorderSide(color: borderColor)),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, -5))
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildFooterRow(
+                  'Subtotal',
+                  '\$${foodie.subtotal.toStringAsFixed(2)}',
+                  subTextColor,
+                  textColor),
+              const SizedBox(height: 8),
+              _buildFooterRow(
+                  'Service Fee',
+                  '\$${foodie.platformFee.toStringAsFixed(2)}',
+                  subTextColor,
+                  textColor),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _diamondButton(
-                    icon: Icons.arrow_back_ios_new,
-                    onTap: () {
-                      final router = GoRouter.of(context);
-                      if (router.canPop()) {
-                        router.pop();
-                      } else {
-                        router.go('/home');
-                      }
-                    },
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Total Amount',
+                          style: TextStyle(fontSize: 12, color: subTextColor)),
+                      Text('\$${foodie.total.toStringAsFixed(2)}',
+                          style: GoogleFonts.plusJakartaSans(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: textColor)),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      'Checkout',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                  SizedBox(
+                    width: 180,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Capture data before clearing
+                        final items = List<CartItem>.from(foodie.cartItems);
+                        final total = foodie.total;
+                        final subtotal = foodie.subtotal;
+                        final deliveryFee = foodie.deliveryFee;
+
+                        // Clear Cart
+                        foodie.clearCart();
+
+                        // Navigate using pushReplacement so user can't go back to checkout with empty cart
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) => OrderSummaryScreen(
+                              items: items,
+                              total: total,
+                              subtotal: subtotal,
+                              deliveryFee: deliveryFee,
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        elevation: 4,
+                        shadowColor: primaryColor.withOpacity(0.4),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('Pay Now',
+                              style: GoogleFonts.plusJakartaSans(
+                                  fontWeight: FontWeight.bold, fontSize: 16)),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.check_circle, size: 20),
+                        ],
                       ),
                     ),
                   ),
                 ],
               ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(18, 10, 18, 120),
-                child: Column(
-                  children: [
-                    // Buyer/Donor Selection (only for UserRole.user)
-                    if (_canChooseBuyerDonor(context)) ...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ChoiceChip(
-                            label: const Text('Buyer'),
-                            selected: _purchaseMode == PurchaseMode.buyer,
-                            onSelected: (_) => setState(
-                                () => _purchaseMode = PurchaseMode.buyer),
-                          ),
-                          const SizedBox(width: 12),
-                          ChoiceChip(
-                            label: const Text('Donor'),
-                            selected: _purchaseMode == PurchaseMode.donor,
-                            onSelected: (_) => setState(
-                                () => _purchaseMode = PurchaseMode.donor),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
+            ],
+          ),
+        );
+      }),
+      body: Consumer<FoodieState>(
+        builder: (context, foodie, _) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Order Summary',
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: textColor)),
+                Text('Review your order before paying.',
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14, color: subTextColor)),
+                const SizedBox(height: 16),
+
+                // Order Items
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: surfaceColor,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: borderColor),
+                    boxShadow: [
+                      if (!isDark)
+                        BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4)),
                     ],
-                    _SectionCard(
-                      title: 'Delivery address',
-                      trailing: TextButton(
-                        onPressed: () {},
-                        child: const Text('Change'),
-                      ),
-                      child: const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Work • 212 Kathir Heights',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text('Tech Park, Floor 11'),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    _SectionCard(
-                      title: 'Delivery slot',
-                      child: Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: List.generate(3, (index) {
-                          const slots = [
-                            'Now (25 min)',
-                            '18:30 - 19:00',
-                            'Schedule'
-                          ];
-                          return GestureDetector(
-                            onTap: () => setState(() => _slot = index),
-                            child: Container(
-                              width: 110,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: _slot == index
-                                    ? AppColors.darkText
-                                    : AppColors.lightBackground,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  slots[index],
-                                  style: TextStyle(
-                                    color: _slot == index
-                                        ? Colors.white
-                                        : AppColors.darkText,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    _SectionCard(
-                      title: 'Payment method',
-                      child: Column(
-                        children: [
-                          for (int i = 0; i < _methods.length; i++) ...[
-                            RadioListTile<int>(
-                              value: i,
-                              groupValue: _selected,
-                              activeColor: AppColors.primaryAccent,
-                              onChanged: (value) =>
-                                  setState(() => _selected = value ?? 0),
-                              title: Text(
-                                '${_methods[i].brand} • ${_methods[i].maskedNumber}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.darkText,
-                                ),
-                              ),
-                              secondary: CircleAvatar(
-                                backgroundColor:
-                                    AppColors.primaryAccent.withOpacity(0.12),
-                                child: Icon(_methods[i].icon,
-                                    color: AppColors.primaryAccent),
-                              ),
-                            ),
-                            if (i != _methods.length - 1)
-                              const Divider(indent: 12, endIndent: 12),
+                  ),
+                  child: Column(
+                    children: [
+                      ...foodie.cartItems.map((item) => _buildOrderItem(item,
+                          textColor, subTextColor, primaryColor, borderColor)),
+                      const SizedBox(height: 16),
+                      // Delivery Info
+                      Container(
+                        padding: const EdgeInsets.only(top: 16),
+                        decoration: BoxDecoration(
+                            border:
+                                Border(top: BorderSide(color: borderColor))),
+                        child: Column(
+                          children: [
+                            _buildSummaryRow(
+                                Icon(Icons.local_shipping,
+                                    size: 16, color: subTextColor),
+                                'Delivery Fee',
+                                '\$${foodie.deliveryFee.toStringAsFixed(2)}',
+                                textColor,
+                                subTextColor),
+                            const SizedBox(height: 8),
+                            _buildSummaryRow(
+                                Icon(Icons.location_on,
+                                    size: 16, color: subTextColor),
+                                'Delivery to',
+                                '12 Hassan Sabry St.',
+                                textColor,
+                                subTextColor),
                           ],
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () {},
-                              icon: const Icon(Icons.add),
-                              label: const Text('Add new card'),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 18),
-                    const _SectionCard(
-                      title: 'Order summary',
-                      child: Column(
-                        children: [
-                          _SummaryRow(label: 'Subtotal (3 items)', value: 52.5),
-                          _SummaryRow(label: 'Delivery fee', value: 3.5),
-                          _SummaryRow(label: 'Courier tip', value: 4.0),
-                          Divider(height: 28),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Payment Method
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Payment Method',
+                        style: GoogleFonts.plusJakartaSans(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: textColor)),
                     Container(
-                      padding: const EdgeInsets.all(18),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.darkText,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
+                          color: primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20)),
                       child: Row(
                         children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child:
-                                const Icon(Icons.discount, color: Colors.white),
-                          ),
-                          const SizedBox(width: 14),
-                          const Expanded(
-                            child: Text(
-                              'Free delivery on orders above \$50',
+                          Icon(Icons.lock, size: 12, color: primaryColor),
+                          const SizedBox(width: 4),
+                          Text('Secured',
                               style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () {},
-                            child: const Text('Add code',
-                                style: TextStyle(color: Colors.white)),
-                          ),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryColor)),
                         ],
                       ),
                     ),
                   ],
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.fromLTRB(18, 18, 18, 30),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x22000000),
-              blurRadius: 16,
-              offset: Offset(0, -4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                const Text('Total', style: TextStyle(color: Colors.grey)),
-                const Spacer(),
-                Text(
-                  '\$${total.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                const SizedBox(height: 12),
+                _buildPaymentOption(
+                    'card',
+                    'Credit / Debit Card',
+                    'Visa, Mastercard (via Paymob)',
+                    Icons.credit_card,
+                    surfaceColor,
+                    borderColor,
+                    primaryColor,
+                    textColor,
+                    subTextColor),
+                const SizedBox(height: 8),
+                _buildPaymentOption(
+                    'wallet',
+                    'Mobile Wallet',
+                    'Vodafone, Orange, Etisalat Cash',
+                    Icons.account_balance_wallet,
+                    surfaceColor,
+                    borderColor,
+                    primaryColor,
+                    textColor,
+                    subTextColor),
+                const SizedBox(height: 8),
+                _buildPaymentOption(
+                    'cod',
+                    'Cash on Delivery',
+                    'Pay cash when order arrives',
+                    Icons.payments,
+                    surfaceColor,
+                    borderColor,
+                    primaryColor,
+                    textColor,
+                    subTextColor),
+
+                // Discount
+                const SizedBox(height: 24),
+                Text('DISCOUNT',
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: subTextColor,
+                        letterSpacing: 1.0)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                            color: surfaceColor,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: borderColor)),
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Add promo code',
+                            prefixIcon:
+                                Icon(Icons.sell_outlined, color: subTextColor),
+                            border: InputBorder.none,
+                            contentPadding:
+                                const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: surfaceColor,
+                        foregroundColor: primaryColor,
+                        elevation: 0,
+                        side: BorderSide(color: borderColor),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 16),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Apply'),
+                    ),
+                  ],
                 ),
-              ),
               ],
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 58,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18)),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildOrderItem(CartItem item, Color textColor, Color subTextColor,
+      Color primaryColor, Color borderColor) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              image: DecorationImage(
+                  image: NetworkImage(item.meal.imageUrl), fit: BoxFit.cover),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                        child: Text(item.meal.title,
+                            style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.bold, color: textColor),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis)),
+                    Text('\$${item.lineTotal.toStringAsFixed(2)}',
+                        style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.bold, color: textColor)),
+                  ],
                 ),
-                onPressed: () {
-                  // Handle order placement based on mode
-                  final modeText = _purchaseMode == PurchaseMode.buyer
-                      ? 'buying'
-                      : 'donating';
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Placing order as $modeText...'),
-                      duration: const Duration(seconds: 1),
+                Text(item.meal.restaurant.name,
+                    style: TextStyle(fontSize: 12, color: subTextColor)),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                          border: Border.all(color: borderColor),
+                          borderRadius: BorderRadius.circular(4)),
+                      child: Text('Qty: ${item.qty}',
+                          style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: subTextColor)),
                     ),
-                  );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Order placed')),
-                  );
-                },
-                child: Text(
-                  _purchaseMode == PurchaseMode.buyer
-                      ? 'Place order'
-                      : 'Complete donation',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
-                  ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                          border: Border.all(color: borderColor),
+                          borderRadius: BorderRadius.circular(4)),
+                      child: Text('Surplus Food',
+                          style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: subTextColor)),
+                    ),
+                  ],
                 ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(Widget icon, String label, String value,
+      Color textColor, Color subTextColor) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            icon,
+            const SizedBox(width: 6),
+            Text(label, style: TextStyle(fontSize: 14, color: subTextColor)),
+          ],
+        ),
+        Text(value,
+            style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+      ],
+    );
+  }
+
+  Widget _buildFooterRow(
+      String label, String value, Color subTextColor, Color textColor) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: TextStyle(color: subTextColor)),
+        Text(value,
+            style: TextStyle(fontWeight: FontWeight.w600, color: textColor)),
+      ],
+    );
+  }
+
+  Widget _buildPaymentOption(
+      String value,
+      String title,
+      String subtitle,
+      IconData icon,
+      Color surfaceColor,
+      Color borderColor,
+      Color primaryColor,
+      Color textColor,
+      Color subTextColor) {
+    final isSelected = _paymentMethod == value;
+    return InkWell(
+      onTap: () => setState(() => _paymentMethod = value),
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+              color: isSelected ? primaryColor : borderColor,
+              width: isSelected ? 2 : 1),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                      color: primaryColor.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4))
+                ]
+              : [],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                    color: isSelected ? primaryColor : subTextColor, width: 2),
+                color: isSelected ? primaryColor : Colors.transparent,
+              ),
+              child: isSelected
+                  ? const Icon(Icons.circle, size: 10, color: Colors.white)
+                  : null,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(title,
+                          style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.bold, color: textColor)),
+                      Icon(icon, color: subTextColor),
+                    ],
+                  ),
+                  Text(subtitle,
+                      style: TextStyle(fontSize: 12, color: subTextColor)),
+                ],
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _diamondButton({required IconData icon, required VoidCallback onTap}) {
-    return Transform.rotate(
-      angle: 0.78,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Transform.rotate(
-            angle: -0.78,
-            child: Icon(icon, color: AppColors.darkText),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-enum PurchaseMode { buyer, donor }
-
-class PaymentMethod {
-  final String brand;
-  final String maskedNumber;
-  final IconData icon;
-  const PaymentMethod({required this.brand, required this.maskedNumber, required this.icon});
-}
-
-List<PaymentMethod> demoPaymentMethods() => const [
-      PaymentMethod(brand: 'Visa', maskedNumber: '•••• 4242', icon: Icons.credit_card),
-      PaymentMethod(brand: 'Mastercard', maskedNumber: '•••• 5454', icon: Icons.credit_card),
-      PaymentMethod(brand: 'Apple Pay', maskedNumber: 'Linked', icon: Icons.phone_iphone),
-    ];
-
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.title, required this.child, this.trailing});
-
-  final String title;
-  final Widget child;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-              const Spacer(),
-              if (trailing != null) trailing!,
-            ],
-          ),
-          const SizedBox(height: 12),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.label, required this.value});
-
-  final String label;
-  final double value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Text(label, style: TextStyle(color: Colors.grey.shade700)),
-          const Spacer(),
-          Text(
-            '\$${value.toStringAsFixed(2)}',
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-              color: AppColors.darkText,
-            ),
-          ),
-        ],
       ),
     );
   }

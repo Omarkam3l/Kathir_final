@@ -138,7 +138,7 @@ class _PartnerChip extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.star, size: 10, color: AppColors.rating),
+                const Icon(Icons.star, size: 10, color: AppColors.rating),
                 const SizedBox(width: 2),
                 Text(
                   restaurant.rating.toStringAsFixed(1),

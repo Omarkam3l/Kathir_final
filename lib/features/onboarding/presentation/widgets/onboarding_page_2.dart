@@ -20,9 +20,9 @@ class OnboardingPage2 extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppColors.white : AppColors.darkText;
-    final mutedColor = AppColors.grey;
+    const mutedColor = AppColors.grey;
     final nextBtnBg = isDark ? AppColors.primary : AppColors.primaryDark;
-    final nextBtnIcon = AppColors.white;
+    const nextBtnIcon = AppColors.white;
 
     return SafeArea(
       child: Column(
@@ -72,7 +72,7 @@ class OnboardingPage2 extends StatelessWidget {
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Container(
                         color: AppColors.primary.withOpacity(0.1),
-                        child: Icon(
+                        child: const Icon(
                           Icons.restaurant,
                           size: 80,
                           color: AppColors.primary,
@@ -134,7 +134,7 @@ class OnboardingPage2 extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                              child: Icon(
+                              child: const Icon(
                                 Icons.volunteer_activism,
                                 color: AppColors.white,
                                 size: 24,
@@ -219,7 +219,8 @@ class OnboardingPage2 extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    OnboardingPaginationDots(pageCount: 3, currentPage: 1),
+                    const OnboardingPaginationDots(
+                        pageCount: 3, currentPage: 1),
                     Material(
                       color: nextBtnBg,
                       borderRadius: BorderRadius.circular(9999),

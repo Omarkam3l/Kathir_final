@@ -18,8 +18,9 @@ class OnboardingPage1 extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppColors.white : AppColors.darkText;
-    final mutedColor = AppColors.grey;
-    final bgColor = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
+    const mutedColor = AppColors.grey;
+    final bgColor =
+        isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
 
     return SafeArea(
       child: Column(
@@ -29,14 +30,16 @@ class OnboardingPage1 extends StatelessWidget {
             padding: const EdgeInsets.only(top: 16),
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: isDark
                       ? AppColors.black.withOpacity(0.3)
                       : AppColors.white.withOpacity(0.8),
                   borderRadius: BorderRadius.circular(9999),
                   border: Border.all(
-                    color: isDark ? AppColors.dividerDark : AppColors.dividerLight,
+                    color:
+                        isDark ? AppColors.dividerDark : AppColors.dividerLight,
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -49,7 +52,7 @@ class OnboardingPage1 extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.eco, color: AppColors.primary, size: 20),
+                    const Icon(Icons.eco, color: AppColors.primary, size: 20),
                     const SizedBox(width: 8),
                     Text(
                       'KATHIR',
@@ -121,7 +124,7 @@ class OnboardingPage1 extends StatelessWidget {
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
                             color: AppColors.primary.withOpacity(0.1),
-                            child: Icon(
+                            child: const Icon(
                               Icons.volunteer_activism,
                               size: 80,
                               color: AppColors.primary,
@@ -200,7 +203,7 @@ class OnboardingPage1 extends StatelessWidget {
                                     color: AppColors.primary.withOpacity(0.2),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: Icon(
+                                  child: const Icon(
                                     Icons.volunteer_activism,
                                     color: AppColors.primary,
                                     size: 20,
@@ -222,7 +225,7 @@ class OnboardingPage1 extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(32, 24, 32, 24),
             child: Column(
               children: [
-                OnboardingPaginationDots(pageCount: 3, currentPage: 0),
+                const OnboardingPaginationDots(pageCount: 3, currentPage: 0),
                 const SizedBox(height: 24),
                 Column(
                   children: [
@@ -350,7 +353,7 @@ class OnboardingPage1 extends StatelessWidget {
           border: Border.all(color: AppColors.white, width: 2),
           color: AppColors.primary.withOpacity(0.3),
         ),
-        child: Icon(Icons.person, size: 18, color: AppColors.primary),
+        child: const Icon(Icons.person, size: 18, color: AppColors.primary),
       ),
     );
   }

@@ -11,7 +11,7 @@ class MapPlaceholderScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
     final textMain = isDark ? AppColors.white : AppColors.darkText;
-    final muted = AppColors.grey;
+    const muted = AppColors.grey;
 
     return Scaffold(
       backgroundColor: bg,

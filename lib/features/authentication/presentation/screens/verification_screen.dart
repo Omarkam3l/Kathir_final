@@ -25,7 +25,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
   static const int _otpLength = 8;
   final List<TextEditingController> _controllers =
       List.generate(_otpLength, (_) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(_otpLength, (_) => FocusNode());
+  final List<FocusNode> _focusNodes =
+      List.generate(_otpLength, (_) => FocusNode());
   int _secondsLeft = 0;
   Timer? _timer;
 
@@ -47,8 +48,12 @@ class _VerificationScreenState extends State<VerificationScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    for (final c in _controllers) c.dispose();
-    for (final f in _focusNodes) f.dispose();
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    for (final f in _focusNodes) {
+      f.dispose();
+    }
     super.dispose();
   }
 
@@ -57,7 +62,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
     final textPrimary = isDark ? AppColors.white : AppColors.darkText;
-    final textMuted = AppColors.grey;
+    const textMuted = AppColors.grey;
     final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
     final border = isDark ? AppColors.dividerDark : AppColors.dividerLight;
     final email = widget.email;
@@ -98,7 +103,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                             : AppColors.primary.withOpacity(0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.lock_reset,
+                      child: const Icon(Icons.lock_reset,
                           size: 32, color: AppColors.primary),
                     ),
                   ),
@@ -202,12 +207,16 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                     );
                                     _startCooldown();
                                     messenger.showSnackBar(const SnackBar(
-                                        content: Text('OTP resent', style: TextStyle(color: AppColors.white)),
+                                        content: Text('OTP resent',
+                                            style: TextStyle(
+                                                color: AppColors.white)),
                                         backgroundColor: AppColors.primary));
                                   } catch (e) {
                                     messenger.showSnackBar(SnackBar(
                                         content: Text(
-                                            'Resend failed: ${e.toString()}', style: const TextStyle(color: AppColors.white)),
+                                            'Resend failed: ${e.toString()}',
+                                            style: const TextStyle(
+                                                color: AppColors.white)),
                                         backgroundColor: AppColors.error));
                                   }
                                 },
@@ -260,8 +269,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                 }
                               } else {
                                 messenger.showSnackBar(SnackBar(
-                                    content:
-                                        Text(vm.error ?? 'Wrong/Expired OTP', style: const TextStyle(color: AppColors.white)),
+                                    content: Text(
+                                        vm.error ?? 'Wrong/Expired OTP',
+                                        style: const TextStyle(
+                                            color: AppColors.white)),
                                     backgroundColor: AppColors.error));
                               }
                             },
@@ -294,7 +305,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.arrow_back,
+                        const Icon(Icons.arrow_back,
                             size: 18, color: AppColors.primary),
                         const SizedBox(width: 6),
                         Text('Back to Sign In',

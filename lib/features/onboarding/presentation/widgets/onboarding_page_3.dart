@@ -20,7 +20,7 @@ class OnboardingPage3 extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppColors.white : AppColors.darkText;
-    final mutedColor = AppColors.grey;
+    const mutedColor = AppColors.grey;
 
     return SafeArea(
       child: Column(
@@ -97,14 +97,14 @@ class OnboardingPage3 extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.volunteer_activism,
                       size: 100,
                       color: AppColors.primary,
                     ),
                   ),
                   // Floating: restaurant (top-right)
-                  Positioned(
+                  const Positioned(
                     top: 0,
                     right: 24,
                     child: _FloatingBadge(
@@ -113,7 +113,7 @@ class OnboardingPage3 extends StatelessWidget {
                     ),
                   ),
                   // Floating: diversity_1 (bottom-left)
-                  Positioned(
+                  const Positioned(
                     bottom: 8,
                     left: 8,
                     child: _FloatingBadge(
@@ -152,7 +152,7 @@ class OnboardingPage3 extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-                OnboardingPaginationDots(pageCount: 3, currentPage: 2),
+                const OnboardingPaginationDots(pageCount: 3, currentPage: 2),
               ],
             ),
           ),
@@ -193,7 +193,9 @@ class OnboardingPage3 extends StatelessWidget {
                       foregroundColor: AppColors.darkText,
                       backgroundColor: AppColors.white,
                       side: BorderSide(
-                        color: isDark ? AppColors.white.withOpacity(0.3) : AppColors.dividerLight,
+                        color: isDark
+                            ? AppColors.white.withOpacity(0.3)
+                            : AppColors.dividerLight,
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
@@ -234,7 +236,9 @@ class _FloatingBadge extends StatelessWidget {
         color: isDark ? AppColors.surfaceDark : AppColors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? AppColors.white.withOpacity(0.05) : AppColors.dividerLight,
+          color: isDark
+              ? AppColors.white.withOpacity(0.05)
+              : AppColors.dividerLight,
         ),
         boxShadow: [
           BoxShadow(

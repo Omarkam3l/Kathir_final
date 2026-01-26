@@ -6,6 +6,7 @@ import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/
 import 'package:kathir_final/features/onboarding/presentation/screens/onboarding_flow_screen.dart';
 import 'package:provider/provider.dart';
 import '../../authentication/presentation/blocs/auth_provider.dart';
+import '../../authentication/presentation/screens/pending_approval_screen.dart';
 import '../../meals/presentation/screens/meal_detail.dart';
 import '../../user_home/domain/entities/meal_offer.dart';
 import '../../user_home/domain/entities/restaurant.dart';
@@ -24,12 +25,14 @@ class RouteNames {
   static const restaurantDashboard = 'restaurant_dashboard';
   static const ngoDashboard = 'ngo_dashboard';
   static const adminDashboard = 'admin_dashboard';
+  static const pendingApproval = 'pending_approval';
   static const product = 'product';
   static const cart = 'cart';
   static const checkout = 'checkout';
   static const settings = 'settings';
   static const profile = 'profile';
 }
+
 
 class AppRouter {
   final AuthProvider auth;
@@ -61,10 +64,22 @@ class AppRouter {
         return '/auth';
       }
       if (loggedIn && (signingFlow || state.matchedLocation == '/')) {
-        final role = auth.user?.role;
-        if (role == 'restaurant') {
+        final user = auth.user;
+        final role = user?.role;
+        
+        // Check approval status for restaurant and NGO roles
+        if (user != null && user.needsApproval && !user.isApproved) {
+          // Pending approval - redirect to pending screen
+          if (state.matchedLocation != '/pending-approval') {
+            return '/pending-approval';
+          }
+          return null;
+        }
+        
+        // Approved users go to their dashboards
+        if (role == 'rest') {
           return '/restaurant-dashboard';
-        } else if (role == 'organization') {
+        } else if (role == 'ngo') {
           return '/ngo-dashboard';
         } else if (role == 'admin') {
           return '/admin-dashboard';
@@ -73,6 +88,7 @@ class AppRouter {
       }
       return null;
     },
+
     routes: [
       GoRoute(
         name: RouteNames.onboarding,
@@ -94,6 +110,12 @@ class AppRouter {
         path: '/admin-dashboard',
         builder: (context, state) => const AdminDashboardScreen(),
       ),
+      GoRoute(
+        name: RouteNames.pendingApproval,
+        path: '/pending-approval',
+        builder: (context, state) => const PendingApprovalScreen(),
+      ),
+
       GoRoute(
         name: RouteNames.product,
         path: '/meal/:id',

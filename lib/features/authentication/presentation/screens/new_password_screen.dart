@@ -35,7 +35,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
     final textPrimary = isDark ? AppColors.white : AppColors.darkText;
-    final textMuted = AppColors.grey;
+    const textMuted = AppColors.grey;
     final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
     final border = isDark ? AppColors.dividerDark : AppColors.dividerLight;
 
@@ -67,23 +67,46 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                         color: AppColors.primary.withOpacity(0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.lock_reset, size: 36, color: AppColors.primary),
+                      child: const Icon(Icons.lock_reset,
+                          size: 36, color: AppColors.primary),
                     ),
                   ),
                   const SizedBox(height: 24),
                   Text(
                     'Create your new password',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w700, color: textPrimary),
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: textPrimary),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Choose a strong password with at least 8 characters.',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 14, color: textMuted, height: 1.4),
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14, color: textMuted, height: 1.4),
                   ),
                   const SizedBox(height: 28),
-                  _buildField('Password', 'Enter new password', _pass, _obscurePass, () => setState(() => _obscurePass = !_obscurePass), textPrimary, textMuted, surface, border),
+                  _buildField(
+                      'Password',
+                      'Enter new password',
+                      _pass,
+                      _obscurePass,
+                      () => setState(() => _obscurePass = !_obscurePass),
+                      textPrimary,
+                      textMuted,
+                      surface,
+                      border),
                   const SizedBox(height: 16),
-                  _buildField('Confirm password', 'Confirm new password', _confirm, _obscureConfirm, () => setState(() => _obscureConfirm = !_obscureConfirm), textPrimary, textMuted, surface, border),
+                  _buildField(
+                      'Confirm password',
+                      'Confirm new password',
+                      _confirm,
+                      _obscureConfirm,
+                      () => setState(() => _obscureConfirm = !_obscureConfirm),
+                      textPrimary,
+                      textMuted,
+                      surface,
+                      border),
                   const SizedBox(height: 32),
                   SizedBox(
                     height: 56,
@@ -94,11 +117,22 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                               final p = _pass.text.trim();
                               final c = _confirm.text.trim();
                               if (p.length < 8) {
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password must be at least 8 characters', style: TextStyle(color: AppColors.white)), backgroundColor: AppColors.error));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'Password must be at least 8 characters',
+                                            style: TextStyle(
+                                                color: AppColors.white)),
+                                        backgroundColor: AppColors.error));
                                 return;
                               }
                               if (p != c) {
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Passwords do not match', style: TextStyle(color: AppColors.white)), backgroundColor: AppColors.error));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text('Passwords do not match',
+                                            style: TextStyle(
+                                                color: AppColors.white)),
+                                        backgroundColor: AppColors.error));
                                 return;
                               }
                               final messenger = ScaffoldMessenger.of(context);
@@ -106,29 +140,51 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                               final ok = await vm.submit(p);
                               if (!mounted) return;
                               if (ok) {
-                                messenger.showSnackBar(const SnackBar(content: Text('Password updated', style: TextStyle(color: AppColors.white)), backgroundColor: AppColors.primary));
+                                messenger.showSnackBar(const SnackBar(
+                                    content: Text('Password updated',
+                                        style:
+                                            TextStyle(color: AppColors.white)),
+                                    backgroundColor: AppColors.primary));
                                 try {
-                                  Provider.of<AuthProvider>(context, listen: false).endPasswordRecovery();
+                                  Provider.of<AuthProvider>(context,
+                                          listen: false)
+                                      .endPasswordRecovery();
                                 } catch (_) {}
                                 try {
-                                  Provider.of<AuthViewModel>(context, listen: false).setMode(true);
+                                  Provider.of<AuthViewModel>(context,
+                                          listen: false)
+                                      .setMode(true);
                                 } catch (_) {}
                                 router.go('/auth');
                               } else {
-                                messenger.showSnackBar(SnackBar(content: Text(vm.error ?? 'Weak password', style: const TextStyle(color: AppColors.white)), backgroundColor: AppColors.error));
+                                messenger.showSnackBar(SnackBar(
+                                    content: Text(vm.error ?? 'Weak password',
+                                        style: const TextStyle(
+                                            color: AppColors.white)),
+                                    backgroundColor: AppColors.error));
                               }
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.white,
-                        disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
+                        disabledBackgroundColor:
+                            AppColors.primary.withOpacity(0.6),
                         disabledForegroundColor: AppColors.white,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
                       ),
                       child: vm.loading
-                          ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(AppColors.white)))
-                          : Text('Update Password', style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700)),
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.white)))
+                          : Text('Update Password',
+                              style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 16, fontWeight: FontWeight.w700)),
                     ),
                   ),
                 ],
@@ -140,11 +196,22 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
     );
   }
 
-  Widget _buildField(String label, String hint, TextEditingController c, bool obscure, VoidCallback onToggle, Color textPrimary, Color textMuted, Color surface, Color border) {
+  Widget _buildField(
+      String label,
+      String hint,
+      TextEditingController c,
+      bool obscure,
+      VoidCallback onToggle,
+      Color textPrimary,
+      Color textMuted,
+      Color surface,
+      Color border) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+        Text(label,
+            style: GoogleFonts.plusJakartaSans(
+                fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
         const SizedBox(height: 8),
         TextFormField(
           controller: c,
@@ -152,18 +219,33 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
           style: GoogleFonts.plusJakartaSans(fontSize: 15, color: textPrimary),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: GoogleFonts.plusJakartaSans(fontSize: 15, color: textMuted),
-            prefixIcon: Icon(Icons.lock_outline, color: AppColors.primary, size: 22),
+            hintStyle:
+                GoogleFonts.plusJakartaSans(fontSize: 15, color: textMuted),
+            prefixIcon: const Icon(Icons.lock_outline,
+                color: AppColors.primary, size: 22),
             suffixIcon: IconButton(
-              icon: Icon(obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: AppColors.primary, size: 22),
+              icon: Icon(
+                  obscure
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  color: AppColors.primary,
+                  size: 22),
               onPressed: onToggle,
             ),
             filled: true,
             fillColor: surface,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: border)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: border)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: border)),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: border)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide:
+                    const BorderSide(color: AppColors.primary, width: 2)),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ),
       ],

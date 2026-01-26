@@ -7,12 +7,16 @@ import '../../data/models/user_model.dart';
 class AuthUserView {
   final String id;
   final String name;
+  final String fullName; // alias for name, for compatibility
   final String email;
   final String? phone;
   final List<String> addresses;
   final List<Map<String, dynamic>> cards;
   final String role;
   final String? defaultLocation;
+  final String approvalStatus;
+  final String? organizationName;
+  
   const AuthUserView({
     required this.id,
     required this.name,
@@ -22,8 +26,17 @@ class AuthUserView {
     this.cards = const [],
     this.role = 'user',
     this.defaultLocation,
-  });
+    this.approvalStatus = 'pending',
+    this.organizationName,
+  }) : fullName = name;
+
+  /// Check if user needs approval (restaurant or NGO)
+  bool get needsApproval => role == 'rest' || role == 'ngo';
+
+  /// Check if user is approved
+  bool get isApproved => approvalStatus == 'approved';
 }
+
 
 class AuthProvider extends ChangeNotifier {
   final SupabaseClient _client = AppLocator.I.get<SupabaseClient>();
@@ -84,6 +97,8 @@ class AuthProvider extends ChangeNotifier {
       cards: cards,
       role: role,
       defaultLocation: _userProfile?['default_location'] as String?,
+      approvalStatus: (_userProfile?['approval_status'] as String?) ?? 'pending',
+      organizationName: (_userProfile?['organization_name'] as String?) ?? model.organizationName,
     );
   }
 

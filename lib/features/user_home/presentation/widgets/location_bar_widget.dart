@@ -17,8 +17,8 @@ class LocationBarWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMain = isDark ? AppColors.white : AppColors.darkText;
-    final primary = AppColors.primary;
-    final muted = AppColors.grey;
+    const primary = AppColors.primary;
+    const muted = AppColors.grey;
 
     return InkWell(
       onTap: onTap,

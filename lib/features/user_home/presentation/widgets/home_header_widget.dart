@@ -22,7 +22,7 @@ class HomeHeaderWidget extends StatelessWidget {
     final bg = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
     final card = isDark ? AppColors.surfaceDark : AppColors.white;
     final textMain = isDark ? AppColors.white : AppColors.darkText;
-    final textMuted = AppColors.grey;
+    const textMuted = AppColors.grey;
     final border = isDark ? AppColors.dividerDark : AppColors.dividerLight;
 
     final auth = context.watch<AuthProvider>();

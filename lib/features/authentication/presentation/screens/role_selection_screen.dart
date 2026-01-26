@@ -23,7 +23,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
     final textPrimary = isDark ? AppColors.white : AppColors.darkText;
-    final textMuted = AppColors.grey;
+    const textMuted = AppColors.grey;
 
     final authVm = Provider.of<AuthViewModel>(context, listen: false);
     final roleVm = RoleSelectionViewModel(authViewModel: authVm);
@@ -37,7 +37,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         ),
         backgroundColor: bg,
         elevation: 0,
-        title: Text('Select Role', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: textPrimary)),
+        title: Text('Select Role',
+            style: GoogleFonts.plusJakartaSans(
+                fontSize: 18, fontWeight: FontWeight.w700, color: textPrimary)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
@@ -46,7 +48,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
           children: [
             Text(
               'Choose your role to continue.',
-              style: GoogleFonts.plusJakartaSans(fontSize: 15, color: textMuted, height: 1.4),
+              style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15, color: textMuted, height: 1.4),
             ),
             const SizedBox(height: 24),
             ...UserRole.values.where((r) => r != UserRole.admin).map((r) {
@@ -59,25 +62,39 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     onTap: () => setState(() => _selected = r),
                     borderRadius: BorderRadius.circular(14),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primary.withOpacity(0.15) : (isDark ? AppColors.surfaceDark : AppColors.surfaceLight),
+                        color: isSelected
+                            ? AppColors.primary.withOpacity(0.15)
+                            : (isDark
+                                ? AppColors.surfaceDark
+                                : AppColors.surfaceLight),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: isSelected ? AppColors.primary : (isDark ? AppColors.dividerDark : AppColors.dividerLight),
+                          color: isSelected
+                              ? AppColors.primary
+                              : (isDark
+                                  ? AppColors.dividerDark
+                                  : AppColors.dividerLight),
                           width: isSelected ? 2 : 1,
                         ),
                       ),
                       child: Row(
                         children: [
-                          Icon(_iconForRole(r), color: isSelected ? AppColors.primary : textMuted, size: 24),
+                          Icon(_iconForRole(r),
+                              color: isSelected ? AppColors.primary : textMuted,
+                              size: 24),
                           const SizedBox(width: 14),
                           Text(
                             r.name[0].toUpperCase() + r.name.substring(1),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 16,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: isSelected ? AppColors.primary : textPrimary,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              color:
+                                  isSelected ? AppColors.primary : textPrimary,
                             ),
                           ),
                         ],
@@ -99,9 +116,12 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
                 ),
-                child: Text('Confirm', style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700)),
+                child: Text('Confirm',
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16, fontWeight: FontWeight.w700)),
               ),
             ),
           ],

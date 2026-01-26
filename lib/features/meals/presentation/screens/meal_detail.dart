@@ -9,15 +9,6 @@ import '../../../../core/utils/app_colors.dart';
 import 'package:intl/intl.dart';
 
 // Custom Colors for this screen to match design
-class DetailColors {
-  static const primary = Color(0xFF13ec5b);
-  static const primaryContent = Color(0xFF052e11);
-  static const backgroundLight = Color(0xFFf6f8f6);
-  static const backgroundDark = Color(0xFF102216);
-  static const surfaceLight = Color(0xFFffffff);
-  static const surfaceDark = Color(0xFF1a2e22);
-}
-
 class ProductDetailPage extends StatefulWidget {
   final MealOffer product;
   const ProductDetailPage({super.key, required this.product});
@@ -33,12 +24,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   Widget build(BuildContext context) {
     final meal = widget.product;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+    const primaryColor = AppColors.primary;
+
     // Derived colors based on theme
-    final bgColor = isDark ? DetailColors.backgroundDark : DetailColors.backgroundLight;
-    final surfaceColor = isDark ? DetailColors.surfaceDark : DetailColors.surfaceLight;
-    final textColor = isDark ? const Color(0xFFf0f4f1) : const Color(0xFF0d1b12);
-    final subTextColor = isDark ? Colors.grey[400]! : Colors.grey[600]!;
+    final bgColor = Theme.of(context).scaffoldBackgroundColor;
+    final surfaceColor = Theme.of(context).cardColor;
+    final textColor =
+        Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
+    final subTextColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -73,7 +67,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     builder: (context, foodie, _) {
                       final isFav = foodie.isFavourite(meal.id);
                       return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.2),
                           shape: BoxShape.circle,
@@ -106,7 +101,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
                             color: Colors.grey[800],
-                            child: const Icon(Icons.restaurant, color: Colors.white54, size: 64),
+                            child: const Icon(Icons.restaurant,
+                                color: Colors.white54, size: 64),
                           ),
                         ),
                       ),
@@ -136,9 +132,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: bgColor,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(32)),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 32),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -166,7 +164,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
-                                    color: DetailColors.primary,
+                                    color: primaryColor,
                                   ),
                                 ),
                                 if (meal.originalPrice > meal.donationPrice)
@@ -184,14 +182,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             ),
                           ],
                         ),
-                        
+
                         // Restaurant Row
                         const SizedBox(height: 24),
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
                             border: Border(
-                              bottom: BorderSide(color: isDark ? Colors.white10 : Colors.black12),
+                              bottom: BorderSide(
+                                  color:
+                                      isDark ? Colors.white10 : Colors.black12),
                             ),
                           ),
                           child: Row(
@@ -203,13 +203,20 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                   shape: BoxShape.circle,
                                   color: surfaceColor,
                                   image: meal.restaurant.logoUrl != null
-                                    ? DecorationImage(image: NetworkImage(meal.restaurant.logoUrl!), fit: BoxFit.cover)
-                                    : null,
-                                  border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
+                                      ? DecorationImage(
+                                          image: NetworkImage(
+                                              meal.restaurant.logoUrl!),
+                                          fit: BoxFit.cover)
+                                      : null,
+                                  border: Border.all(
+                                      color: isDark
+                                          ? Colors.white10
+                                          : Colors.black12),
                                 ),
-                                child: meal.restaurant.logoUrl == null 
-                                  ? Icon(Icons.store, size: 20, color: subTextColor)
-                                  : null,
+                                child: meal.restaurant.logoUrl == null
+                                    ? Icon(Icons.store,
+                                        size: 20, color: subTextColor)
+                                    : null,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -228,13 +235,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                         ),
                                         if (meal.restaurant.verified) ...[
                                           const SizedBox(width: 4),
-                                          const Icon(Icons.verified, color: Colors.blue, size: 16),
+                                          const Icon(Icons.verified,
+                                              color: Colors.blue, size: 16),
                                         ],
                                       ],
                                     ),
                                     Row(
                                       children: [
-                                        const Icon(Icons.star, color: Colors.amber, size: 14),
+                                        const Icon(Icons.star,
+                                            color: Colors.amber, size: 14),
                                         const SizedBox(width: 4),
                                         Text(
                                           '${meal.restaurant.rating} (${meal.restaurant.reviewsCount} reviews)',
@@ -251,16 +260,19 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                               TextButton(
                                 onPressed: () {}, // Go to restaurant
                                 style: TextButton.styleFrom(
-                                  backgroundColor: DetailColors.primary.withOpacity(0.1),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  backgroundColor:
+                                      primaryColor.withOpacity(0.1),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20)),
                                 ),
                                 child: Text(
                                   'View Profile',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: DetailColors.primary,
+                                    color: primaryColor,
                                   ),
                                 ),
                               ),
@@ -277,11 +289,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 icon: Icons.access_time,
                                 iconColor: Colors.orange,
                                 title: 'PICKUP BY',
-                                value: meal.pickupTime != null 
-                                  ? DateFormat('EEE, h:mm a').format(meal.pickupTime!)
-                                  : 'Today, ${DateFormat('h:mm a').format(meal.expiry)}',
-                                bgColor: isDark ? Colors.orange.withOpacity(0.1) : Colors.orange.shade50,
-                                borderColor: isDark ? Colors.orange.withOpacity(0.2) : Colors.orange.shade100,
+                                value: meal.pickupTime != null
+                                    ? DateFormat('EEE, h:mm a')
+                                        .format(meal.pickupTime!)
+                                    : 'Today, ${DateFormat('h:mm a').format(meal.expiry)}',
+                                bgColor: isDark
+                                    ? Colors.orange.withOpacity(0.1)
+                                    : Colors.orange.shade50,
+                                borderColor: isDark
+                                    ? Colors.orange.withOpacity(0.2)
+                                    : Colors.orange.shade100,
                                 textColor: textColor,
                               ),
                             ),
@@ -291,9 +308,14 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 icon: Icons.eco,
                                 iconColor: Colors.green,
                                 title: 'IMPACT',
-                                value: 'Saves ${meal.co2Savings > 0 ? meal.co2Savings : "0.5"}kg CO2',
-                                bgColor: isDark ? Colors.green.withOpacity(0.1) : Colors.green.shade50,
-                                borderColor: isDark ? Colors.green.withOpacity(0.2) : Colors.green.shade100,
+                                value:
+                                    'Saves ${meal.co2Savings > 0 ? meal.co2Savings : "0.5"}kg CO2',
+                                bgColor: isDark
+                                    ? Colors.green.withOpacity(0.1)
+                                    : Colors.green.shade50,
+                                borderColor: isDark
+                                    ? Colors.green.withOpacity(0.2)
+                                    : Colors.green.shade100,
                                 textColor: textColor,
                               ),
                             ),
@@ -305,20 +327,28 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: isDark ? Colors.red.withOpacity(0.1) : Colors.red.shade50,
+                            color: isDark
+                                ? Colors.red.withOpacity(0.1)
+                                : Colors.red.shade50,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: isDark ? Colors.red.withOpacity(0.2) : Colors.red.shade100),
+                            border: Border.all(
+                                color: isDark
+                                    ? Colors.red.withOpacity(0.2)
+                                    : Colors.red.shade100),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.local_fire_department, color: Colors.red, size: 20),
+                              const Icon(Icons.local_fire_department,
+                                  color: Colors.red, size: 20),
                               const SizedBox(width: 8),
                               Text(
                                 'Hurry! Only ${meal.quantity} portions left.',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
-                                  color: isDark ? Colors.red[300] : Colors.red[700],
+                                  color: isDark
+                                      ? Colors.red[300]
+                                      : Colors.red[700],
                                 ),
                               ),
                             ],
@@ -337,9 +367,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          meal.description.isNotEmpty 
-                            ? meal.description 
-                            : 'Freshly prepared meal saved from surplus. Delicious and ready to enjoy! This dish is perfect for a sustainable and tasty dinner choice.',
+                          meal.description.isNotEmpty
+                              ? meal.description
+                              : 'Freshly prepared meal saved from surplus. Delicious and ready to enjoy! This dish is perfect for a sustainable and tasty dinner choice.',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
                             height: 1.6,
@@ -348,7 +378,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         ),
 
                         // Ingredients & Allergens
-                        if (meal.ingredients.isNotEmpty || meal.allergens.isNotEmpty) ...[
+                        if (meal.ingredients.isNotEmpty ||
+                            meal.allergens.isNotEmpty) ...[
                           const SizedBox(height: 24),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -361,7 +392,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                   color: textColor,
                                 ),
                               ),
-                              Icon(Icons.info_outline, color: subTextColor, size: 20),
+                              Icon(Icons.info_outline,
+                                  color: subTextColor, size: 20),
                             ],
                           ),
                           const SizedBox(height: 12),
@@ -369,8 +401,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             spacing: 8,
                             runSpacing: 8,
                             children: [
-                              ...meal.ingredients.map((e) => _buildTag(e, false, isDark, subTextColor)),
-                              ...meal.allergens.map((e) => _buildTag(e, true, isDark, subTextColor)),
+                              ...meal.ingredients.map((e) =>
+                                  _buildTag(e, false, isDark, subTextColor)),
+                              ...meal.allergens.map((e) =>
+                                  _buildTag(e, true, isDark, subTextColor)),
                             ],
                           ),
                         ],
@@ -393,22 +427,29 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             borderRadius: BorderRadius.circular(16),
                             color: isDark ? Colors.grey[800] : Colors.grey[200],
                             image: const DecorationImage(
-                              image: NetworkImage('https://maps.googleapis.com/maps/api/staticmap?center=San+Francisco,CA&zoom=13&size=600x300&maptype=roadmap&key=YOUR_API_KEY_HERE'), // Using placeholder logic
+                              image: NetworkImage(
+                                  'https://maps.googleapis.com/maps/api/staticmap?center=San+Francisco,CA&zoom=13&size=600x300&maptype=roadmap&key=YOUR_API_KEY_HERE'), // Using placeholder logic
                               fit: BoxFit.cover,
                             ),
                           ),
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
-                              Container(color: Colors.black.withOpacity(0.1)), // Dimmer
+                              Container(
+                                  color:
+                                      Colors.black.withOpacity(0.1)), // Dimmer
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: const BoxDecoration(
                                   color: Colors.white,
                                   shape: BoxShape.circle,
-                                  boxShadow: [BoxShadow(blurRadius: 10, color: Colors.black26)],
+                                  boxShadow: [
+                                    BoxShadow(
+                                        blurRadius: 10, color: Colors.black26)
+                                  ],
                                 ),
-                                child: const Icon(Icons.location_on, color: DetailColors.primary, size: 24),
+                                child: Icon(Icons.location_on,
+                                    color: primaryColor, size: 24),
                               )
                             ],
                           ),
@@ -416,7 +457,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            Icon(Icons.location_on, size: 16, color: subTextColor),
+                            Icon(Icons.location_on,
+                                size: 16, color: subTextColor),
                             const SizedBox(width: 4),
                             Text(
                               meal.location,
@@ -427,7 +469,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 100), // Spacing for bottom bar
                       ],
                     ),
@@ -436,7 +478,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               ),
             ],
           ),
-          
+
           // Sticky Bottom Bar
           Positioned(
             bottom: 0,
@@ -447,14 +489,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
                   padding: EdgeInsets.only(
-                    left: 16, 
-                    right: 16, 
-                    top: 16, 
-                    bottom: 16 + MediaQuery.of(context).padding.bottom
-                  ),
+                      left: 16,
+                      right: 16,
+                      top: 16,
+                      bottom: 16 + MediaQuery.of(context).padding.bottom),
                   decoration: BoxDecoration(
-                    color: (isDark ? DetailColors.surfaceDark : Colors.white).withOpacity(0.9),
-                    border: Border(top: BorderSide(color: isDark ? Colors.white10 : Colors.black12)),
+                    color:
+                        (isDark ? surfaceColor : Colors.white).withOpacity(0.9),
+                    border: Border(
+                        top: BorderSide(
+                            color: isDark ? Colors.white10 : Colors.black12)),
                   ),
                   child: Row(
                     children: [
@@ -487,13 +531,18 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           height: 56,
                           child: ElevatedButton(
                             onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Added $qty ${meal.title} to cart')),
-                                );
+                              context
+                                  .read<FoodieState>()
+                                  .addToCart(meal, qty: qty);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(
+                                        'Added $qty ${meal.title} to cart')),
+                              );
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: DetailColors.primary,
-                              foregroundColor: DetailColors.primaryContent,
+                              backgroundColor: primaryColor,
+                              foregroundColor: Colors.white,
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
@@ -579,14 +628,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isAllergen 
-          ? (isDark ? Colors.orange.withOpacity(0.2) : Colors.orange.shade100)
-          : (isDark ? Colors.grey.withOpacity(0.2) : Colors.grey.shade200),
+        color: isAllergen
+            ? (isDark ? Colors.orange.withOpacity(0.2) : Colors.orange.shade100)
+            : (isDark ? Colors.grey.withOpacity(0.2) : Colors.grey.shade200),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isAllergen 
-            ? (isDark ? Colors.orange.withOpacity(0.3) : Colors.orange.shade200)
-            : (isDark ? Colors.white10 : Colors.grey.shade300),
+          color: isAllergen
+              ? (isDark
+                  ? Colors.orange.withOpacity(0.3)
+                  : Colors.orange.shade200)
+              : (isDark ? Colors.white10 : Colors.grey.shade300),
         ),
       ),
       child: Text(
@@ -594,9 +645,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         style: GoogleFonts.plusJakartaSans(
           fontSize: 12,
           fontWeight: FontWeight.w500,
-          color: isAllergen 
-            ? (isDark ? Colors.orange[200] : Colors.orange[800])
-            : textColor,
+          color: isAllergen
+              ? (isDark ? Colors.orange[200] : Colors.orange[800])
+              : textColor,
         ),
       ),
     );
