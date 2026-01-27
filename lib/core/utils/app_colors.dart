@@ -10,9 +10,10 @@ class AppColors {
   static const Color mintAqua = Color(0xFF7FEDD9);
 
   // Theme Specific Colors — RED primary and gradient (dark red / soft red)
-  static const Color primary = Color(0xFFD32F2F); // Red 700
-  static const Color primaryDark = Color(0xFFB71C1C); // Red 900 — dark red for gradients
-  static const Color primarySoft = Color(0xFFEF5350); // Red 400 — soft red for gradients
+  static const Color primary = Color(0xFF2E7D32);
+  static const Color primaryDark = Color(0xFF1B5E20);
+  static const Color primarySoft = Color(0xFF66BB6A);
+  static const Color primaryGreen = primary;
 
   // Base Colors
   static const Color white = Color(0xFFFFFFFF);
