@@ -15,8 +15,7 @@ class AuthUserView {
   final String role;
   final String? defaultLocation;
   final String approvalStatus;
-  final String? organizationName;
-  
+  // TODO: Add organizationName from NGO/restaurant table if needed
   const AuthUserView({
     required this.id,
     required this.name,
@@ -27,7 +26,6 @@ class AuthUserView {
     this.role = 'user',
     this.defaultLocation,
     this.approvalStatus = 'pending',
-    this.organizationName,
   }) : fullName = name;
 
   /// Check if user needs approval (restaurant or NGO)
@@ -98,7 +96,7 @@ class AuthProvider extends ChangeNotifier {
       role: role,
       defaultLocation: _userProfile?['default_location'] as String?,
       approvalStatus: (_userProfile?['approval_status'] as String?) ?? 'pending',
-      organizationName: (_userProfile?['organization_name'] as String?) ?? model.organizationName,
+      // TODO: Fetch organizationName from NGO/restaurant table if needed
     );
   }
 
@@ -117,7 +115,7 @@ class AuthProvider extends ChangeNotifier {
         'full_name': fullName,
         if (phoneNumber != null) 'phone_number': phoneNumber,
         'role': role.wireValue,
-        if (organizationName != null) 'organization_name': organizationName,
+        // TODO: Add organizationName to NGO/restaurant table after profile creation
       },
     );
 
@@ -132,7 +130,6 @@ class AuthProvider extends ChangeNotifier {
       'full_name': fullName,
       'role': role.wireValue,
       if (phoneNumber != null) 'phone_number': phoneNumber,
-      if (organizationName != null) 'organization_name': organizationName,
       'is_verified': role == UserRole.user,
     });
   }

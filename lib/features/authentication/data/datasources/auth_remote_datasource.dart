@@ -85,7 +85,7 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
         data: {
           'full_name': fullName,
           'role': UserRole.restaurant.wireValue,
-          'organization_name': orgName,
+          // TODO: Add organization_name to restaurant table after profile creation
           'phone': phone,
         },
         emailRedirectTo: kIsWeb

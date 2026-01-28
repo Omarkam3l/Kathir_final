@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../profile/presentation/providers/foodie_state.dart';
 import '../../../../core/utils/app_colors.dart';
-import '../../../user_home/domain/entities/meal_offer.dart';
 import '../../../orders/presentation/screens/order_summary_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {

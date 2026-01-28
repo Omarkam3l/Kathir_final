@@ -62,9 +62,7 @@ class _NgoDashboardScreenState extends State<NgoDashboardScreen> {
           .eq('user_id', userId)
           .inFilter('status', ['pending', 'confirmed', 'preparing']);
       
-      if (ordersRes != null && ordersRes is List) {
-        _activeOrders = ordersRes.length;
-      }
+      _activeOrders = (ordersRes as List).length;
 
       // Calculate stats from completed orders (simplified)
       _mealsClaimed = 120; // TODO: Calculate from actual order history
@@ -86,14 +84,11 @@ class _NgoDashboardScreenState extends State<NgoDashboardScreen> {
           .eq('status', 'active')
           .order('expiry', ascending: true);
 
-      if (res != null && res is List) {
-        final meals = res.map((json) => MealModel.fromJson(json as Map<String, dynamic>)).toList();
-        
-        // Separate expiring soon (within 2 hours)
-        final twoHoursFromNow = DateTime.now().add(const Duration(hours: 2));
-        _expiringMeals = meals.where((m) => m.expiry.isBefore(twoHoursFromNow)).toList();
-        _meals = meals;
-      }
+      final meals = (res as List).map((json) => MealModel.fromJson(json)).toList();
+      // Separate expiring soon (within 2 hours)
+      final twoHoursFromNow = DateTime.now().add(const Duration(hours: 2));
+      _expiringMeals = meals.where((m) => m.expiry.isBefore(twoHoursFromNow)).toList();
+      _meals = meals;
 
       if (mounted) setState(() {});
     } catch (e) {

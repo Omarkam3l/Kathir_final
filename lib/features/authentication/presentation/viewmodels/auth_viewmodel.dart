@@ -12,7 +12,6 @@ import '../../domain/usecases/send_password_reset_usecase.dart';
 import '../../domain/usecases/verify_signup_otp_usecase.dart';
 import '../../domain/usecases/verify_recovery_otp_usecase.dart';
 import '../../domain/usecases/update_password_usecase.dart';
-import '../../domain/usecases/update_profile_legal_docs_usecase.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final SignInUseCase signIn;
@@ -24,7 +23,6 @@ class AuthViewModel extends ChangeNotifier {
   final VerifySignupOtpUseCase verifySignupOtp;
   final VerifyRecoveryOtpUseCase verifyRecoveryOtp;
   final UpdatePasswordUseCase updatePassword;
-  final UpdateProfileLegalDocsUseCase updateProfileLegalDocs;
 
   bool loading = false;
   Failure? failure;
@@ -43,7 +41,6 @@ class AuthViewModel extends ChangeNotifier {
     required this.verifySignupOtp,
     required this.verifyRecoveryOtp,
     required this.updatePassword,
-    required this.updateProfileLegalDocs,
   });
 
   Future<bool> login(String email, String password) async {
@@ -60,10 +57,9 @@ class AuthViewModel extends ChangeNotifier {
         'full_name': r.fullName,
         'role': r.role,
         if (r.phoneNumber != null) 'phone_number': r.phoneNumber,
-        if (r.organizationName != null) 'organization_name': r.organizationName,
         'is_verified': r.isVerified,
       };
-      // Fire and forget profile upsert; rely on RLS with auth.uid()
+      // TODO: Upsert NGO/restaurant-specific data in their own tables if needed
       createOrGetProfile.call(r.id, data);
       return true;
     });
@@ -118,7 +114,6 @@ class AuthViewModel extends ChangeNotifier {
     );
     if (result.url != null) {
       try {
-        await updateProfileLegalDocs(userId, result.url!);
       } catch (_) {}
     }
     return result;
@@ -153,9 +148,9 @@ class AuthViewModel extends ChangeNotifier {
         'full_name': r.fullName,
         'role': r.role,
         if (r.phoneNumber != null) 'phone_number': r.phoneNumber,
-        if (r.organizationName != null) 'organization_name': r.organizationName,
         'is_verified': r.isVerified,
       };
+      // TODO: Upsert NGO/restaurant-specific data in their own tables if needed
       createOrGetProfile.call(r.id, data);
       return true;
     });

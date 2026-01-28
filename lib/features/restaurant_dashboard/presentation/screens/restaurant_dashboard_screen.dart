@@ -77,10 +77,8 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
           .select('id, status')
           .eq('restaurant_id', _restaurantId ?? userId);
 
-      if (mealsRes != null && mealsRes is List) {
-        _activeListings = mealsRes.where((m) => m['status'] == 'active').length;
-        _mealsShared = mealsRes.where((m) => m['status'] == 'sold').length;
-      }
+      _activeListings = (mealsRes as List).where((m) => m['status'] == 'active').length;
+      _mealsShared = (mealsRes as List).where((m) => m['status'] == 'sold').length;
 
       if (mounted) setState(() {});
     } catch (e) {
