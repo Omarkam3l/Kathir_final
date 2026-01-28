@@ -11,26 +11,44 @@ BEGIN
     RETURN NEW;
 END;
 $$ language 'plpgsql';
-CREATE TABLE public.profiles (
-    id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    constraint profiles_role_check check (
-    role = any (
+create table public.profiles (
+  id uuid not null,
+  role text null,
+  email text null,
+  full_name text null,
+  phone_number text null,
+  avatar_url text null,
+  is_verified boolean null default false,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  approval_status text not null default 'pending'::text,
+  constraint profiles_pkey primary key (id),
+  constraint profiles_email_key unique (email),
+  constraint profiles_id_fkey foreign KEY (id) references auth.users (id) on delete CASCADE,
+  constraint profiles_approval_status_check check (
+    (
+      approval_status = any (
         array[
-        'user'::text,
-        'restaurant'::text,
-        'ngo'::text,
-        'admin'::text
+          'pending'::text,
+          'approved'::text,
+          'rejected'::text
         ]
+      )
     )
+  ),
+  constraint profiles_role_check check (
+    (
+      role = any (
+        array[
+          'user'::text,
+          'restaurant'::text,
+          'ngo'::text,
+          'admin'::text
+        ]
+      )
     )
-    email text UNIQUE,
-    full_name text,
-    phone_number text,
-    avatar_url text,
-    is_verified boolean DEFAULT false,
-    created_at timestamptz DEFAULT now(),
-    updated_at timestamptz DEFAULT now()
-);
+  )
+) TABLESPACE pg_default;
 
 -- RESTAURANTS (One-to-One with Profiles)
 CREATE TABLE public.restaurants (
