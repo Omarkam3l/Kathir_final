@@ -13,7 +13,7 @@ class PendingApprovalScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = context.watch<AuthProvider>().user;
-    final isRestaurant = user?.role == 'rest';
+    final isRestaurant = user?.role == 'restaurant';
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,

@@ -1,0 +1,283 @@
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/utils/app_colors.dart';
+import '../widgets/meal_card.dart';
+import '../widgets/restaurant_bottom_nav.dart';
+
+class MealsListScreen extends StatefulWidget {
+  const MealsListScreen({super.key});
+
+  @override
+  State<MealsListScreen> createState() => _MealsListScreenState();
+}
+
+class _MealsListScreenState extends State<MealsListScreen> {
+  final _supabase = Supabase.instance.client;
+  List<Map<String, dynamic>> _meals = [];
+  bool _isLoading = true;
+  String? _restaurantId;
+  String? _restaurantName;
+  int _activeMeals = 0;
+  int _totalSales = 0;
+  double _rating = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      // Get restaurant info
+      final restaurantRes = await _supabase
+          .from('restaurants')
+          .select('profile_id, restaurant_name, rating')
+          .eq('profile_id', userId)
+          .maybeSingle();
+
+      if (restaurantRes != null) {
+        _restaurantId = restaurantRes['profile_id'];
+        _restaurantName = restaurantRes['restaurant_name'];
+        _rating = (restaurantRes['rating'] as num?)?.toDouble() ?? 0.0;
+      }
+
+      // Get meals
+      final mealsRes = await _supabase
+          .from('meals')
+          .select()
+          .eq('restaurant_id', _restaurantId ?? userId)
+          .order('created_at', ascending: false);
+
+      _meals = List<Map<String, dynamic>>.from(mealsRes);
+      _activeMeals = _meals.where((m) => 
+        DateTime.parse(m['expiry_date']).isAfter(DateTime.now())
+      ).length;
+
+      // Get total sales (mock for now)
+      _totalSales = _meals.length * 10;
+
+      if (mounted) setState(() => _isLoading = false);
+    } catch (e) {
+      debugPrint('Error loading data: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
+    final surface = isDark ? AppColors.surfaceDark : Colors.white;
+
+    return Scaffold(
+      backgroundColor: bg,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(isDark, surface),
+            _buildStatsSection(surface, isDark),
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _meals.isEmpty
+                      ? _buildEmptyState(isDark)
+                      : _buildMealsList(isDark),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final result = await Navigator.pushNamed(context, '/restaurant-dashboard/add-meal');
+          if (result == true) _loadData();
+        },
+        backgroundColor: AppColors.primaryGreen,
+        foregroundColor: Colors.black,
+        icon: const Icon(Icons.add),
+        label: const Text('Add Meal', style: TextStyle(fontWeight: FontWeight.bold)),
+      ),
+      bottomNavigationBar: RestaurantBottomNav(
+        currentIndex: 1,
+        onTap: (index) {
+          if (index == 0) Navigator.pushReplacementNamed(context, '/restaurant-dashboard');
+        },
+      ),
+    );
+  }
+
+  Widget _buildHeader(bool isDark, Color surface) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: surface,
+        border: Border(
+          bottom: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.primaryGreen.withValues(alpha: 0.2),
+              border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3), width: 2),
+            ),
+            child: const Icon(Icons.restaurant, color: AppColors.primaryGreen),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'My Meals',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                ),
+                Text(
+                  _restaurantName ?? 'Restaurant',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: _loadData,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsSection(Color surface, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          _buildStatCard('$_activeMeals', 'Active', AppColors.primaryGreen, surface, isDark),
+          const SizedBox(width: 12),
+          _buildStatCard('$_totalSales', 'Sales', null, surface, isDark),
+          const SizedBox(width: 12),
+          _buildStatCard(
+            _rating.toStringAsFixed(1),
+            'Rating',
+            null,
+            surface,
+            isDark,
+            trailing: const Icon(Icons.star, color: Colors.amber, size: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String value, String label, Color? valueColor, Color surface, bool isDark, {Widget? trailing}) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: valueColor,
+                  ),
+                ),
+                if (trailing != null) ...[const SizedBox(width: 4), trailing],
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(bool isDark) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.restaurant_menu,
+            size: 80,
+            color: isDark ? Colors.grey[700] : Colors.grey[300],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No meals yet',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Tap the + button to add your first meal',
+            style: TextStyle(
+              color: isDark ? Colors.grey[500] : Colors.grey[500],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMealsList(bool isDark) {
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      child: GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.75,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        itemCount: _meals.length,
+        itemBuilder: (context, index) {
+          return MealCard(
+            meal: _meals[index],
+            onTap: () async {
+              final result = await Navigator.pushNamed(
+                context,
+                '/restaurant-dashboard/meal/${_meals[index]['id']}',
+              );
+              if (result == true) _loadData();
+            },
+          );
+        },
+      ),
+    );
+  }
+}

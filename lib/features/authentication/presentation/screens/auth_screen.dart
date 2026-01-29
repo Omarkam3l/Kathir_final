@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
+import 'package:kathir_final/core/utils/auth_logger.dart';
 import 'package:kathir_final/core/utils/user_role.dart';
 import 'package:kathir_final/features/authentication/presentation/screens/verification_screen.dart';
 import 'package:kathir_final/features/authentication/presentation/viewmodels/auth_viewmodel.dart';
@@ -105,31 +106,15 @@ class _AuthScreenState extends State<AuthScreen> {
             ? null
             : _phoneController.text.trim(),
       );
-      if (_legalDocBytes != null) {
-        final uid =
-            vm.user?.id ?? s.Supabase.instance.client.auth.currentUser?.id;
-        if (uid != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Uploading legal document...')));
-          final result =
-              await vm.uploadLegalDoc(uid, 'legal.pdf', _legalDocBytes!);
-          if (mounted) {
-            if (result.url != null) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('Document uploaded successfully')));
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text(
-                  result.error ??
-                      'Document upload failed. Please try again later.',
-                  style: const TextStyle(color: AppColors.white),
-                ),
-                backgroundColor: AppColors.error,
-              ));
-            }
-          }
-        }
+      
+      // ✅ FIX: Don't upload documents here - wait until after OTP verification
+      // Store document bytes for upload after verification
+      if (_legalDocBytes != null && vm.user?.id != null) {
+        // Store in viewmodel for later upload
+        vm.pendingLegalDocBytes = _legalDocBytes;
+        vm.pendingLegalDocFileName = 'legal.pdf';
       }
+      
       if (ok) {
         if (mounted) GoRouter.of(context).go('/home');
       } else {
@@ -189,16 +174,137 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _uploadDocuments() async {
-    final res = await FilePicker.platform.pickFiles(withReadStream: false);
+    // Show loading snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
+              ),
+            ),
+            SizedBox(width: 12),
+            Text('Opening file picker...', style: TextStyle(color: AppColors.white)),
+          ],
+        ),
+        backgroundColor: AppColors.primary,
+        duration: Duration(seconds: 2),
+      ),
+    );
+    
+    AuthLogger.info('documentPicker.opening', ctx: {
+      'role': _selectedRole.toString(),
+    });
+    
+    final res = await FilePicker.platform.pickFiles(
+      withReadStream: false,
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+    );
+    
     if (!mounted) return;
+    
     if (res != null && res.files.isNotEmpty) {
-      _legalDocBytes = res.files.first.bytes;
+      final file = res.files.first;
+      _legalDocBytes = file.bytes;
+      final fileName = file.name;
+      final fileSize = file.size;
+      
+      AuthLogger.info('documentPicker.selected', ctx: {
+        'fileName': fileName,
+        'fileSize': fileSize,
+        'fileSizeKB': (fileSize / 1024).toStringAsFixed(2),
+        'role': _selectedRole.toString(),
+      });
+      
       if (_legalDocBytes != null) {
+        // Validate file size (max 10MB)
+        if (fileSize > 10 * 1024 * 1024) {
+          AuthLogger.warn('documentPicker.fileTooLarge', ctx: {
+            'fileName': fileName,
+            'fileSize': fileSize,
+            'maxSize': 10 * 1024 * 1024,
+          });
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'File too large! Maximum size is 10MB',
+                  style: TextStyle(color: AppColors.white),
+                ),
+                backgroundColor: AppColors.error,
+                duration: Duration(seconds: 4),
+              ),
+            );
+          }
+          return;
+        }
+        
         setState(() => _documentsUploaded = true);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Documents selected',
-                style: TextStyle(color: AppColors.white)),
-            backgroundColor: AppColors.primary));
+        
+        AuthLogger.info('documentPicker.success', ctx: {
+          'fileName': fileName,
+          'documentsUploaded': true,
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: AppColors.white, size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Document selected successfully!',
+                          style: TextStyle(
+                            color: AppColors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          '$fileName (${(fileSize / 1024).toStringAsFixed(1)} KB)',
+                          style: const TextStyle(
+                            color: AppColors.white,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: AppColors.primary,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } else {
+      AuthLogger.info('documentPicker.cancelled', ctx: {
+        'role': _selectedRole.toString(),
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No document selected',
+              style: TextStyle(color: AppColors.white),
+            ),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 2),
+          ),
+        );
       }
     }
   }

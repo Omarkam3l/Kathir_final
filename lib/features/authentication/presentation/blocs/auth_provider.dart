@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/utils/user_role.dart';
+import '../../../../core/utils/auth_logger.dart';
 import '../../../../di/global_injection/app_locator.dart';
 import '../../data/models/user_model.dart';
 
@@ -29,7 +30,7 @@ class AuthUserView {
   }) : fullName = name;
 
   /// Check if user needs approval (restaurant or NGO)
-  bool get needsApproval => role == 'rest' || role == 'ngo';
+  bool get needsApproval => role == 'restaurant' || role == 'ngo';
 
   /// Check if user is approved
   bool get isApproved => approvalStatus == 'approved';
@@ -196,7 +197,14 @@ class AuthProvider extends ChangeNotifier {
       _userProfile = null;
       return;
     }
+    
     try {
+      AuthLogger.profileCheck(
+        userId: current.id,
+        role: (current.userMetadata?['role'] as String?) ?? 'unknown',
+        exists: false,
+      );
+      
       final existing = await _client
           .from('profiles')
           .select()
@@ -212,14 +220,38 @@ class AuthProvider extends ChangeNotifier {
           'phone_number': (current.userMetadata?['phone_number'] as String?),
           'is_verified': current.emailConfirmedAt != null,
         };
+        
+        AuthLogger.dbOp(
+          operation: 'upsert',
+          table: 'profiles',
+          userId: current.id,
+          extra: {'reason': 'profile_missing'},
+        );
+        
         await _client.from('profiles').upsert(newProfile);
         _userProfile = newProfile;
+        
+        AuthLogger.info('profile.created', ctx: {
+          'userId': current.id,
+          'role': newProfile['role'],
+        });
       } else {
         _userProfile = existing;
+        AuthLogger.profileCheck(
+          userId: current.id,
+          role: existing['role'] as String? ?? 'unknown',
+          exists: true,
+        );
       }
       notifyListeners();
-    } catch (_) {
-      // ignore
+    } catch (e, stackTrace) {
+      AuthLogger.dbOpFailed(
+        operation: 'sync',
+        table: 'profiles',
+        userId: current.id,
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 

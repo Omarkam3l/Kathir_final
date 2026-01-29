@@ -3,6 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:kathir_final/features/admin_dashboard/presentation/screens/admin_dashboard_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_dashboard_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_dashboard_screen.dart';
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/meals_list_screen.dart';
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/add_meal_screen.dart';
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/meal_details_screen.dart';
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/edit_meal_screen.dart';
 import 'package:kathir_final/features/onboarding/presentation/screens/onboarding_flow_screen.dart';
 import 'package:provider/provider.dart';
 import '../../authentication/presentation/blocs/auth_provider.dart';
@@ -77,7 +81,7 @@ class AppRouter {
         }
         
         // Approved users go to their dashboards
-        if (role == 'rest') {
+        if (role == 'restaurant') {
           return '/restaurant-dashboard';
         } else if (role == 'ngo') {
           return '/ngo-dashboard';
@@ -99,6 +103,28 @@ class AppRouter {
         name: RouteNames.restaurantDashboard,
         path: '/restaurant-dashboard',
         builder: (context, state) => const RestaurantDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/restaurant-dashboard/meals',
+        builder: (context, state) => const MealsListScreen(),
+      ),
+      GoRoute(
+        path: '/restaurant-dashboard/add-meal',
+        builder: (context, state) => const AddMealScreen(),
+      ),
+      GoRoute(
+        path: '/restaurant-dashboard/meal/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return MealDetailsScreen(mealId: id);
+        },
+      ),
+      GoRoute(
+        path: '/restaurant-dashboard/edit-meal/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return EditMealScreen(mealId: id);
+        },
       ),
       GoRoute(
         name: RouteNames.ngoDashboard,
