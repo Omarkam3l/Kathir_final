@@ -1,7 +1,12 @@
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/auth_logger.dart';
 import '../widgets/image_upload_widget.dart';
 import '../widgets/restaurant_bottom_nav.dart';
 
@@ -27,12 +32,25 @@ class _EditMealScreenState extends State<EditMealScreen> {
   final _quantityController = TextEditingController();
 
   // State
-  String _category = 'meals';
+  String _category = 'Meals';  // Must match database constraint
   DateTime? _expiryDate;
   DateTime? _pickupDeadline;
   String? _imageUrl;
+  File? _imageFile;
+  Uint8List? _imageBytes;
   bool _isLoading = true;
   bool _isSaving = false;
+
+  // Categories must match database constraint exactly
+  final List<String> _categories = [
+    'Meals',
+    'Bakery',
+    'Meat & Poultry',
+    'Seafood',
+    'Vegetables',
+    'Desserts',
+    'Groceries',
+  ];
 
   @override
   void initState() {
@@ -92,6 +110,13 @@ class _EditMealScreenState extends State<EditMealScreen> {
 
     setState(() => _isSaving = true);
     try {
+      String? imageUrl = _imageUrl;
+      
+      // Upload new image if selected
+      if (_imageFile != null || _imageBytes != null) {
+        imageUrl = await _uploadImage();
+      }
+
       await _supabase.from('meals').update({
         'title': _titleController.text.trim(),
         'description': _descriptionController.text.trim(),
@@ -101,7 +126,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
         'quantity_available': int.tryParse(_quantityController.text) ?? 0,
         'expiry_date': _expiryDate?.toIso8601String(),
         'pickup_deadline': _pickupDeadline?.toIso8601String(),
-        'image_url': _imageUrl,
+        'image_url': imageUrl,
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', widget.mealId);
 
@@ -124,6 +149,56 @@ class _EditMealScreenState extends State<EditMealScreen> {
           ),
         );
       }
+    }
+  }
+
+  Future<String?> _uploadImage() async {
+    try {
+      final restaurantId = _supabase.auth.currentUser?.id;
+      if (restaurantId == null) throw Exception('Not authenticated');
+
+      // Validate file size
+      int fileSize = 0;
+      if (kIsWeb && _imageBytes != null) {
+        fileSize = _imageBytes!.length;
+      } else if (_imageFile != null) {
+        fileSize = await _imageFile!.length();
+      }
+
+      if (fileSize > 5 * 1024 * 1024) {
+        throw Exception('Image size must be less than 5MB');
+      }
+
+      // Generate unique filename
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final mealId = const Uuid().v4();
+      final filename = 'meal_${mealId}_$timestamp.jpg';
+      final path = '$restaurantId/$filename';
+
+      AuthLogger.info('meal.image.upload.start', ctx: {
+        'restaurantId': restaurantId,
+        'filename': filename,
+        'fileSize': fileSize,
+      });
+
+      // Upload to Supabase
+      if (kIsWeb && _imageBytes != null) {
+        await _supabase.storage.from('meal-images').uploadBinary(path, _imageBytes!);
+      } else if (_imageFile != null) {
+        await _supabase.storage.from('meal-images').upload(path, _imageFile!);
+      }
+
+      // Get public URL
+      final url = _supabase.storage.from('meal-images').getPublicUrl(path);
+
+      AuthLogger.info('meal.image.upload.success', ctx: {
+        'url': url,
+      });
+
+      return url;
+    } catch (e, stackTrace) {
+      AuthLogger.errorLog('meal.image.upload.failed', error: e, stackTrace: stackTrace);
+      rethrow;
     }
   }
 
@@ -150,7 +225,13 @@ class _EditMealScreenState extends State<EditMealScreen> {
                     // Image Upload
                     ImageUploadWidget(
                       initialImageUrl: _imageUrl,
-                      onImageUploaded: (url) => setState(() => _imageUrl = url),
+                      isDark: isDark,
+                      onImageSelected: (file, bytes) {
+                        setState(() {
+                          _imageFile = file;
+                          _imageBytes = bytes;
+                        });
+                      },
                     ),
                     const SizedBox(height: 24),
 
@@ -179,12 +260,8 @@ class _EditMealScreenState extends State<EditMealScreen> {
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
-                      children: [
-                        _buildCategoryChip('meals', 'Meals'),
-                        _buildCategoryChip('bakery', 'Bakery'),
-                        _buildCategoryChip('raw_ingredients', 'Raw Ingredients'),
-                        _buildCategoryChip('vegan', 'Vegan'),
-                      ],
+                      runSpacing: 8,
+                      children: _categories.map((cat) => _buildCategoryChip(cat)).toList(),
                     ),
                     const SizedBox(height: 20),
 
@@ -294,7 +371,25 @@ class _EditMealScreenState extends State<EditMealScreen> {
                 ),
               ),
             ),
-      bottomNavigationBar: const RestaurantBottomNav(currentIndex: 0),
+      bottomNavigationBar: RestaurantBottomNav(
+        currentIndex: 0,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              context.go('/restaurant-dashboard/meals');
+              break;
+            case 1:
+              context.go('/restaurant-dashboard/meals');
+              break;
+            case 2:
+              // TODO: Navigate to orders
+              break;
+            case 3:
+              context.go('/restaurant-dashboard/profile');
+              break;
+          }
+        },
+      ),
     );
   }
 
@@ -325,16 +420,26 @@ class _EditMealScreenState extends State<EditMealScreen> {
     );
   }
 
-  Widget _buildCategoryChip(String value, String label) {
-    final isSelected = _category == value;
-    return ChoiceChip(
+  Widget _buildCategoryChip(String category) {
+    final isSelected = _category == category;
+    return FilterChip(
       selected: isSelected,
-      onSelected: (_) => setState(() => _category = value),
-      label: Text(label),
+      label: Text(category),
+      onSelected: (_) => setState(() => _category = category),
       selectedColor: AppColors.primaryGreen,
+      checkmarkColor: Colors.black,
+      backgroundColor: Colors.grey[200],
       labelStyle: TextStyle(
-        color: isSelected ? Colors.black : null,
-        fontWeight: isSelected ? FontWeight.w600 : null,
+        color: isSelected ? Colors.black : Colors.grey[700],
+        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: isSelected ? AppColors.primaryGreen : Colors.grey[300]!,
+          width: isSelected ? 2 : 1,
+        ),
       ),
     );
   }

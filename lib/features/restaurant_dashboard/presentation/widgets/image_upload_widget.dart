@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
@@ -6,7 +7,7 @@ import '../../../../core/utils/app_colors.dart';
 
 class ImageUploadWidget extends StatefulWidget {
   final String? initialImageUrl;
-  final Function(File?, List<int>?) onImageSelected;
+  final Function(File?, Uint8List?) onImageSelected;
   final bool isDark;
 
   const ImageUploadWidget({
@@ -22,7 +23,7 @@ class ImageUploadWidget extends StatefulWidget {
 
 class _ImageUploadWidgetState extends State<ImageUploadWidget> {
   File? _imageFile;
-  List<int>? _imageBytes;
+  Uint8List? _imageBytes;
   String? _imageUrl;
   final _picker = ImagePicker();
 
@@ -43,7 +44,8 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
 
       if (pickedFile != null) {
         if (kIsWeb) {
-          _imageBytes = await pickedFile.readAsBytes();
+          final bytes = await pickedFile.readAsBytes();
+          _imageBytes = Uint8List.fromList(bytes);
           setState(() => _imageUrl = null);
           widget.onImageSelected(null, _imageBytes);
         } else {

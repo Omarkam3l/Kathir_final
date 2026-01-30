@@ -131,7 +131,7 @@ class PendingApprovalScreen extends StatelessWidget {
           child: Center(
             child: Text(
               number,
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppColors.primary,
                 fontWeight: FontWeight.bold,
                 fontSize: 14,

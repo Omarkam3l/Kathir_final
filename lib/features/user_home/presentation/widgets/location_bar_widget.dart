@@ -26,7 +26,7 @@ class LocationBarWidget extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
-            Icon(Icons.location_on, size: 20, color: primary),
+            const Icon(Icons.location_on, size: 20, color: primary),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -40,7 +40,7 @@ class LocationBarWidget extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            Icon(Icons.expand_more, size: 20, color: muted),
+            const Icon(Icons.expand_more, size: 20, color: muted),
           ],
         ),
       ),

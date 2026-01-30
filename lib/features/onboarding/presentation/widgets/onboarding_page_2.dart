@@ -239,7 +239,7 @@ class OnboardingPage2 extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.arrow_forward,
                             color: nextBtnIcon,
                             size: 28,

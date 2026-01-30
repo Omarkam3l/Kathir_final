@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -30,9 +31,10 @@ class _AddMealScreenState extends State<AddMealScreen> {
   DateTime? _expiryDate;
   DateTime? _pickupDeadline;
   File? _imageFile;
-  List<int>? _imageBytes;
+  Uint8List? _imageBytes;
   bool _isLoading = false;
 
+  // Categories must match database constraint exactly
   final List<String> _categories = [
     'Meals',
     'Bakery',
@@ -238,13 +240,10 @@ class _AddMealScreenState extends State<AddMealScreen> {
             // Category
             _buildLabel('Category *'),
             const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              value: _category,
-              decoration: _inputDecoration('Select category', isDark),
-              items: _categories.map((cat) {
-                return DropdownMenuItem(value: cat, child: Text(cat));
-              }).toList(),
-              onChanged: (v) => setState(() => _category = v!),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _categories.map((cat) => _buildCategoryChip(cat)).toList(),
             ),
             const SizedBox(height: 20),
 
@@ -435,6 +434,30 @@ class _AddMealScreenState extends State<AddMealScreen> {
     return Text(
       text,
       style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+    );
+  }
+
+  Widget _buildCategoryChip(String category) {
+    final isSelected = _category == category;
+    return FilterChip(
+      selected: isSelected,
+      label: Text(category),
+      onSelected: (_) => setState(() => _category = category),
+      selectedColor: AppColors.primaryGreen,
+      checkmarkColor: Colors.black,
+      backgroundColor: Colors.grey[200],
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.black : Colors.grey[700],
+        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: isSelected ? AppColors.primaryGreen : Colors.grey[300]!,
+          width: isSelected ? 2 : 1,
+        ),
+      ),
     );
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../widgets/meal_card.dart';
@@ -94,7 +95,7 @@ class _MealsListScreenState extends State<MealsListScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          final result = await Navigator.pushNamed(context, '/restaurant-dashboard/add-meal');
+          final result = await context.push('/restaurant-dashboard/add-meal');
           if (result == true) _loadData();
         },
         backgroundColor: AppColors.primaryGreen,
@@ -105,7 +106,20 @@ class _MealsListScreenState extends State<MealsListScreen> {
       bottomNavigationBar: RestaurantBottomNav(
         currentIndex: 1,
         onTap: (index) {
-          if (index == 0) Navigator.pushReplacementNamed(context, '/restaurant-dashboard');
+          switch (index) {
+            case 0:
+              context.go('/restaurant-dashboard/meals');
+              break;
+            case 1:
+              // Already on meals
+              break;
+            case 2:
+              // TODO: Navigate to orders
+              break;
+            case 3:
+              context.go('/restaurant-dashboard/profile');
+              break;
+          }
         },
       ),
     );
@@ -269,8 +283,7 @@ class _MealsListScreenState extends State<MealsListScreen> {
           return MealCard(
             meal: _meals[index],
             onTap: () async {
-              final result = await Navigator.pushNamed(
-                context,
+              final result = await context.push(
                 '/restaurant-dashboard/meal/${_meals[index]['id']}',
               );
               if (result == true) _loadData();

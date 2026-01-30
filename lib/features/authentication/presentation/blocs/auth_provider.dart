@@ -11,6 +11,7 @@ class AuthUserView {
   final String fullName; // alias for name, for compatibility
   final String email;
   final String? phone;
+  final String? avatarUrl;
   final List<String> addresses;
   final List<Map<String, dynamic>> cards;
   final String role;
@@ -22,6 +23,7 @@ class AuthUserView {
     required this.name,
     required this.email,
     this.phone,
+    this.avatarUrl,
     this.addresses = const [],
     this.cards = const [],
     this.role = 'user',
@@ -92,6 +94,7 @@ class AuthProvider extends ChangeNotifier {
       name: model.fullName,
       email: model.email,
       phone: model.phoneNumber,
+      avatarUrl: _userProfile?['avatar_url'] as String?,
       addresses: addresses,
       cards: cards,
       role: role,
@@ -288,6 +291,13 @@ class AuthProvider extends ChangeNotifier {
       'role': (current.userMetadata?['role'] as String?) ?? 'user',
       'is_verified': current.emailConfirmedAt != null,
     });
+    await refreshUser();
+  }
+
+  /// Refresh user profile data from database
+  Future<void> refreshUser() async {
+    await _syncUserProfile();
+    notifyListeners();
   }
 
   Future<void> setRole(UserRole role) async {

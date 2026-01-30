@@ -149,7 +149,25 @@ class _MealDetailsScreenState extends State<MealDetailsScreen> {
                   ),
                 )
               : _buildMealDetails(isDark),
-      bottomNavigationBar: const RestaurantBottomNav(currentIndex: 0),
+      bottomNavigationBar: RestaurantBottomNav(
+        currentIndex: 0,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              context.go('/restaurant-dashboard/meals');
+              break;
+            case 1:
+              context.go('/restaurant-dashboard/meals');
+              break;
+            case 2:
+              // TODO: Navigate to orders
+              break;
+            case 3:
+              context.go('/restaurant-dashboard/profile');
+              break;
+          }
+        },
+      ),
     );
   }
 
