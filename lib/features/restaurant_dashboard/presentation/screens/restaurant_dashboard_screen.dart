@@ -170,15 +170,26 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
     final bg = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
     final surface = isDark ? AppColors.surfaceDark : Colors.white;
 
+    // Role-based access control
+    if (user == null || user.role != 'restaurant') {
+      return Scaffold(
+        body: Center(
+          child: Text(
+            'Access denied. Only restaurant users can view this page.',
+            style: Theme.of(context).textTheme.titleLarge,
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
         child: Column(
           children: [
             // Header
-            _buildHeader(isDark, user?.fullName ?? _restaurantName ?? 'Restaurant'),
-            
-            // Main content
+            _buildHeader(isDark, user.fullName ?? _restaurantName ?? 'Restaurant'),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.only(bottom: 100),
@@ -187,7 +198,6 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                   children: [
                     // Stats Summary
                     _buildStatsSection(surface, isDark),
-                    
                     // Form Title
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -210,7 +220,6 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                         ],
                       ),
                     ),
-                    
                     // Form
                     _buildMealForm(surface, isDark),
                   ],
@@ -220,7 +229,6 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
           ],
         ),
       ),
-      
       // Bottom publish button
       bottomNavigationBar: _buildBottomBar(isDark),
     );
