@@ -3,7 +3,7 @@ import '../../user_home/presentation/screens/home_screen.dart';
 import '../../favorites/presentation/screens/favourites_screen.dart';
 import '../../cart/presentation/screens/cart_screen.dart';
 import '../../profile/presentation/screens/notifications_screen.dart';
-import '../../profile/presentation/screens/profile_overview_screen.dart';
+import '../../profile/presentation/screens/user_profile_screen_new.dart';
 
 class NavItem {
   final String key;
@@ -26,11 +26,11 @@ class UiConfig {
         NavItem(key: 'favourites', icon: Icons.favorite_border, label: 'Favourites', builder: FavouritesScreen.new),
         NavItem(key: 'cart', icon: Icons.shopping_cart_outlined, label: 'Cart', builder: CartScreen.new),
         NavItem(key: 'alerts', icon: Icons.notifications_none, label: 'Alerts', builder: NotificationsScreen.new),
-        NavItem(key: 'profile', icon: Icons.person_outline, label: 'Profile', builder: ProfileOverviewScreen.new),
+        NavItem(key: 'profile', icon: Icons.person_outline, label: 'Profile', builder: UserProfileScreenNew.new),
       ];
 
   static List<DrawerItem> drawerItems() => const [
-        DrawerItem(icon: Icons.person, label: 'My Profile', path: ProfileOverviewScreen.routeName),
+        DrawerItem(icon: Icons.person, label: 'My Profile', path: UserProfileScreenNew.routeName),
         DrawerItem(icon: Icons.favorite, label: 'My Favourites', path: '/favourites'),
         DrawerItem(icon: Icons.shopping_cart, label: 'Cart', path: '/cart'),
         DrawerItem(icon: Icons.notifications, label: 'Notification', path: '/alerts'),

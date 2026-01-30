@@ -19,7 +19,7 @@ enum UserRole {
     return switch (this) {
       UserRole.user => 'user',
       UserRole.ngo => 'ngo',
-      UserRole.restaurant => 'rest',
+      UserRole.restaurant => 'restaurant',  // Fixed: was 'rest', now 'restaurant'
       UserRole.admin => 'admin',
     };
   }

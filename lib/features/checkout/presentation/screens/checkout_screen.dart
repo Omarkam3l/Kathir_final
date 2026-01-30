@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../profile/presentation/providers/foodie_state.dart';
 import '../../../../core/utils/app_colors.dart';
-import '../../../user_home/domain/entities/meal_offer.dart';
 import '../../../orders/presentation/screens/order_summary_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -224,10 +223,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       decoration: BoxDecoration(
                           color: primaryColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20)),
-                      child: Row(
+                      child: const Row(
                         children: [
                           Icon(Icons.lock, size: 12, color: primaryColor),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Text('Secured',
                               style: TextStyle(
                                   fontSize: 12,

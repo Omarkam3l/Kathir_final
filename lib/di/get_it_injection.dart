@@ -16,7 +16,6 @@ import '../features/authentication/domain/usecases/send_password_reset_usecase.d
 import '../features/authentication/domain/usecases/verify_signup_otp_usecase.dart';
 import '../features/authentication/domain/usecases/verify_recovery_otp_usecase.dart';
 import '../features/authentication/domain/usecases/update_password_usecase.dart';
-import '../features/authentication/domain/usecases/update_profile_legal_docs_usecase.dart';
 import '../features/meals/data/datasources/meal_remote_datasource.dart';
 import '../features/meals/data/repositories/meal_repository_impl.dart';
 import '../features/meals/domain/repositories/meal_repository.dart';
@@ -49,8 +48,6 @@ Future<void> registerGetItDependencies() async {
   sl.registerFactory<VerifySignupOtpUseCase>(() => VerifySignupOtpUseCase(sl()));
   sl.registerFactory<VerifyRecoveryOtpUseCase>(() => VerifyRecoveryOtpUseCase(sl()));
   sl.registerFactory<UpdatePasswordUseCase>(() => UpdatePasswordUseCase(sl()));
-  sl.registerFactory<UpdateProfileLegalDocsUseCase>(
-      () => UpdateProfileLegalDocsUseCase(sl()));
 
   sl.registerLazySingleton<MealRemoteDataSource>(
       () => SupabaseMealRemoteDataSource(sl()));
@@ -75,6 +72,5 @@ Future<void> registerGetItDependencies() async {
         verifySignupOtp: sl(),
         verifyRecoveryOtp: sl(),
         updatePassword: sl(),
-        updateProfileLegalDocs: sl(),
       ));
 }

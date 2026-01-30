@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../../core/utils/app_colors.dart';
-import '../../../authentication/presentation/blocs/auth_provider.dart';
+import 'package:go_router/go_router.dart';
 
-/// Restaurant Dashboard screen for adding meal listings
-/// Matches the restaurant_home_page HTML design
+/// Restaurant Dashboard screen - redirects to meals list
+/// This is the main entry point for restaurant users
 class RestaurantDashboardScreen extends StatefulWidget {
   const RestaurantDashboardScreen({super.key});
 
@@ -14,156 +11,17 @@ class RestaurantDashboardScreen extends StatefulWidget {
 }
 
 class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _supabase = Supabase.instance.client;
-
-  // Form controllers
-  final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _locationController = TextEditingController();
-  
-  // Form state
-  String _category = 'meals';
-  int _quantity = 5;
-  String _unit = 'portions';
-  String _fulfillmentMethod = 'pickup';
-  TimeOfDay? _pickupDeadline;
-  DateTime? _bestBefore;
-  bool _isDonationAvailable = true;
-  bool _isLoading = false;
-
-  // Stats
-  int _activeListings = 0;
-  int _mealsShared = 0;
-  double _rating = 0.0;
-  String? _restaurantId;
-  String? _restaurantName;
-
   @override
   void initState() {
     super.initState();
-    _loadRestaurantData();
-  }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
-    _locationController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadRestaurantData() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
-
-    try {
-      // Get restaurant linked to this user
-      final restaurantRes = await _supabase
-          .from('restaurants')
-          .select('id, name, rating')
-          .eq('id', userId)
-          .maybeSingle();
-
-      if (restaurantRes != null) {
-        _restaurantId = restaurantRes['id'];
-        _restaurantName = restaurantRes['name'];
-        _rating = (restaurantRes['rating'] as num?)?.toDouble() ?? 0.0;
-      }
-
-      // Get stats
-      final mealsRes = await _supabase
-          .from('meals')
-          .select('id, status')
-          .eq('restaurant_id', _restaurantId ?? userId);
-
-      if (mealsRes != null && mealsRes is List) {
-        _activeListings = mealsRes.where((m) => m['status'] == 'active').length;
-        _mealsShared = mealsRes.where((m) => m['status'] == 'sold').length;
-      }
-
-      if (mounted) setState(() {});
-    } catch (e) {
-      debugPrint('Error loading restaurant data: $e');
-    }
-  }
-
-  Future<void> _publishListing() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (_restaurantId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Restaurant not found. Please try again.')),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      // Calculate pickup deadline datetime
-      DateTime? pickupDeadline;
-      if (_pickupDeadline != null) {
-        final now = DateTime.now();
-        pickupDeadline = DateTime(
-          now.year, now.month, now.day,
-          _pickupDeadline!.hour, _pickupDeadline!.minute,
-        );
-        // If time is before now, set to tomorrow
-        if (pickupDeadline.isBefore(now)) {
-          pickupDeadline = pickupDeadline.add(const Duration(days: 1));
-        }
-      }
-
-      await _supabase.from('meals').insert({
-        'title': _titleController.text.trim(),
-        'description': _descriptionController.text.trim(),
-        'location': _locationController.text.trim().isNotEmpty 
-            ? _locationController.text.trim() 
-            : 'Pickup at restaurant',
-        'restaurant_id': _restaurantId,
-        'category': _category,
-        'quantity': _quantity,
-        'unit': _unit,
-        'fulfillment_method': _fulfillmentMethod,
-        'is_donation_available': _isDonationAvailable,
-        'status': 'active',
-        'original_price': 0.0, // Set by restaurant later or default
-        'donation_price': 0.0,
-        'expiry': _bestBefore?.toIso8601String() ?? 
-            DateTime.now().add(const Duration(hours: 6)).toIso8601String(),
-        'pickup_deadline': pickupDeadline?.toIso8601String(),
-        'image_url': '', // TODO: Implement image upload
-      });
-
+    // Redirect to meals list on load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Listing published successfully!'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-        // Reset form
-        _titleController.clear();
-        _descriptionController.clear();
-        _locationController.clear();
-        setState(() {
-          _quantity = 5;
-          _pickupDeadline = null;
-          _bestBefore = null;
-        });
-        // Refresh stats
-        _loadRestaurantData();
+        context.go('/restaurant-dashboard/meals');
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -172,15 +30,26 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
     final bg = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
     final surface = isDark ? AppColors.surfaceDark : Colors.white;
 
+    // Role-based access control
+    if (user == null || user.role != 'restaurant') {
+      return Scaffold(
+        body: Center(
+          child: Text(
+            'Access denied. Only restaurant users can view this page.',
+            style: Theme.of(context).textTheme.titleLarge,
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
         child: Column(
           children: [
             // Header
-            _buildHeader(isDark, user?.fullName ?? _restaurantName ?? 'Restaurant'),
-            
-            // Main content
+            _buildHeader(isDark, user.fullName ?? _restaurantName ?? 'Restaurant'),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.only(bottom: 100),
@@ -189,7 +58,6 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                   children: [
                     // Stats Summary
                     _buildStatsSection(surface, isDark),
-                    
                     // Form Title
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -212,7 +80,6 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                         ],
                       ),
                     ),
-                    
                     // Form
                     _buildMealForm(surface, isDark),
                   ],
@@ -222,7 +89,6 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
           ],
         ),
       ),
-      
       // Bottom publish button
       bottomNavigationBar: _buildBottomBar(isDark),
     );

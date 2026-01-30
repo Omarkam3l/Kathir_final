@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/errors/failure.dart';
 import '../../../../core/utils/user_role.dart';
+import '../../../../core/utils/auth_logger.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/usecases/sign_in_usecase.dart';
 import '../../domain/usecases/sign_up_usecase.dart';
@@ -12,7 +13,6 @@ import '../../domain/usecases/send_password_reset_usecase.dart';
 import '../../domain/usecases/verify_signup_otp_usecase.dart';
 import '../../domain/usecases/verify_recovery_otp_usecase.dart';
 import '../../domain/usecases/update_password_usecase.dart';
-import '../../domain/usecases/update_profile_legal_docs_usecase.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final SignInUseCase signIn;
@@ -24,7 +24,6 @@ class AuthViewModel extends ChangeNotifier {
   final VerifySignupOtpUseCase verifySignupOtp;
   final VerifyRecoveryOtpUseCase verifyRecoveryOtp;
   final UpdatePasswordUseCase updatePassword;
-  final UpdateProfileLegalDocsUseCase updateProfileLegalDocs;
 
   bool loading = false;
   Failure? failure;
@@ -32,6 +31,10 @@ class AuthViewModel extends ChangeNotifier {
 
   bool isLogin = true;
   UserRole? selectedRole;
+  
+  // ✅ FIX: Store pending legal documents for upload after OTP verification
+  List<int>? pendingLegalDocBytes;
+  String? pendingLegalDocFileName;
 
   AuthViewModel({
     required this.signIn,
@@ -43,15 +46,18 @@ class AuthViewModel extends ChangeNotifier {
     required this.verifySignupOtp,
     required this.verifyRecoveryOtp,
     required this.updatePassword,
-    required this.updateProfileLegalDocs,
   });
 
   Future<bool> login(String email, String password) async {
     loading = true;
     notifyListeners();
+    
+    AuthLogger.info('login.attempt', ctx: {'email': email});
+    
     final res = await signIn(email, password);
     final ok = res.fold((l) {
       failure = l;
+      AuthLogger.errorLog('login.failed', ctx: {'email': email}, error: l.message);
       return false;
     }, (r) {
       user = r;
@@ -60,13 +66,19 @@ class AuthViewModel extends ChangeNotifier {
         'full_name': r.fullName,
         'role': r.role,
         if (r.phoneNumber != null) 'phone_number': r.phoneNumber,
-        if (r.organizationName != null) 'organization_name': r.organizationName,
         'is_verified': r.isVerified,
       };
-      // Fire and forget profile upsert; rely on RLS with auth.uid()
+      
+      AuthLogger.info('login.success', ctx: {
+        'email': email,
+        'userId': r.id,
+        'role': r.role,
+      });
+      
       createOrGetProfile.call(r.id, data);
       return true;
     });
+    
     loading = false;
     notifyListeners();
     return ok;
@@ -76,18 +88,46 @@ class AuthViewModel extends ChangeNotifier {
       {String? organizationName, String? phone}) async {
     loading = true;
     notifyListeners();
-    final res = await signUp(role: role, fullName: fullName, email: email, password: password, organizationName: organizationName, phone: phone);
+    
+    AuthLogger.info('signup.viewmodel.start', ctx: {
+      'role': role.toString(),
+      'email': email,
+      'hasOrgName': organizationName != null,
+      'hasPhone': phone != null,
+    });
+    
+    final res = await signUp(
+      role: role,
+      fullName: fullName,
+      email: email,
+      password: password,
+      organizationName: organizationName,
+      phone: phone,
+    );
+    
     final ok = res.fold((l) {
       failure = l;
+      AuthLogger.errorLog('signup.viewmodel.failed',
+          ctx: {'role': role.toString(), 'email': email},
+          error: l.message);
       return false;
     }, (r) {
       user = r;
+      
+      AuthLogger.info('signup.viewmodel.success', ctx: {
+        'role': role.toString(),
+        'email': email,
+        'userId': r.id,
+        'isVerified': r.isVerified,
+      });
+      
       if (user?.isVerified == true) {
         return true;
       }
       failure = const Failure('Please verify your email to complete signup');
       return false;
     });
+    
     loading = false;
     notifyListeners();
     return ok;
@@ -111,16 +151,131 @@ class AuthViewModel extends ChangeNotifier {
 
   /// Returns (url, error). On success url is set; on failure error contains the message.
   Future<({String? url, String? error})> uploadLegalDoc(String userId, String fileName, List<int> bytes) async {
+    AuthLogger.docUploadAttempt(userId: userId, fileName: fileName);
+    
     final res = await uploadDocs(userId, fileName, bytes);
     final result = res.fold(
-      (l) => (url: null, error: l.cause?.toString() ?? l.message),
-      (r) => (url: r, error: null),
+      (l) {
+        AuthLogger.docUploadFailed(
+          userId: userId,
+          fileName: fileName,
+          error: l.cause ?? l.message,
+        );
+        return (url: null, error: l.cause?.toString() ?? l.message);
+      },
+      (r) {
+        AuthLogger.docUploadSuccess(userId: userId, fileName: fileName, url: r);
+        return (url: r, error: null);
+      },
     );
-    if (result.url != null) {
+    
+    // Save URL to database using atomic append RPC
+    if (result.url != null && user != null) {
       try {
-        await updateProfileLegalDocs(userId, result.url!);
-      } catch (_) {}
+        final client = Supabase.instance.client;
+        final role = user!.role;
+        
+        if (role == 'restaurant') {
+          AuthLogger.dbOp(
+            operation: 'rpc.append_restaurant_legal_doc',
+            table: 'restaurants',
+            userId: userId,
+            extra: {'url': result.url},
+          );
+          
+          // Call RPC function to atomically append URL
+          final rpcResult = await client.rpc(
+            'append_restaurant_legal_doc',
+            params: {'p_url': result.url},
+          );
+          
+          AuthLogger.info('legalDoc.saved', ctx: {
+            'userId': userId,
+            'role': role,
+            'table': 'restaurants',
+            'url': result.url,
+            'updatedUrls': rpcResult['legal_docs_urls'],
+          });
+          
+          // Verify URL was saved by reading back
+          final verification = await client
+              .from('restaurants')
+              .select('legal_docs_urls')
+              .eq('profile_id', userId)
+              .single();
+          
+          final savedUrls = verification['legal_docs_urls'] as List?;
+          if (savedUrls == null || !savedUrls.contains(result.url)) {
+            AuthLogger.warn('legalDoc.verificationFailed', ctx: {
+              'userId': userId,
+              'expectedUrl': result.url,
+              'actualUrls': savedUrls,
+            });
+          } else {
+            AuthLogger.info('legalDoc.verified', ctx: {
+              'userId': userId,
+              'urlCount': savedUrls.length,
+            });
+          }
+          
+        } else if (role == 'ngo') {
+          AuthLogger.dbOp(
+            operation: 'rpc.append_ngo_legal_doc',
+            table: 'ngos',
+            userId: userId,
+            extra: {'url': result.url},
+          );
+          
+          // Call RPC function to atomically append URL
+          final rpcResult = await client.rpc(
+            'append_ngo_legal_doc',
+            params: {'p_url': result.url},
+          );
+          
+          AuthLogger.info('legalDoc.saved', ctx: {
+            'userId': userId,
+            'role': role,
+            'table': 'ngos',
+            'url': result.url,
+            'updatedUrls': rpcResult['legal_docs_urls'],
+          });
+          
+          // Verify URL was saved by reading back
+          final verification = await client
+              .from('ngos')
+              .select('legal_docs_urls')
+              .eq('profile_id', userId)
+              .single();
+          
+          final savedUrls = verification['legal_docs_urls'] as List?;
+          if (savedUrls == null || !savedUrls.contains(result.url)) {
+            AuthLogger.warn('legalDoc.verificationFailed', ctx: {
+              'userId': userId,
+              'expectedUrl': result.url,
+              'actualUrls': savedUrls,
+            });
+          } else {
+            AuthLogger.info('legalDoc.verified', ctx: {
+              'userId': userId,
+              'urlCount': savedUrls.length,
+            });
+          }
+        }
+      } catch (e, stackTrace) {
+        final table = user!.role == 'restaurant' ? 'restaurants' : 'ngos';
+        AuthLogger.dbOpFailed(
+          operation: 'rpc.append_legal_doc',
+          table: table,
+          userId: userId,
+          extra: {'url': result.url},
+          error: e,
+          stackTrace: stackTrace,
+        );
+        debugPrint('Failed to save legal doc URL to database: $e');
+        // Don't fail the whole operation, just log the error
+      }
     }
+    
     return result;
   }
 
@@ -142,23 +297,76 @@ class AuthViewModel extends ChangeNotifier {
     loading = true;
     failure = null;
     notifyListeners();
+    
+    AuthLogger.info('confirmSignupCode.attempt', ctx: {'email': email});
+    
     final res = await verifySignupOtp(email, otp);
-    final ok = res.fold((l) {
+    bool ok = false;
+    
+    await res.fold((l) async {
       failure = l;
-      return false;
-    }, (r) {
+      AuthLogger.errorLog('confirmSignupCode.failed',
+          ctx: {'email': email},
+          error: l.message);
+      ok = false;
+    }, (r) async {
       user = r;
       final data = {
         'email': r.email,
         'full_name': r.fullName,
         'role': r.role,
         if (r.phoneNumber != null) 'phone_number': r.phoneNumber,
-        if (r.organizationName != null) 'organization_name': r.organizationName,
         'is_verified': r.isVerified,
       };
+      
+      AuthLogger.info('confirmSignupCode.success', ctx: {
+        'email': email,
+        'userId': r.id,
+        'role': r.role,
+      });
+      
       createOrGetProfile.call(r.id, data);
-      return true;
+      
+      // ✅ FIX: Upload pending legal documents AFTER successful OTP verification
+      if (pendingLegalDocBytes != null && pendingLegalDocFileName != null) {
+        AuthLogger.info('uploadPendingDocs.start', ctx: {
+          'userId': r.id,
+          'fileName': pendingLegalDocFileName,
+        });
+        
+        try {
+          final uploadResult = await uploadLegalDoc(
+            r.id,
+            pendingLegalDocFileName!,
+            pendingLegalDocBytes!,
+          );
+          
+          if (uploadResult.url != null) {
+            AuthLogger.info('uploadPendingDocs.success', ctx: {
+              'userId': r.id,
+              'url': uploadResult.url,
+            });
+          } else {
+            AuthLogger.warn('uploadPendingDocs.failed', ctx: {
+              'userId': r.id,
+              'error': uploadResult.error,
+            });
+          }
+        } catch (e, stackTrace) {
+          AuthLogger.errorLog('uploadPendingDocs.exception',
+              ctx: {'userId': r.id},
+              error: e,
+              stackTrace: stackTrace);
+        } finally {
+          // Clear pending documents
+          pendingLegalDocBytes = null;
+          pendingLegalDocFileName = null;
+        }
+      }
+      
+      ok = true;
     });
+    
     loading = false;
     notifyListeners();
     return ok;

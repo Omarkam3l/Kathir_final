@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import '../../../../core/utils/user_role.dart';
 import '../../../../core/utils/storage_constants.dart';
+import '../../../../core/utils/auth_logger.dart';
 import '../../../../core/supabase/supabase_helper.dart';
 import '../models/user_model.dart';
 
@@ -37,64 +38,212 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
 
   @override
   Future<UserModel> signIn(String email, String password) async {
-    final res =
-        await client.auth.signInWithPassword(email: email, password: password);
-    return UserModelFactory.fromAuthUser(res.user!);
+    try {
+      AuthLogger.info('signIn.attempt', ctx: {'email': email});
+      
+      final res =
+          await client.auth.signInWithPassword(email: email, password: password);
+      
+      AuthLogger.info('signIn.success', ctx: {
+        'email': email,
+        'userId': res.user?.id,
+        'hasSession': res.session != null,
+      });
+      
+      return UserModelFactory.fromAuthUser(res.user!);
+    } catch (e, stackTrace) {
+      AuthLogger.errorLog('signIn.failed',
+          ctx: {'email': email},
+          error: e,
+          stackTrace: stackTrace);
+      rethrow;
+    }
   }
 
   @override
   Future<UserModel> signUpUser(
       String fullName, String email, String password) async {
-    final res = await client.auth.signUp(
+    try {
+      AuthLogger.signupAttempt(role: 'user', email: email);
+      
+      final res = await client.auth.signUp(
+          email: email,
+          password: password,
+          data: {'full_name': fullName, 'role': UserRole.user.wireValue},
+          emailRedirectTo: kIsWeb
+              ? Uri.base.toString()
+              : 'io.supabase.flutter://login-callback/');
+      
+      final userId = res.user?.id;
+      final hasSession = res.session != null;
+      final emailConfirmed = res.user?.emailConfirmedAt != null;
+      
+      AuthLogger.signupResult(
+        role: 'user',
         email: email,
-        password: password,
-        data: {'full_name': fullName, 'role': UserRole.user.wireValue},
-        emailRedirectTo: kIsWeb
-            ? Uri.base.toString()
-            : 'io.supabase.flutter://login-callback/');
-    if (res.session == null) {
+        userId: userId,
+        hasSession: hasSession,
+        emailConfirmed: emailConfirmed,
+      );
+      
+      if (!hasSession) {
+        AuthLogger.otpRequested(email: email, type: 'signup');
+      }
+      
       return UserModelFactory.fromAuthUser(res.user!);
+    } catch (e, stackTrace) {
+      AuthLogger.errorLog('signUpUser.failed',
+          ctx: {'role': 'user', 'email': email},
+          error: e,
+          stackTrace: stackTrace);
+      rethrow;
     }
-    return UserModelFactory.fromAuthUser(res.user!);
   }
 
   @override
   Future<UserModel> signUpNGO(
       String orgName, String fullName, String email, String password,
       {String? phone}) async {
-    final res = await client.auth.signUp(
+    try {
+      AuthLogger.signupAttempt(role: 'ngo', email: email);
+      
+      AuthLogger.info('signUpNGO.metadata', ctx: {
+        'email': email,
+        'fullName': fullName,
+        'orgName': orgName,
+        'hasPhone': phone != null,
+        'role': UserRole.ngo.wireValue,
+      });
+      
+      final res = await client.auth.signUp(
+          email: email,
+          password: password,
+          data: {
+            'full_name': fullName,
+            'role': UserRole.ngo.wireValue,
+            'organization_name': orgName,
+            if (phone != null) 'phone_number': phone,
+          },
+          emailRedirectTo: kIsWeb
+              ? Uri.base.toString()
+              : 'io.supabase.flutter://login-callback/');
+      
+      final userId = res.user?.id;
+      final hasSession = res.session != null;
+      final emailConfirmed = res.user?.emailConfirmedAt != null;
+      
+      AuthLogger.signupResult(
+        role: 'ngo',
         email: email,
-        password: password,
-        data: {'full_name': fullName, 'role': UserRole.ngo.wireValue},
-        emailRedirectTo: kIsWeb
-            ? Uri.base.toString()
-            : 'io.supabase.flutter://login-callback/');
-    if (res.session == null) {
+        userId: userId,
+        hasSession: hasSession,
+        emailConfirmed: emailConfirmed,
+      );
+      
+      if (!hasSession) {
+        AuthLogger.otpRequested(email: email, type: 'signup');
+      }
+      
       return UserModelFactory.fromAuthUser(res.user!);
+    } on AuthException catch (e, stackTrace) {
+      // Supabase-specific auth error
+      AuthLogger.errorLog('signUpNGO.authException',
+          ctx: {
+            'role': 'ngo',
+            'email': email,
+            'orgName': orgName,
+            'statusCode': e.statusCode,
+            'message': e.message,
+          },
+          error: e,
+          stackTrace: stackTrace);
+      rethrow;
+    } catch (e, stackTrace) {
+      // Generic error
+      AuthLogger.errorLog('signUpNGO.failed',
+          ctx: {
+            'role': 'ngo',
+            'email': email,
+            'orgName': orgName,
+            'errorType': e.runtimeType.toString(),
+          },
+          error: e,
+          stackTrace: stackTrace);
+      rethrow;
     }
-    return UserModelFactory.fromAuthUser(res.user!);
   }
 
   @override
   Future<UserModel> signUpRestaurant(
       String orgName, String fullName, String email, String password,
       {String? phone}) async {
-    final res = await client.auth.signUp(
+    try {
+      AuthLogger.signupAttempt(role: 'restaurant', email: email);
+      
+      AuthLogger.info('signUpRestaurant.metadata', ctx: {
+        'email': email,
+        'fullName': fullName,
+        'orgName': orgName,
+        'hasPhone': phone != null,
+        'role': UserRole.restaurant.wireValue,
+      });
+      
+      final res = await client.auth.signUp(
+          email: email,
+          password: password,
+          data: {
+            'full_name': fullName,
+            'role': UserRole.restaurant.wireValue,
+            'organization_name': orgName,
+            if (phone != null) 'phone_number': phone,
+          },
+          emailRedirectTo: kIsWeb
+              ? Uri.base.toString()
+              : 'io.supabase.flutter://login-callback/');
+      
+      final userId = res.user?.id;
+      final hasSession = res.session != null;
+      final emailConfirmed = res.user?.emailConfirmedAt != null;
+      
+      AuthLogger.signupResult(
+        role: 'restaurant',
         email: email,
-        password: password,
-        data: {
-          'full_name': fullName,
-          'role': UserRole.restaurant.wireValue,
-          'organization_name': orgName,
-          'phone': phone,
-        },
-        emailRedirectTo: kIsWeb
-            ? Uri.base.toString()
-            : 'io.supabase.flutter://login-callback/');
-    if (res.session == null) {
+        userId: userId,
+        hasSession: hasSession,
+        emailConfirmed: emailConfirmed,
+      );
+      
+      if (!hasSession) {
+        AuthLogger.otpRequested(email: email, type: 'signup');
+      }
+      
       return UserModelFactory.fromAuthUser(res.user!);
+    } on AuthException catch (e, stackTrace) {
+      // Supabase-specific auth error
+      AuthLogger.errorLog('signUpRestaurant.authException',
+          ctx: {
+            'role': 'restaurant',
+            'email': email,
+            'orgName': orgName,
+            'statusCode': e.statusCode,
+            'message': e.message,
+          },
+          error: e,
+          stackTrace: stackTrace);
+      rethrow;
+    } catch (e, stackTrace) {
+      // Generic error
+      AuthLogger.errorLog('signUpRestaurant.failed',
+          ctx: {
+            'role': 'restaurant',
+            'email': email,
+            'orgName': orgName,
+            'errorType': e.runtimeType.toString(),
+          },
+          error: e,
+          stackTrace: stackTrace);
+      rethrow;
     }
-    return UserModelFactory.fromAuthUser(res.user!);
   }
 
   @override
@@ -147,39 +296,109 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
   @override
   Future<String> uploadDocuments(
       String userId, String fileName, List<int> bytes,
-      {String bucket = StorageConstants.legalDocsBucket}) {
+      {String bucket = StorageConstants.legalDocsBucket}) async {
+    AuthLogger.docUploadAttempt(userId: userId, fileName: fileName);
+    
     final path = '$userId/$fileName';
-    return helper.uploadDocument(bucket: bucket, path: path, bytes: bytes);
+    
+    try {
+      final url = await helper.uploadDocument(bucket: bucket, path: path, bytes: bytes);
+      AuthLogger.docUploadSuccess(userId: userId, fileName: fileName, url: url);
+      return url;
+    } catch (e, stackTrace) {
+      AuthLogger.docUploadFailed(
+        userId: userId,
+        fileName: fileName,
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
   }
 
   @override
   Future<void> sendPasswordResetEmail(String email) async {
-    await client.auth.resetPasswordForEmail(
-      email,
-      redirectTo: kIsWeb
-          ? Uri.base.toString()
-          : 'io.supabase.flutter://login-callback/',
-    );
+    try {
+      AuthLogger.otpRequested(email: email, type: 'recovery');
+      
+      await client.auth.resetPasswordForEmail(
+        email,
+        redirectTo: kIsWeb
+            ? Uri.base.toString()
+            : 'io.supabase.flutter://login-callback/',
+      );
+      
+      AuthLogger.info('passwordReset.emailSent', ctx: {'email': email});
+    } catch (e, stackTrace) {
+      AuthLogger.otpRequestFailed(
+        email: email,
+        type: 'recovery',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
   }
 
   @override
   Future<UserModel> verifySignupOtp(String email, String otp) async {
-    await client.auth.verifyOTP(type: OtpType.signup, token: otp, email: email);
-    final s = await _waitForSession();
-    final u = client.auth.currentUser;
-    if (u == null && s?.user == null) {
-      throw const AuthException('Verification failed');
+    try {
+      AuthLogger.otpVerifyAttempt(email: email, type: 'signup');
+      
+      await client.auth.verifyOTP(type: OtpType.signup, token: otp, email: email);
+      final s = await _waitForSession();
+      final u = client.auth.currentUser;
+      
+      if (u == null && s?.user == null) {
+        AuthLogger.otpVerifyResult(
+          email: email,
+          type: 'signup',
+          success: false,
+        );
+        throw const AuthException('Verification failed');
+      }
+      
+      final userId = (u ?? s!.user).id;
+      AuthLogger.otpVerifyResult(
+        email: email,
+        type: 'signup',
+        success: true,
+        userId: userId,
+      );
+      
+      return UserModelFactory.fromAuthUser(u ?? s!.user);
+    } catch (e, stackTrace) {
+      AuthLogger.errorLog('verifySignupOtp.failed',
+          ctx: {'email': email, 'type': 'signup'},
+          error: e,
+          stackTrace: stackTrace);
+      rethrow;
     }
-    return UserModelFactory.fromAuthUser(u ?? s!.user);
   }
 
   @override
   Future<void> verifyRecoveryOtp(String email, String otp) async {
-    await client.auth.verifyOTP(
-      type: OtpType.recovery,
-      token: otp,
-      email: email,
-    );
+    try {
+      AuthLogger.otpVerifyAttempt(email: email, type: 'recovery');
+      
+      await client.auth.verifyOTP(
+        type: OtpType.recovery,
+        token: otp,
+        email: email,
+      );
+      
+      AuthLogger.otpVerifyResult(
+        email: email,
+        type: 'recovery',
+        success: true,
+      );
+    } catch (e, stackTrace) {
+      AuthLogger.errorLog('verifyRecoveryOtp.failed',
+          ctx: {'email': email, 'type': 'recovery'},
+          error: e,
+          stackTrace: stackTrace);
+      rethrow;
+    }
   }
 
   @override
