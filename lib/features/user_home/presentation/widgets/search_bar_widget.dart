@@ -55,7 +55,7 @@ class SearchBarWidget extends StatelessWidget {
                     fontSize: 14,
                     color: muted,
                   ),
-                  prefixIcon: Icon(Icons.search, size: 22, color: muted),
+                  prefixIcon: const Icon(Icons.search, size: 22, color: muted),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,

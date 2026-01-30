@@ -250,7 +250,7 @@ class _NgoDashboardScreenState extends State<NgoDashboardScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.location_on, size: 14, color: AppColors.primaryGreen),
+                      const Icon(Icons.location_on, size: 14, color: AppColors.primaryGreen),
                       const SizedBox(width: 4),
                       Text(
                         'Current Location',
@@ -379,7 +379,7 @@ class _NgoDashboardScreenState extends State<NgoDashboardScreen> {
               decoration: BoxDecoration(
                 border: Border(left: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[200]!)),
               ),
-              child: Icon(Icons.tune, color: AppColors.primaryGreen),
+              child: const Icon(Icons.tune, color: AppColors.primaryGreen),
             ),
           ],
         ),
@@ -520,7 +520,7 @@ class _NgoDashboardScreenState extends State<NgoDashboardScreen> {
                   ),
                 ],
               ),
-              Text(
+              const Text(
                 'See All',
                 style: TextStyle(
                   color: AppColors.primaryGreen,
@@ -609,7 +609,7 @@ class _NgoDashboardScreenState extends State<NgoDashboardScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
+                    gradient: const LinearGradient(
                       colors: [Colors.black54, Colors.black26],
                     ),
                     borderRadius: BorderRadius.circular(4),
@@ -716,7 +716,7 @@ class _NgoDashboardScreenState extends State<NgoDashboardScreen> {
               color: isDark ? Colors.white : Colors.black,
             ),
           ),
-          Icon(Icons.sort, color: Colors.grey),
+          const Icon(Icons.sort, color: Colors.grey),
         ],
       ),
     );

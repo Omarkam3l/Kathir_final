@@ -185,7 +185,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.eco, size: 18, color: textMuted),
+                      const Icon(Icons.eco, size: 18, color: textMuted),
                       const SizedBox(width: 6),
                       Text('KATHIR',
                           style: GoogleFonts.plusJakartaSans(

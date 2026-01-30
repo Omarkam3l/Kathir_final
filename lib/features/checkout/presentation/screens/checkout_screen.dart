@@ -223,10 +223,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       decoration: BoxDecoration(
                           color: primaryColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20)),
-                      child: Row(
+                      child: const Row(
                         children: [
                           Icon(Icons.lock, size: 12, color: primaryColor),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Text('Secured',
                               style: TextStyle(
                                   fontSize: 12,

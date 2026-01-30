@@ -132,7 +132,7 @@ class MealCardGrid extends StatelessWidget {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(Icons.location_on, size: 12, color: muted),
+                          const Icon(Icons.location_on, size: 12, color: muted),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(

@@ -3,7 +3,7 @@ import 'package:kathir_final/features/user_home/presentation/screens/home_screen
 import 'package:kathir_final/features/user_home/presentation/screens/map_placeholder_screen.dart';
 import 'package:kathir_final/features/cart/presentation/screens/cart_screen.dart';
 import 'package:kathir_final/features/orders/presentation/screens/my_orders_screen.dart';
-import 'package:kathir_final/features/profile/presentation/screens/profile_overview_screen.dart';
+import 'package:kathir_final/features/profile/presentation/screens/user_profile_screen_new.dart';
 import 'package:kathir_final/features/_shared/widgets/home_bottom_nav_bar.dart';
 
 /// Main shell: Home, Map, Cart (center), Orders, Profile.
@@ -25,7 +25,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     MapPlaceholderScreen(),
     CartScreen(),
     MyOrdersScreen(),
-    ProfileOverviewScreen(),
+    UserProfileScreenNew(),
   ];
 
   @override

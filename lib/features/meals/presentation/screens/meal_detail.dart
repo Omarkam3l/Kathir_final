@@ -448,7 +448,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                         blurRadius: 10, color: Colors.black26)
                                   ],
                                 ),
-                                child: Icon(Icons.location_on,
+                                child: const Icon(Icons.location_on,
                                     color: primaryColor, size: 24),
                               )
                             ],

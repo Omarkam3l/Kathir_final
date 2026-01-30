@@ -189,21 +189,21 @@ class OrderSummaryScreen extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.eco, color: primaryColor),
+                    const Icon(Icons.eco, color: primaryColor),
                     const SizedBox(width: 12),
                     Expanded(
                       child: RichText(
                         text: TextSpan(
                           style: TextStyle(color: textColor, fontSize: 14),
-                          children: [
-                            const TextSpan(
+                          children: const [
+                            TextSpan(
                                 text: 'Your contribution saved approx. '),
                             TextSpan(
                                 text: '1.2kg',
                                 style: TextStyle(
                                     color: primaryColor,
                                     fontWeight: FontWeight.bold)),
-                            const TextSpan(text: ' of food from waste.'),
+                            TextSpan(text: ' of food from waste.'),
                           ],
                         ),
                       ),
@@ -353,7 +353,7 @@ class OrderSummaryScreen extends StatelessWidget {
                                           fontWeight: FontWeight.bold,
                                           color: textColor)),
                                   Text('\$${total.toStringAsFixed(2)}',
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: primaryColor,
                                           fontSize: 16)),
