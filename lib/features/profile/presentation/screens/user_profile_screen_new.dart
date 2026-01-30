@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -67,15 +67,23 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) throw Exception('User not authenticated');
 
-      // Upload to Supabase Storage
-      final file = File(image.path);
-      final fileExt = image.path.split('.').last;
-      final fileName = 'profile.$fileExt';
+      // Read image as bytes (works on all platforms including web)
+      final bytes = await image.readAsBytes();
+      final fileExt = image.name.split('.').last.toLowerCase();
+      final fileName = 'avatar.$fileExt';
       final filePath = '$userId/$fileName';
 
+      // Upload using uploadBinary (works on web)
       await _supabase.storage
           .from('profile-images')
-          .upload(filePath, file, fileOptions: const FileOptions(upsert: true));
+          .uploadBinary(
+            filePath,
+            bytes,
+            fileOptions: FileOptions(
+              upsert: true,
+              contentType: _getContentType(fileExt),
+            ),
+          );
 
       // Get public URL
       final imageUrl = _supabase.storage
@@ -110,6 +118,20 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
           ),
         );
       }
+    }
+  }
+
+  String _getContentType(String extension) {
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      default:
+        return 'image/jpeg';
     }
   }
 
