@@ -109,7 +109,7 @@ class MealCardGrid extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        offer.title,
+                        offer.title.isEmpty ? 'Delicious Meal' : offer.title,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,

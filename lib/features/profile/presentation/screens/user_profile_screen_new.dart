@@ -426,11 +426,11 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Row(
+                  const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.receipt_long, size: 18, color: AppColors.primary),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4),
                       Text(
                         'ORDERS',
                         style: TextStyle(
@@ -488,11 +488,11 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Row(
+                  const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.eco, size: 18, color: AppColors.primary),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4),
                       Text(
                         'SAVED',
                         style: TextStyle(
@@ -644,7 +644,7 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
                   trailing: Switch(
                     value: true,
                     onChanged: (value) {},
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                   ),
                   onTap: null,
                   showDivider: true,

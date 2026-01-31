@@ -34,7 +34,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     _index = widget.initialIndex.clamp(0, _pages.length - 1);
   }
 
-  void _select(int i) => setState(() => _index = i);
+  @override
+  void didUpdateWidget(MainNavigationScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update index if initialIndex changes
+    if (widget.initialIndex != oldWidget.initialIndex) {
+      setState(() {
+        _index = widget.initialIndex.clamp(0, _pages.length - 1);
+      });
+    }
+  }
+
+  void _select(int i) {
+    if (_index != i) {
+      setState(() => _index = i);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

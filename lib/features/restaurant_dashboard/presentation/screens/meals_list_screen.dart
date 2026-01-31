@@ -18,9 +18,6 @@ class _MealsListScreenState extends State<MealsListScreen> {
   bool _isLoading = true;
   String? _restaurantId;
   String? _restaurantName;
-  int _activeMeals = 0;
-  int _totalSales = 0;
-  double _rating = 0.0;
 
   @override
   void initState() {
@@ -38,14 +35,13 @@ class _MealsListScreenState extends State<MealsListScreen> {
       // Get restaurant info
       final restaurantRes = await _supabase
           .from('restaurants')
-          .select('profile_id, restaurant_name, rating')
+          .select('profile_id, restaurant_name')
           .eq('profile_id', userId)
           .maybeSingle();
 
       if (restaurantRes != null) {
         _restaurantId = restaurantRes['profile_id'];
         _restaurantName = restaurantRes['restaurant_name'];
-        _rating = (restaurantRes['rating'] as num?)?.toDouble() ?? 0.0;
       }
 
       // Get meals
@@ -56,12 +52,6 @@ class _MealsListScreenState extends State<MealsListScreen> {
           .order('created_at', ascending: false);
 
       _meals = List<Map<String, dynamic>>.from(mealsRes);
-      _activeMeals = _meals.where((m) => 
-        DateTime.parse(m['expiry_date']).isAfter(DateTime.now())
-      ).length;
-
-      // Get total sales (mock for now)
-      _totalSales = _meals.length * 10;
 
       if (mounted) setState(() => _isLoading = false);
     } catch (e) {
@@ -74,15 +64,13 @@ class _MealsListScreenState extends State<MealsListScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
-    final surface = isDark ? AppColors.surfaceDark : Colors.white;
 
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(isDark, surface),
-            _buildStatsSection(surface, isDark),
+            _buildHeader(isDark),
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -108,13 +96,13 @@ class _MealsListScreenState extends State<MealsListScreen> {
         onTap: (index) {
           switch (index) {
             case 0:
-              context.go('/restaurant-dashboard/meals');
+              context.go('/restaurant-dashboard');
               break;
             case 1:
               // Already on meals
               break;
             case 2:
-              // TODO: Navigate to orders
+              context.go('/restaurant-dashboard/orders');
               break;
             case 3:
               context.go('/restaurant-dashboard/profile');
@@ -125,7 +113,9 @@ class _MealsListScreenState extends State<MealsListScreen> {
     );
   }
 
-  Widget _buildHeader(bool isDark, Color surface) {
+  Widget _buildHeader(bool isDark) {
+    final surface = isDark ? AppColors.surfaceDark : Colors.white;
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -144,7 +134,7 @@ class _MealsListScreenState extends State<MealsListScreen> {
               color: AppColors.primaryGreen.withValues(alpha: 0.2),
               border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3), width: 2),
             ),
-            child: const Icon(Icons.restaurant, color: AppColors.primaryGreen),
+            child: const Icon(Icons.restaurant_menu, color: AppColors.primaryGreen),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -152,7 +142,7 @@ class _MealsListScreenState extends State<MealsListScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'My Meals',
+                  'Manage Meals',
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -170,68 +160,6 @@ class _MealsListScreenState extends State<MealsListScreen> {
             icon: const Icon(Icons.refresh),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStatsSection(Color surface, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          _buildStatCard('$_activeMeals', 'Active', AppColors.primaryGreen, surface, isDark),
-          const SizedBox(width: 12),
-          _buildStatCard('$_totalSales', 'Sales', null, surface, isDark),
-          const SizedBox(width: 12),
-          _buildStatCard(
-            _rating.toStringAsFixed(1),
-            'Rating',
-            null,
-            surface,
-            isDark,
-            trailing: const Icon(Icons.star, color: Colors.amber, size: 16),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard(String value, String label, Color? valueColor, Color surface, bool isDark, {Widget? trailing}) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
-        ),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: valueColor,
-                  ),
-                ),
-                if (trailing != null) ...[const SizedBox(width: 4), trailing],
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
       ),
     );
   }

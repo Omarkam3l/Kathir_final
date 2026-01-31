@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
 
 /// Bottom nav matching design: Home, Map, [Cart - elevated], Orders, Profile.
+/// Clean modern design matching the profile screen style.
 class HomeBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -15,60 +15,55 @@ class HomeBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.surfaceDark : AppColors.white;
-    final border = isDark ? AppColors.dividerDark : AppColors.dividerLight;
-    const selected = AppColors.primary;
-    const unselected = AppColors.grey;
-
     return Container(
-      padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 8,
-        bottom: MediaQuery.of(context).padding.bottom + 8,
-      ),
       decoration: BoxDecoration(
-        color: bg,
-        border: Border(top: BorderSide(color: border)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _NavItem(
-            icon: Icons.home,
-            label: 'Home',
-            selected: currentIndex == 0,
-            onTap: () => onTap(0),
-            selectedColor: selected,
-            unselectedColor: unselected,
-          ),
-          _NavItem(
-            icon: Icons.map_outlined,
-            label: 'Map',
-            selected: currentIndex == 1,
-            onTap: () => onTap(1),
-            selectedColor: selected,
-            unselectedColor: unselected,
-          ),
-          _CenterCartButton(onTap: () => onTap(2)),
-          _NavItem(
-            icon: Icons.receipt_long_outlined,
-            label: 'Orders',
-            selected: currentIndex == 3,
-            onTap: () => onTap(3),
-            selectedColor: selected,
-            unselectedColor: unselected,
-          ),
-          _NavItem(
-            icon: Icons.person_outline,
-            label: 'Profile',
-            selected: currentIndex == 4,
-            onTap: () => onTap(4),
-            selectedColor: selected,
-            unselectedColor: unselected,
+        color: AppColors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
           ),
         ],
+      ),
+      child: SafeArea(
+        child: Container(
+          height: 70,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _NavItem(
+                icon: Icons.home,
+                label: 'Home',
+                selected: currentIndex == 0,
+                onTap: () => onTap(0),
+              ),
+              _NavItem(
+                icon: Icons.search,
+                label: 'Explore',
+                selected: currentIndex == 1,
+                onTap: () => onTap(1),
+              ),
+              _CenterButton(
+                icon: Icons.volunteer_activism,
+                onTap: () => onTap(2),
+              ),
+              _NavItem(
+                icon: Icons.history,
+                label: 'Activity',
+                selected: currentIndex == 3,
+                onTap: () => onTap(3),
+              ),
+              _NavItem(
+                icon: Icons.person,
+                label: 'Profile',
+                selected: currentIndex == 4,
+                onTap: () => onTap(4),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -79,40 +74,36 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
-  final Color selectedColor;
-  final Color unselectedColor;
 
   const _NavItem({
     required this.icon,
     required this.label,
     required this.selected,
     required this.onTap,
-    required this.selectedColor,
-    required this.unselectedColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              icon,
+              selected ? icon : icon,
               size: 24,
-              color: selected ? selectedColor : unselectedColor,
+              color: selected ? AppColors.primary : Colors.grey[600],
             ),
             const SizedBox(height: 4),
             Text(
               label,
-              style: GoogleFonts.plusJakartaSans(
+              style: TextStyle(
                 fontSize: 10,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected ? selectedColor : unselectedColor,
+                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                color: selected ? AppColors.primary : Colors.grey[600],
               ),
             ),
           ],
@@ -122,40 +113,42 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-class _CenterCartButton extends StatelessWidget {
+class _CenterButton extends StatelessWidget {
+  final IconData icon;
   final VoidCallback onTap;
 
-  const _CenterCartButton({required this.onTap});
+  const _CenterButton({
+    required this.icon,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Transform.translate(
-      offset: const Offset(0, -12),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: const CircleBorder(),
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.primary,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(0.4),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.shopping_basket,
-              size: 28,
-              color: AppColors.white,
-            ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 56,
+        height: 56,
+        margin: const EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: AppColors.backgroundLight,
+            width: 4,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Icon(
+          icon,
+          size: 28,
+          color: Colors.black,
         ),
       ),
     );
