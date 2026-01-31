@@ -12,6 +12,7 @@ import 'package:kathir_final/features/onboarding/presentation/screens/onboarding
 import 'package:provider/provider.dart';
 import '../../authentication/presentation/blocs/auth_provider.dart';
 import '../../authentication/presentation/screens/pending_approval_screen.dart';
+import '../../authentication/presentation/screens/auth_splash_screen.dart';
 import '../../meals/presentation/screens/meal_detail.dart';
 import '../../user_home/domain/entities/meal_offer.dart';
 import '../../user_home/domain/entities/restaurant.dart';
@@ -49,48 +50,92 @@ class AppRouter {
     refreshListenable: auth,
     observers: [observer],
     redirect: (context, state) {
-      if (auth.isPasswordRecovery && state.matchedLocation != '/new-password') {
+      final location = state.matchedLocation;
+      final isInitialized = auth.isInitialized;
+      final isLoggedIn = auth.isLoggedIn;
+      final user = auth.user;
+      
+      // Define route categories for cleaner logic
+      final isAuthSplash = location == '/auth-splash';
+      final isOnboarding = location == '/';
+      final isAuthFlow = location == '/role' ||
+          location == '/auth' ||
+          location == '/login' ||
+          location == '/forgot-password' ||
+          location == '/verify-otp' ||
+          location == '/new-password';
+      final isPendingApproval = location == '/pending-approval';
+      
+      // RULE 1: Password recovery takes precedence
+      if (auth.isPasswordRecovery && location != '/new-password') {
         return '/new-password';
       }
-      final loggedIn = auth.isLoggedIn;
-      final signingFlow = state.matchedLocation == '/role' ||
-          state.matchedLocation == '/auth' ||
-          state.matchedLocation == '/login' ||
-          state.matchedLocation == '/forgot-password' ||
-          state.matchedLocation == '/verify-otp' ||
-          state.matchedLocation == '/new-password';
-
-      // Allow onboarding / auth redirect at '/' if not logged in
-      if (!loggedIn && state.matchedLocation == '/') {
-        return null;
+      
+      // RULE 2: Show splash screen while initializing (only if logged in)
+      // This prevents redirect loops on logout
+      if (!isInitialized && isLoggedIn && !isAuthSplash) {
+        return '/auth-splash';
       }
-
-      if (!loggedIn && state.matchedLocation != '/' && !signingFlow) {
+      
+      // RULE 3: Not logged in - allow onboarding and auth flows
+      if (!isLoggedIn) {
+        // Allow onboarding screen
+        if (isOnboarding) return null;
+        
+        // Allow auth flow screens
+        if (isAuthFlow) return null;
+        
+        // Redirect everything else to auth
         return '/auth';
       }
-      if (loggedIn && (signingFlow || state.matchedLocation == '/')) {
-        final user = auth.user;
-        final role = user?.role;
-        
-        // Check approval status for restaurant and NGO roles
-        if (user != null && user.needsApproval && !user.isApproved) {
-          // Pending approval - redirect to pending screen
-          if (state.matchedLocation != '/pending-approval') {
-            return '/pending-approval';
+      
+      // RULE 4: Logged in and initialized - route based on user state
+      if (isLoggedIn && isInitialized) {
+        // If on auth flow or onboarding, redirect to appropriate dashboard
+        if (isAuthFlow || isOnboarding) {
+          final role = user?.role;
+          
+          // Check approval status (now guaranteed to be accurate)
+          if (user != null && user.needsApproval) {
+            // If approval status is still unknown, stay on splash
+            if (user.isApprovalStatusUnknown) {
+              return '/auth-splash';
+            }
+            
+            // If not approved, go to pending screen
+            if (!user.isApproved) {
+              return '/pending-approval';
+            }
           }
-          return null;
+          
+          // Approved users or users who don't need approval - go to dashboard
+          if (role == 'restaurant') {
+            return '/restaurant-dashboard';
+          } else if (role == 'ngo') {
+            return '/ngo-dashboard';
+          } else if (role == 'admin') {
+            return '/admin-dashboard';
+          }
+          return '/home';
         }
         
-        // Approved users go to their dashboards
-        if (role == 'restaurant') {
-          return '/restaurant-dashboard';
-        } else if (role == 'ngo') {
-          return '/ngo-dashboard';
-        } else if (role == 'admin') {
-          return '/admin-dashboard';
+        // If trying to access pending approval but actually approved, redirect
+        if (isPendingApproval && user != null) {
+          if (!user.needsApproval || user.isApproved) {
+            final role = user.role;
+            if (role == 'restaurant') {
+              return '/restaurant-dashboard';
+            } else if (role == 'ngo') {
+              return '/ngo-dashboard';
+            } else if (role == 'admin') {
+              return '/admin-dashboard';
+            }
+            return '/home';
+          }
         }
-        return '/home';
       }
+      
+      // Allow navigation to current location
       return null;
     },
 
@@ -99,6 +144,10 @@ class AppRouter {
         name: RouteNames.onboarding,
         path: '/',
         builder: (context, state) => const OnboardingFlowScreen(),
+      ),
+      GoRoute(
+        path: '/auth-splash',
+        builder: (context, state) => const AuthSplashScreen(),
       ),
       GoRoute(
         name: RouteNames.restaurantDashboard,

@@ -5,6 +5,27 @@ import '../../../../core/utils/auth_logger.dart';
 import '../../../../di/global_injection/app_locator.dart';
 import '../../data/models/user_model.dart';
 
+/// Explicit approval status enum to prevent fallback confusion
+enum ApprovalStatus {
+  unknown,   // Profile not yet loaded
+  pending,   // Awaiting approval
+  approved,  // Approved
+  rejected;  // Rejected
+  
+  static ApprovalStatus fromString(String? value) {
+    switch (value) {
+      case 'pending':
+        return ApprovalStatus.pending;
+      case 'approved':
+        return ApprovalStatus.approved;
+      case 'rejected':
+        return ApprovalStatus.rejected;
+      default:
+        return ApprovalStatus.unknown;
+    }
+  }
+}
+
 class AuthUserView {
   final String id;
   final String name;
@@ -16,8 +37,8 @@ class AuthUserView {
   final List<Map<String, dynamic>> cards;
   final String role;
   final String? defaultLocation;
-  final String approvalStatus;
-  // TODO: Add organizationName from NGO/restaurant table if needed
+  final ApprovalStatus approvalStatus;
+  
   const AuthUserView({
     required this.id,
     required this.name,
@@ -28,14 +49,17 @@ class AuthUserView {
     this.cards = const [],
     this.role = 'user',
     this.defaultLocation,
-    this.approvalStatus = 'pending',
+    this.approvalStatus = ApprovalStatus.unknown,
   }) : fullName = name;
 
   /// Check if user needs approval (restaurant or NGO)
   bool get needsApproval => role == 'restaurant' || role == 'ngo';
 
   /// Check if user is approved
-  bool get isApproved => approvalStatus == 'approved';
+  bool get isApproved => approvalStatus == ApprovalStatus.approved;
+  
+  /// Check if approval status is still loading
+  bool get isApprovalStatusUnknown => approvalStatus == ApprovalStatus.unknown;
 }
 
 
@@ -43,12 +67,11 @@ class AuthProvider extends ChangeNotifier {
   final SupabaseClient _client = AppLocator.I.get<SupabaseClient>();
   bool _loggedIn = false;
   bool _passwordRecovery = false;
+  bool _isInitialized = false;
   Map<String, dynamic>? _userProfile;
+  
   AuthProvider() {
-    _loggedIn = _client.auth.currentSession != null;
-    if (_loggedIn) {
-      _syncUserProfile();
-    }
+    _initialize();
     _client.auth.onAuthStateChange.listen((data) {
       final ev = data.event;
       if (ev == AuthChangeEvent.passwordRecovery) {
@@ -63,8 +86,20 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
     });
   }
+  
+  /// Initialize auth state and load user profile if logged in
+  Future<void> _initialize() async {
+    _loggedIn = _client.auth.currentSession != null;
+    if (_loggedIn) {
+      await _syncUserProfile(); // AWAIT profile load to prevent race condition
+    }
+    _isInitialized = true;
+    notifyListeners();
+  }
+  
   bool get isLoggedIn => _loggedIn;
   bool get isPasswordRecovery => _passwordRecovery;
+  bool get isInitialized => _isInitialized;
 
   void endPasswordRecovery() {
     _passwordRecovery = false;
@@ -89,6 +124,12 @@ class AuthProvider extends ChangeNotifier {
         (meta['role'] as String?) ??
         'user';
 
+    // Use explicit unknown state when profile hasn't loaded yet
+    final approvalStatusStr = _userProfile?['approval_status'] as String?;
+    final approvalStatus = _isInitialized 
+        ? ApprovalStatus.fromString(approvalStatusStr)
+        : ApprovalStatus.unknown;
+
     return AuthUserView(
       id: model.id,
       name: model.fullName,
@@ -99,8 +140,7 @@ class AuthProvider extends ChangeNotifier {
       cards: cards,
       role: role,
       defaultLocation: _userProfile?['default_location'] as String?,
-      approvalStatus: (_userProfile?['approval_status'] as String?) ?? 'pending',
-      // TODO: Fetch organizationName from NGO/restaurant table if needed
+      approvalStatus: approvalStatus,
     );
   }
 
@@ -146,7 +186,10 @@ class AuthProvider extends ChangeNotifier {
     final ok = res.session != null;
     _loggedIn = ok;
     if (ok) {
-      await _syncUserProfile();
+      _isInitialized = false; // Reset initialization state
+      notifyListeners(); // Trigger splash screen
+      await _syncUserProfile(); // Load profile
+      _isInitialized = true; // Mark as initialized
     }
     notifyListeners();
     return ok;
@@ -157,7 +200,10 @@ class AuthProvider extends ChangeNotifier {
     final ok = _client.auth.currentSession != null;
     _loggedIn = ok;
     if (ok) {
+      _isInitialized = false;
+      notifyListeners();
       await _syncUserProfile();
+      _isInitialized = true;
     }
     notifyListeners();
     return ok;
@@ -168,7 +214,10 @@ class AuthProvider extends ChangeNotifier {
     final ok = _client.auth.currentSession != null;
     _loggedIn = ok;
     if (ok) {
+      _isInitialized = false;
+      notifyListeners();
       await _syncUserProfile();
+      _isInitialized = true;
     }
     notifyListeners();
     return ok;
@@ -179,7 +228,10 @@ class AuthProvider extends ChangeNotifier {
     final ok = _client.auth.currentSession != null;
     _loggedIn = ok;
     if (ok) {
+      _isInitialized = false;
+      notifyListeners();
       await _syncUserProfile();
+      _isInitialized = true;
     }
     notifyListeners();
     return ok;
@@ -262,6 +314,8 @@ class AuthProvider extends ChangeNotifier {
     await _client.auth.signOut();
     _loggedIn = false;
     _passwordRecovery = false;
+    _userProfile = null; // Clear profile data
+    _isInitialized = true; // Set to true so router doesn't show splash for logged out state
     notifyListeners();
   }
 
