@@ -154,15 +154,18 @@ class _MealDetailsScreenState extends State<MealDetailsScreen> {
         onTap: (index) {
           switch (index) {
             case 0:
-              context.go('/restaurant-dashboard/meals');
+              context.go('/restaurant-dashboard');
               break;
             case 1:
               context.go('/restaurant-dashboard/meals');
               break;
             case 2:
-              // TODO: Navigate to orders
+              context.go('/restaurant-dashboard/orders');
               break;
             case 3:
+              context.go('/restaurant-dashboard/leaderboard');
+              break;
+            case 4:
               context.go('/restaurant-dashboard/profile');
               break;
           }

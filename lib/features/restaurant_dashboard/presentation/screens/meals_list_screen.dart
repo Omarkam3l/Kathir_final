@@ -105,6 +105,9 @@ class _MealsListScreenState extends State<MealsListScreen> {
               context.go('/restaurant-dashboard/orders');
               break;
             case 3:
+              context.go('/restaurant-dashboard/leaderboard');
+              break;
+            case 4:
               context.go('/restaurant-dashboard/profile');
               break;
           }

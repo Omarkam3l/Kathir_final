@@ -9,6 +9,7 @@ import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/meal_details_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/edit_meal_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_profile_screen.dart';
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_leaderboard_screen.dart';
 import 'package:kathir_final/features/onboarding/presentation/screens/onboarding_flow_screen.dart';
 import 'package:provider/provider.dart';
 import '../../authentication/presentation/blocs/auth_provider.dart';
@@ -184,6 +185,10 @@ class AppRouter {
       GoRoute(
         path: '/restaurant-dashboard/profile',
         builder: (context, state) => const RestaurantProfileScreen(),
+      ),
+      GoRoute(
+        path: '/restaurant-dashboard/leaderboard',
+        builder: (context, state) => const RestaurantLeaderboardScreen(),
       ),
       GoRoute(
         name: RouteNames.ngoDashboard,

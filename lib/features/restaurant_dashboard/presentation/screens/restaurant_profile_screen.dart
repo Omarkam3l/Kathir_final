@@ -510,7 +510,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
               ),
             ),
       bottomNavigationBar: RestaurantBottomNav(
-        currentIndex: 3,
+        currentIndex: 4,
         onTap: (index) {
           switch (index) {
             case 0:
@@ -523,6 +523,9 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
               context.go('/restaurant-dashboard/orders');
               break;
             case 3:
+              context.go('/restaurant-dashboard/leaderboard');
+              break;
+            case 4:
               // Already on profile
               break;
           }

@@ -107,6 +107,9 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
               // Already on orders
               break;
             case 3:
+              context.go('/restaurant-dashboard/leaderboard');
+              break;
+            case 4:
               context.go('/restaurant-dashboard/profile');
               break;
           }
