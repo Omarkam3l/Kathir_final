@@ -31,10 +31,6 @@ class AuthViewModel extends ChangeNotifier {
 
   bool isLogin = true;
   UserRole? selectedRole;
-  
-  // ✅ FIX: Store pending legal documents for upload after OTP verification
-  List<int>? pendingLegalDocBytes;
-  String? pendingLegalDocFileName;
 
   AuthViewModel({
     required this.signIn,
@@ -326,43 +322,6 @@ class AuthViewModel extends ChangeNotifier {
       });
       
       createOrGetProfile.call(r.id, data);
-      
-      // ✅ FIX: Upload pending legal documents AFTER successful OTP verification
-      if (pendingLegalDocBytes != null && pendingLegalDocFileName != null) {
-        AuthLogger.info('uploadPendingDocs.start', ctx: {
-          'userId': r.id,
-          'fileName': pendingLegalDocFileName,
-        });
-        
-        try {
-          final uploadResult = await uploadLegalDoc(
-            r.id,
-            pendingLegalDocFileName!,
-            pendingLegalDocBytes!,
-          );
-          
-          if (uploadResult.url != null) {
-            AuthLogger.info('uploadPendingDocs.success', ctx: {
-              'userId': r.id,
-              'url': uploadResult.url,
-            });
-          } else {
-            AuthLogger.warn('uploadPendingDocs.failed', ctx: {
-              'userId': r.id,
-              'error': uploadResult.error,
-            });
-          }
-        } catch (e, stackTrace) {
-          AuthLogger.errorLog('uploadPendingDocs.exception',
-              ctx: {'userId': r.id},
-              error: e,
-              stackTrace: stackTrace);
-        } finally {
-          // Clear pending documents
-          pendingLegalDocBytes = null;
-          pendingLegalDocFileName = null;
-        }
-      }
       
       ok = true;
     });
