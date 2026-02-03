@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kathir_final/features/admin_dashboard/presentation/screens/admin_dashboard_screen.dart';
-import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_dashboard_screen.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_home_screen.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_map_screen.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_profile_screen.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_meal_detail_screen.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_chat_list_screen.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_chat_screen.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/viewmodels/ngo_home_viewmodel.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/viewmodels/ngo_map_viewmodel.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/viewmodels/ngo_profile_viewmodel.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/viewmodels/ngo_chat_list_viewmodel.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/viewmodels/ngo_chat_viewmodel.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_dashboard_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/meals_list_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_orders_screen.dart';
@@ -9,6 +19,8 @@ import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/meal_details_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/edit_meal_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_profile_screen.dart';
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_chat_list_screen.dart';
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_chat_screen.dart';
 import 'package:kathir_final/features/onboarding/presentation/screens/onboarding_flow_screen.dart';
 import 'package:provider/provider.dart';
 import '../../authentication/presentation/blocs/auth_provider.dart';
@@ -16,6 +28,7 @@ import '../../authentication/presentation/screens/pending_approval_screen.dart';
 import '../../authentication/presentation/screens/auth_splash_screen.dart';
 import '../../meals/presentation/screens/meal_detail.dart';
 import '../../user_home/domain/entities/meal_offer.dart';
+import '../../user_home/domain/entities/meal.dart';
 import '../../user_home/domain/entities/restaurant.dart';
 import '../../checkout/routes.dart';
 import '../../orders/routes.dart';
@@ -113,7 +126,7 @@ class AppRouter {
           if (role == 'restaurant') {
             return '/restaurant-dashboard';
           } else if (role == 'ngo') {
-            return '/ngo-dashboard';
+            return '/ngo/home';
           } else if (role == 'admin') {
             return '/admin-dashboard';
           }
@@ -127,7 +140,7 @@ class AppRouter {
             if (role == 'restaurant') {
               return '/restaurant-dashboard';
             } else if (role == 'ngo') {
-              return '/ngo-dashboard';
+              return '/ngo/home';
             } else if (role == 'admin') {
               return '/admin-dashboard';
             }
@@ -186,9 +199,109 @@ class AppRouter {
         builder: (context, state) => const RestaurantProfileScreen(),
       ),
       GoRoute(
+        path: '/restaurant/chats',
+        builder: (context, state) => ChangeNotifierProvider(
+          create: (_) => NgoChatListViewModel(),
+          child: const RestaurantChatListScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/restaurant/chat/:id',
+        builder: (context, state) {
+          final conversationId = state.pathParameters['id'] ?? '';
+          final extra = state.extra as Map<String, dynamic>?;
+          final otherPartyName = extra?['otherPartyName'] ?? 'NGO';
+          
+          return ChangeNotifierProvider(
+            create: (_) => NgoChatViewModel(
+              conversationId: conversationId,
+              restaurantName: otherPartyName,
+            ),
+            child: RestaurantChatScreen(
+              conversationId: conversationId,
+              otherPartyName: otherPartyName,
+            ),
+          );
+        },
+      ),
+      // NGO Dashboard Routes
+      GoRoute(
         name: RouteNames.ngoDashboard,
         path: '/ngo-dashboard',
-        builder: (context, state) => const NgoDashboardScreen(),
+        redirect: (context, state) => '/ngo/home',
+      ),
+      GoRoute(
+        path: '/ngo/home',
+        builder: (context, state) => ChangeNotifierProvider(
+          create: (_) => NgoHomeViewModel(),
+          child: const NgoHomeScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/ngo/map',
+        builder: (context, state) => ChangeNotifierProvider(
+          create: (_) => NgoMapViewModel(),
+          child: const NgoMapScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/ngo/profile',
+        builder: (context, state) => ChangeNotifierProvider(
+          create: (_) => NgoProfileViewModel(),
+          child: const NgoProfileScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/ngo/orders',
+        builder: (context, state) => const Scaffold(
+          body: Center(
+            child: Text(
+              'NGO Orders - Coming Soon',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/ngo/chats',
+        builder: (context, state) => ChangeNotifierProvider(
+          create: (_) => NgoChatListViewModel(),
+          child: const NgoChatListScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/ngo/chat/:id',
+        builder: (context, state) {
+          final conversationId = state.pathParameters['id'] ?? '';
+          final extra = state.extra as Map<String, dynamic>?;
+          final restaurantName = extra?['restaurantName'] ?? 'Restaurant';
+          
+          return ChangeNotifierProvider(
+            create: (_) => NgoChatViewModel(
+              conversationId: conversationId,
+              restaurantName: restaurantName,
+            ),
+            child: NgoChatScreen(
+              conversationId: conversationId,
+              restaurantName: restaurantName,
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/ngo/meal/:id',
+        builder: (context, state) {
+          final extra = state.extra;
+          if (extra is Meal) {
+            return NgoMealDetailScreen(meal: extra);
+          }
+          // Fallback if no meal data provided
+          return const Scaffold(
+            body: Center(
+              child: Text('Meal not found'),
+            ),
+          );
+        },
       ),
       GoRoute(
         name: RouteNames.adminDashboard,

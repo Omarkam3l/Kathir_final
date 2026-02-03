@@ -213,6 +213,12 @@ class _RestaurantHomeScreenState extends State<RestaurantHomeScreen> {
               ),
             ),
             IconButton(
+              onPressed: () {
+                context.go('/restaurant/chats');
+              },
+              icon: const Icon(Icons.chat_bubble_outline),
+            ),
+            IconButton(
               onPressed: _loadData,
               icon: const Icon(Icons.refresh),
             ),

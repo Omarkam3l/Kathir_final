@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kathir - NGO Surplus Map</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2e22",
+                        "earth-light": "#e7f3eb",
+                        "earth-dark": "#1f3a2b",
+                        "text-main": "#0d1b12",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                    spacing: {
+                        "safe-top": "env(safe-area-inset-top)",
+                        "safe-bottom": "env(safe-area-inset-bottom)",
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-main dark:text-gray-100 transition-colors duration-200 h-[100dvh] w-full flex flex-col overflow-hidden">
+<div class="z-50 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md pt-safe-top shrink-0 shadow-sm border-b border-earth-light dark:border-earth-dark">
+<div class="flex items-center justify-between px-4 py-3">
+<div class="flex flex-col">
+<div class="flex items-center gap-1 text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wider">
+<span class="material-symbols-outlined text-primary" style="font-size: 16px;">location_on</span>
+<span>Searching Area</span>
+</div>
+<div class="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity">
+<h2 class="text-text-main dark:text-white text-lg font-bold leading-tight">Anna Nagar, Chennai</h2>
+<span class="material-symbols-outlined text-text-main dark:text-white" style="font-size: 20px;">expand_more</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="relative p-2 rounded-full bg-surface-light dark:bg-surface-dark shadow-sm border border-earth-light dark:border-earth-dark text-text-main dark:text-white active:scale-95 transition-transform">
+<span class="material-symbols-outlined" style="font-size: 24px;">filter_list</span>
+</button>
+<div class="w-10 h-10 rounded-full bg-earth-light dark:bg-earth-dark overflow-hidden border-2 border-primary p-0.5">
+<img alt="NGO Profile Avatar" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBccjedaTCgBbChBZORy9_2ac0fycDH7n5I3gY1rdhmUIIsVz8JoLR_GSzfw-AkmgSmQ40Y6qRT1Lgo6WD-bFED6sp5LzR8FRpgFDZ_auURiyh9WIVVD7hKSdi5mEJ6nNSUiwqT6my8O-DB5wi_FjkWCj5S13wCRiUYmvjsxUPjCrhYDqusw07ZQE5xu0m6pWZO9c8d4-3LZ6cT0cnBzFUbsMHQgTzWVWakHO74z6hrI_hIKhnQ8FrJq2JvPlujuAyYNyPujRlCyZo"/>
+</div>
+</div>
+</div>
+</div>
+<div class="relative flex-1 w-full bg-[#E5E7EB] dark:bg-[#1f2937] overflow-hidden group">
+<div class="absolute inset-0 z-0">
+<svg class="w-full h-full opacity-30 dark:opacity-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<pattern height="100" id="grid" patternUnits="userSpaceOnUse" width="100">
+<path class="text-white dark:text-gray-600" d="M 100 0 L 0 0 0 100" fill="none" stroke="currentColor" stroke-width="2"></path>
+</pattern>
+</defs>
+<rect class="dark:fill-[#242f3e]" fill="#E8EAED" height="100%" width="100%"></rect>
+<rect fill="url(#grid)" height="100%" width="100%"></rect>
+<path class="dark:stroke-gray-700" d="M -10 200 Q 150 250 400 200 T 800 300" fill="none" stroke="white" stroke-width="12"></path>
+<path class="dark:stroke-gray-700" d="M 200 -10 L 250 800" fill="none" stroke="white" stroke-width="15"></path>
+<path class="dark:stroke-gray-700" d="M 50 400 L 450 50" fill="none" stroke="white" stroke-width="10"></path>
+</svg>
+</div>
+<div class="absolute top-4 left-1/2 -translate-x-1/2 z-30 w-auto">
+<button class="flex items-center gap-2 bg-surface-light dark:bg-surface-dark px-5 py-2.5 rounded-full shadow-lg border border-gray-100 dark:border-gray-600 text-sm font-bold text-primary active:scale-95 transition-transform hover:shadow-xl">
+<span class="material-symbols-outlined text-[20px]">search</span>
+                Search this area
+            </button>
+</div>
+<div class="absolute top-[40%] left-[50%] -translate-x-1/2 -translate-y-full flex flex-col items-center z-20 transition-all duration-300">
+<div class="relative group cursor-pointer">
+<div class="relative flex items-center justify-center w-14 h-14 bg-primary rounded-full shadow-[0_4px_15px_rgba(19,236,91,0.4)] border-[3px] border-white dark:border-surface-dark transform -translate-y-2">
+<span class="material-symbols-outlined text-text-main text-[26px]">restaurant</span>
+</div>
+<div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary rotate-45 border-r-[3px] border-b-[3px] border-white dark:border-surface-dark z-[-1]"></div>
+<div class="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2.5 py-1 bg-white dark:bg-surface-dark rounded-lg shadow-md border border-gray-100 dark:border-gray-700 whitespace-nowrap z-30">
+<p class="text-[10px] font-bold text-text-main dark:text-white">Spice Garden</p>
+</div>
+</div>
+<div class="absolute top-[35%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-primary/30 rounded-full animate-ping z-[-2]"></div>
+</div>
+<div class="absolute top-[25%] left-[20%] flex flex-col items-center z-10 hover:z-20 group cursor-pointer">
+<div class="relative flex items-center justify-center w-10 h-10 bg-surface-dark dark:bg-white rounded-full shadow-lg border-2 border-white dark:border-surface-dark transition-transform hover:-translate-y-1">
+<span class="material-symbols-outlined text-white dark:text-text-main text-[20px]">bakery_dining</span>
+</div>
+<div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-surface-dark dark:bg-white rotate-45"></div>
+</div>
+<div class="absolute top-[55%] left-[78%] flex flex-col items-center z-10 hover:z-20 group cursor-pointer">
+<div class="relative flex items-center justify-center w-10 h-10 bg-surface-dark dark:bg-white rounded-full shadow-lg border-2 border-white dark:border-surface-dark transition-transform hover:-translate-y-1">
+<span class="material-symbols-outlined text-white dark:text-text-main text-[20px]">soup_kitchen</span>
+</div>
+<div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-surface-dark dark:bg-white rotate-45"></div>
+</div>
+<div class="absolute bottom-[100px] left-0 w-full z-30 pb-safe-bottom">
+<div class="flex overflow-x-auto snap-x hide-scrollbar px-6 gap-4 pb-4 items-end">
+<div class="snap-center shrink-0 w-[88%] max-w-[340px] bg-white dark:bg-surface-dark rounded-2xl p-3 shadow-[0_8px_30px_rgba(0,0,0,0.12)] border-2 border-primary/50 flex gap-3 relative overflow-hidden">
+<div class="w-28 h-28 rounded-xl overflow-hidden shrink-0 relative bg-gray-100">
+<img alt="Biryani rice dish" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZjKwdImh238zAZEM_x8SC_0RzKk1_pOAsUW9O-kKNGQ9c6RJ5xcOzOp2zsrg0qiwPThCKHjpcL4AQgaUOaA5N_JMay0EpMij2_kqQz7_-4CKT2OWugrF5Lg-4ZcY06LGhFXiLCa3ATKeT8IdAQ8-KOxWKlhCBHdxKl4pmxN6b4RRuUsNrR3EGZTp7yN-T4MEoZ0eM8UclmE5oAEfClxISo42oupRRMpjhWzfv9nSQu2fEFncSuYd9J_Spe_WbVQNErGSFwX8J2tA"/>
+<span class="absolute top-1.5 left-1.5 bg-white/90 dark:bg-black/80 backdrop-blur text-text-main dark:text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[10px] text-orange-500">star</span> 4.8
+                        </span>
+</div>
+<div class="flex flex-col justify-between flex-1 py-1">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-text-main dark:text-white text-base leading-tight">Chicken Biryani</h3>
+<div class="bg-primary/10 text-green-700 dark:text-primary px-1.5 py-0.5 rounded text-[10px] font-bold uppercase">Free</div>
+</div>
+<p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">storefront</span> Spice Garden
+                            </p>
+<div class="flex flex-wrap gap-2 mt-2">
+<span class="text-[10px] font-bold bg-earth-light dark:bg-earth-dark px-2 py-1 rounded text-green-700 dark:text-green-300 border border-green-100 dark:border-green-900 flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">scale</span> 15kg
+                                </span>
+<span class="text-[10px] font-bold bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded text-orange-700 dark:text-orange-300 border border-orange-100 dark:border-orange-900/50 flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">timer</span> 45m left
+                                </span>
+</div>
+</div>
+<div class="flex justify-between items-center mt-2">
+<span class="text-xs text-gray-400 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">near_me</span> 0.8 km
+                            </span>
+<button class="bg-primary hover:bg-green-400 text-text-main font-bold text-xs px-4 py-2 rounded-lg shadow-md shadow-primary/20 active:scale-95 transition-all">
+                                Claim Now
+                            </button>
+</div>
+</div>
+</div>
+<div class="snap-center shrink-0 w-[88%] max-w-[340px] bg-white dark:bg-surface-dark rounded-2xl p-3 shadow-lg border border-transparent dark:border-gray-800 flex gap-3 opacity-70 scale-95 transition-all">
+<div class="w-24 h-24 rounded-xl overflow-hidden shrink-0 relative bg-gray-100">
+<img alt="Assorted breads" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWL7DgWBkn1FlW9XXfM7r3ipiteTxz3OwEfMuY4rmiYMQQtSZgeDJvtw6pLekusEPcdNoSTaNRDqF9defY3sLQyHReRC08FLcxamfRV57dKluZTW-7nnpOaUl1IneRu6AHMAWuqjwseFqvO63u3aTs3gCoWoM2TqBAFe8ibknOXwMb4tA6U1doi-cMiYyJsuxz_P2rMhtHuLEbdTQrlXDOqolg77A1c6s16ArSqzDTFAwF0HwdwvNgwWtKCzXQpKovVUWtxhryg6o"/>
+</div>
+<div class="flex flex-col justify-between flex-1 py-1">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-text-main dark:text-white text-base leading-tight">Assorted Pastries</h3>
+<div class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded text-[10px] font-bold">₹200</div>
+</div>
+<p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">Daily Breads</p>
+<div class="flex gap-2 mt-2">
+<span class="text-[10px] font-bold bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">5kg</span>
+</div>
+</div>
+<div class="flex justify-end mt-2">
+<button class="bg-surface-dark dark:bg-white text-white dark:text-black font-bold text-xs px-4 py-2 rounded-lg">View</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="fixed bottom-0 left-0 w-full bg-white dark:bg-surface-dark border-t border-earth-light dark:border-earth-dark pb-safe-bottom pt-2 px-6 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] z-50">
+<div class="flex justify-between items-end pb-2">
+<button class="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 hover:text-primary w-16 transition-colors group">
+<span class="material-symbols-outlined text-[28px] group-hover:scale-110 transition-transform">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 hover:text-primary w-16 transition-colors group">
+<span class="material-symbols-outlined text-[28px] group-hover:scale-110 transition-transform">receipt_long</span>
+<span class="text-[10px] font-medium">Orders</span>
+</button>
+<div class="relative -top-6">
+<button class="flex items-center justify-center w-14 h-14 rounded-full bg-primary text-text-main shadow-lg shadow-green-500/30 transform scale-110 transition-transform ring-4 ring-white dark:ring-surface-dark">
+<span class="material-symbols-outlined text-[28px] fill-1">map</span>
+</button>
+</div>
+<button class="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 hover:text-primary w-16 transition-colors group">
+<span class="material-symbols-outlined text-[28px] group-hover:scale-110 transition-transform">chat_bubble</span>
+<span class="text-[10px] font-medium">Chats</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 hover:text-primary w-16 transition-colors group">
+<span class="material-symbols-outlined text-[28px] group-hover:scale-110 transition-transform">person</span>
+<span class="text-[10px] font-medium">Profile</span>
+</button>
+</div>
+</div>
+
+</body></html>

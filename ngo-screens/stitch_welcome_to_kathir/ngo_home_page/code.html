@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kathir - NGO Home</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2e22",
+                        "earth-light": "#e7f3eb",
+                        "earth-dark": "#1f3a2b",
+                        "text-main": "#0d1b12",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-main dark:text-gray-100 transition-colors duration-200 pb-20">
+<!-- Header Section -->
+<div class="sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm pt-safe-top">
+<div class="flex items-center justify-between px-4 py-3">
+<div class="flex flex-col">
+<div class="flex items-center gap-1 text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wider">
+<span class="material-symbols-outlined text-primary" style="font-size: 16px;">location_on</span>
+<span>Current Location</span>
+</div>
+<div class="flex items-center gap-1 cursor-pointer">
+<h2 class="text-text-main dark:text-white text-lg font-bold leading-tight">Anna Nagar, Chennai</h2>
+<span class="material-symbols-outlined text-text-main dark:text-white" style="font-size: 20px;">expand_more</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="relative p-2 rounded-full bg-surface-light dark:bg-surface-dark shadow-sm border border-earth-light dark:border-earth-dark text-text-main dark:text-white">
+<span class="material-symbols-outlined" style="font-size: 24px;">notifications</span>
+<span class="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-surface-dark"></span>
+</button>
+<div class="w-10 h-10 rounded-full bg-earth-light dark:bg-earth-dark overflow-hidden border-2 border-primary p-0.5">
+<img alt="NGO Profile Avatar" class="w-full h-full object-cover rounded-full" data-alt="Smiling woman profile picture representing NGO admin" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBccjedaTCgBbChBZORy9_2ac0fycDH7n5I3gY1rdhmUIIsVz8JoLR_GSzfw-AkmgSmQ40Y6qRT1Lgo6WD-bFED6sp5LzR8FRpgFDZ_auURiyh9WIVVD7hKSdi5mEJ6nNSUiwqT6my8O-DB5wi_FjkWCj5S13wCRiUYmvjsxUPjCrhYDqusw07ZQE5xu0m6pWZO9c8d4-3LZ6cT0cnBzFUbsMHQgTzWVWakHO74z6hrI_hIKhnQ8FrJq2JvPlujuAyYNyPujRlCyZo"/>
+</div>
+</div>
+</div>
+<!-- Greeting -->
+<div class="px-4 pb-2">
+<h1 class="text-2xl font-bold text-text-main dark:text-white">Good Morning, <span class="text-primary">Hope Foundation</span></h1>
+</div>
+</div>
+<!-- Search Section -->
+<div class="px-4 pt-4 pb-2">
+<div class="relative flex items-center w-full h-12 rounded-xl focus-within:ring-2 focus-within:ring-primary/50 overflow-hidden bg-white dark:bg-surface-dark shadow-sm border border-earth-light dark:border-earth-dark">
+<div class="grid place-items-center h-full w-12 text-gray-400">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="peer h-full w-full outline-none text-sm text-gray-700 dark:text-gray-200 pr-2 bg-transparent placeholder-gray-400" id="search" placeholder="Search rice, bread, or nearby donors..." type="text"/>
+<div class="grid place-items-center h-full w-12 text-primary cursor-pointer border-l border-earth-light dark:border-earth-dark hover:bg-earth-light dark:hover:bg-earth-dark transition-colors">
+<span class="material-symbols-outlined">tune</span>
+</div>
+</div>
+</div>
+<!-- Stats Bar -->
+<div class="flex overflow-x-auto hide-scrollbar gap-3 px-4 py-4 snap-x">
+<div class="snap-start flex min-w-[140px] flex-col gap-1 rounded-xl p-4 bg-earth-light dark:bg-earth-dark border border-primary/20">
+<div class="flex items-center gap-2 mb-1">
+<div class="p-1.5 bg-primary/20 rounded-lg text-primary-dark">
+<span class="material-symbols-outlined text-primary text-[20px]">restaurant</span>
+</div>
+<p class="text-gray-600 dark:text-gray-300 text-xs font-semibold">Meals Claimed</p>
+</div>
+<p class="text-text-main dark:text-white text-2xl font-bold leading-tight">120</p>
+</div>
+<div class="snap-start flex min-w-[140px] flex-col gap-1 rounded-xl p-4 bg-earth-light dark:bg-earth-dark border border-primary/20">
+<div class="flex items-center gap-2 mb-1">
+<div class="p-1.5 bg-primary/20 rounded-lg text-primary-dark">
+<span class="material-symbols-outlined text-primary text-[20px]">eco</span>
+</div>
+<p class="text-gray-600 dark:text-gray-300 text-xs font-semibold">Carbon Saved</p>
+</div>
+<p class="text-text-main dark:text-white text-2xl font-bold leading-tight">350kg</p>
+</div>
+<div class="snap-start flex min-w-[140px] flex-col gap-1 rounded-xl p-4 bg-earth-light dark:bg-earth-dark border border-primary/20">
+<div class="flex items-center gap-2 mb-1">
+<div class="p-1.5 bg-primary/20 rounded-lg text-primary-dark">
+<span class="material-symbols-outlined text-primary text-[20px]">local_shipping</span>
+</div>
+<p class="text-gray-600 dark:text-gray-300 text-xs font-semibold">Active Orders</p>
+</div>
+<p class="text-text-main dark:text-white text-2xl font-bold leading-tight">2</p>
+</div>
+</div>
+<!-- Filter Chips -->
+<div class="flex gap-2 px-4 pb-6 overflow-x-auto hide-scrollbar">
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-text-main dark:bg-white text-white dark:text-text-main text-sm font-semibold whitespace-nowrap shadow-md">
+            All Listings
+        </button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium whitespace-nowrap shadow-sm hover:bg-earth-light dark:hover:bg-earth-dark">
+<span class="material-symbols-outlined text-[18px] text-green-600">grass</span>
+            Vegetarian
+        </button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium whitespace-nowrap shadow-sm hover:bg-earth-light dark:hover:bg-earth-dark">
+<span class="material-symbols-outlined text-[18px] text-blue-500">near_me</span>
+            Within 5km
+        </button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium whitespace-nowrap shadow-sm hover:bg-earth-light dark:hover:bg-earth-dark">
+<span class="material-symbols-outlined text-[18px] text-orange-500">inventory_2</span>
+            Large Qty
+        </button>
+</div>
+<!-- Featured / Urgent Section -->
+<div class="mb-6">
+<div class="flex items-center justify-between px-4 mb-3">
+<h3 class="text-lg font-bold text-text-main dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-orange-500">timer</span>
+                Expiring Soon
+            </h3>
+<a class="text-primary text-sm font-bold" href="#">See All</a>
+</div>
+<div class="flex overflow-x-auto hide-scrollbar gap-4 px-4 pb-4 snap-x">
+<!-- Urgent Card 1 -->
+<div class="snap-center min-w-[280px] rounded-2xl bg-white dark:bg-surface-dark shadow-md border border-gray-100 dark:border-gray-800 overflow-hidden relative group">
+<div class="absolute top-3 left-3 bg-red-50 text-red-600 px-2 py-1 rounded-md text-xs font-bold border border-red-100 flex items-center gap-1 z-10">
+<span class="material-symbols-outlined text-[14px]">alarm</span> 45m left
+                </div>
+<div class="h-32 w-full relative">
+<img alt="Biryani rice dish" class="w-full h-full object-cover" data-alt="Pot of biryani rice surplus food" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZjKwdImh238zAZEM_x8SC_0RzKk1_pOAsUW9O-kKNGQ9c6RJ5xcOzOp2zsrg0qiwPThCKHjpcL4AQgaUOaA5N_JMay0EpMij2_kqQz7_-4CKT2OWugrF5Lg-4ZcY06LGhFXiLCa3ATKeT8IdAQ8-KOxWKlhCBHdxKl4pmxN6b4RRuUsNrR3EGZTp7yN-T4MEoZ0eM8UclmE5oAEfClxISo42oupRRMpjhWzfv9nSQu2fEFncSuYd9J_Spe_WbVQNErGSFwX8J2tA"/>
+<div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/60 to-transparent"></div>
+<div class="absolute bottom-2 left-3 text-white font-bold text-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">storefront</span> Spice Garden
+                    </div>
+</div>
+<div class="p-3">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h4 class="font-bold text-text-main dark:text-white text-base">Chicken Biryani Surplus</h4>
+<p class="text-xs text-gray-500 dark:text-gray-400">Approx 15kg (40 meals)</p>
+</div>
+<div class="bg-primary/10 text-primary-dark px-2 py-1 rounded text-xs font-bold border border-primary/20">
+                            Free
+                        </div>
+</div>
+<div class="flex items-center justify-between mt-3">
+<div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+<span class="material-symbols-outlined text-[16px]">distance</span> 0.8km
+                        </div>
+<button class="bg-primary hover:bg-green-400 text-text-main font-bold py-1.5 px-4 rounded-lg text-sm transition-colors shadow-sm shadow-primary/30">
+                            Claim Now
+                        </button>
+</div>
+</div>
+</div>
+<!-- Urgent Card 2 -->
+<div class="snap-center min-w-[280px] rounded-2xl bg-white dark:bg-surface-dark shadow-md border border-gray-100 dark:border-gray-800 overflow-hidden relative group">
+<div class="absolute top-3 left-3 bg-orange-50 text-orange-600 px-2 py-1 rounded-md text-xs font-bold border border-orange-100 flex items-center gap-1 z-10">
+<span class="material-symbols-outlined text-[14px]">alarm</span> 2h left
+                </div>
+<div class="h-32 w-full relative">
+<img alt="Assorted breads and pastries" class="w-full h-full object-cover" data-alt="Basket of surplus bread and pastries" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWL7DgWBkn1FlW9XXfM7r3ipiteTxz3OwEfMuY4rmiYMQQtSZgeDJvtw6pLekusEPcdNoSTaNRDqF9defY3sLQyHReRC08FLcxamfRV57dKluZTW-7nnpOaUl1IneRu6AHMAWuqjwseFqvO63u3aTs3gCoWoM2TqBAFe8ibknOXwMb4tA6U1doi-cMiYyJsuxz_P2rMhtHuLEbdTQrlXDOqolg77A1c6s16ArSqzDTFAwF0HwdwvNgwWtKCzXQpKovVUWtxhryg6o"/>
+<div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/60 to-transparent"></div>
+<div class="absolute bottom-2 left-3 text-white font-bold text-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">bakery_dining</span> Daily Breads
+                    </div>
+</div>
+<div class="p-3">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h4 class="font-bold text-text-main dark:text-white text-base">Assorted Pastries</h4>
+<p class="text-xs text-gray-500 dark:text-gray-400">Approx 5kg (15 meals)</p>
+</div>
+<div class="bg-primary/10 text-primary-dark px-2 py-1 rounded text-xs font-bold border border-primary/20">
+                            ₹200
+                        </div>
+</div>
+<div class="flex items-center justify-between mt-3">
+<div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+<span class="material-symbols-outlined text-[16px]">distance</span> 1.2km
+                        </div>
+<button class="bg-primary hover:bg-green-400 text-text-main font-bold py-1.5 px-4 rounded-lg text-sm transition-colors shadow-sm shadow-primary/30">
+                            Claim Now
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Feed -->
+<div class="px-4 pb-24">
+<div class="flex items-center justify-between mb-3">
+<h3 class="text-lg font-bold text-text-main dark:text-white">Nearby Surplus</h3>
+<button class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
+<span class="material-symbols-outlined text-gray-500">sort</span>
+</button>
+</div>
+<div class="flex flex-col gap-4">
+<!-- Listing Card 1 -->
+<div class="bg-white dark:bg-surface-dark rounded-2xl p-3 shadow-sm border border-earth-light dark:border-earth-dark flex gap-4">
+<div class="w-24 h-24 shrink-0 rounded-xl overflow-hidden relative">
+<img alt="Large pot of vegetable curry" class="w-full h-full object-cover" data-alt="South Indian vegetable curry catering tray" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABLiES_P-JrCAP9jXAji29W0BLCDGlEx8k1vqdcwBMMMrlAjORYAkUWBthZWsuopmm1TRGebBqWTQRP3wvoweVPtthG4bVrsk-ZS464F6XRKBX7mXk4f7hDgHU5hRfmWpiK46VRX1Lvl2wNPiypV0v9H3S8kUEE0L9C09cyRX2Jv5dPpKm26mIZqq6MLqYHMWW5U2op1cjHRcpW15FwuRT7c8yNVA2wlNsu7vwc2t4thqTxCJS1UDuvUv4JI89Uzkbowhkoz-P7-Y"/>
+<span class="absolute top-1 right-1 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">Veg</span>
+</div>
+<div class="flex flex-col flex-1 justify-between py-0.5">
+<div>
+<div class="flex justify-between items-start">
+<h4 class="font-bold text-text-main dark:text-white text-base line-clamp-1">Vegetable Kurma &amp; Rice</h4>
+</div>
+<p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Sangeetha Veg Hotel</p>
+<div class="flex items-center gap-3 mt-2">
+<div class="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-300 font-medium bg-earth-light dark:bg-earth-dark px-2 py-0.5 rounded">
+<span class="material-symbols-outlined text-[14px]">scale</span> 25kg
+                            </div>
+<div class="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-300 font-medium bg-earth-light dark:bg-earth-dark px-2 py-0.5 rounded">
+<span class="material-symbols-outlined text-[14px]">group</span> ~80
+                            </div>
+</div>
+</div>
+<div class="flex justify-between items-end mt-2">
+<div class="flex items-center gap-1 text-xs text-gray-400">
+<span class="material-symbols-outlined text-[14px]">schedule</span> Pickup by 4 PM
+                        </div>
+<button class="bg-black dark:bg-white text-white dark:text-black font-bold py-1.5 px-4 rounded-lg text-xs hover:bg-opacity-80 transition-colors">
+                            View Details
+                        </button>
+</div>
+</div>
+</div>
+<!-- Listing Card 2 -->
+<div class="bg-white dark:bg-surface-dark rounded-2xl p-3 shadow-sm border border-earth-light dark:border-earth-dark flex gap-4">
+<div class="w-24 h-24 shrink-0 rounded-xl overflow-hidden relative">
+<img alt="Fresh salad bowl" class="w-full h-full object-cover" data-alt="Healthy salad greens bowl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB03fhCTpYndemJxRNN4TWdH4CqO5vVKU1H9rFcxx1-pNVUfNN8Xn6GFKM7toGSi4WRpy--imzLLs-3AW2M8upQCL56uDhVs1kfjxBKUJo3lc0sioNyV61NczoIXU0fEoL5iZSL4v-iDnPBZdnbMAQrt4jRcmJoZx4CGGJUEm02l0Ih7sJKRLe6rtC6eoyXfWigMdQzKx7UOzQcyP1hBmjn8i0isq8CCvY5LU7BAYaH-1im20jeys7ROsIcRmHLP9JX0MAc4F0jpHg"/>
+<span class="absolute top-1 right-1 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">Veg</span>
+</div>
+<div class="flex flex-col flex-1 justify-between py-0.5">
+<div>
+<div class="flex justify-between items-start">
+<h4 class="font-bold text-text-main dark:text-white text-base line-clamp-1">Fresh Salad Greens</h4>
+</div>
+<p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">GreenLife Organic</p>
+<div class="flex items-center gap-3 mt-2">
+<div class="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-300 font-medium bg-earth-light dark:bg-earth-dark px-2 py-0.5 rounded">
+<span class="material-symbols-outlined text-[14px]">scale</span> 8kg
+                            </div>
+<div class="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-300 font-medium bg-earth-light dark:bg-earth-dark px-2 py-0.5 rounded">
+<span class="material-symbols-outlined text-[14px]">group</span> ~20
+                            </div>
+</div>
+</div>
+<div class="flex justify-between items-end mt-2">
+<div class="flex items-center gap-1 text-xs text-gray-400">
+<span class="material-symbols-outlined text-[14px]">schedule</span> Pickup by 6 PM
+                        </div>
+<button class="bg-black dark:bg-white text-white dark:text-black font-bold py-1.5 px-4 rounded-lg text-xs hover:bg-opacity-80 transition-colors">
+                            View Details
+                        </button>
+</div>
+</div>
+</div>
+<!-- Listing Card 3 -->
+<div class="bg-white dark:bg-surface-dark rounded-2xl p-3 shadow-sm border border-earth-light dark:border-earth-dark flex gap-4 opacity-75">
+<div class="w-24 h-24 shrink-0 rounded-xl overflow-hidden relative">
+<img alt="Indian curry" class="w-full h-full object-cover grayscale" data-alt="Spicy curry in a bowl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2iT-WydFHJXQd8mIl7O7VmKpDhhMqe3OI7nzI8UqO4jkSiuhv6ldhdnNXjeXEPfdjAZqAuLFbp399UiyBXV3bcL4dslkAk5dPOW2QGvH92DrBMizm498R3_L6wznmsOHDRrXgpgI4terO-dTgSTLXFZMBZxPsbaY6fgST9ccJF4Hg7zdrSYxocp8yGBr2e5BCLToDAMTSkNWTN7hB7ZYrg3G3zVtlnuZsKXajAoY3cIebAtt3h66OojvtzaKDNOKfYe6fLhGsVFk"/>
+<div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+<span class="text-white text-xs font-bold uppercase tracking-wide border border-white px-2 py-1 rounded">Reserved</span>
+</div>
+</div>
+<div class="flex flex-col flex-1 justify-between py-0.5">
+<div>
+<h4 class="font-bold text-gray-500 dark:text-gray-400 text-base line-clamp-1">Mixed Veg Curry</h4>
+<p class="text-sm text-gray-400 dark:text-gray-500 mt-0.5">Adyar Ananda Bhavan</p>
+<div class="flex items-center gap-3 mt-2">
+<div class="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-medium bg-earth-light dark:bg-earth-dark px-2 py-0.5 rounded">
+<span class="material-symbols-outlined text-[14px]">scale</span> 12kg
+                            </div>
+</div>
+</div>
+<div class="flex justify-between items-end mt-2">
+<div class="flex items-center gap-1 text-xs text-gray-400">
+<span class="material-symbols-outlined text-[14px]">done_all</span> Claimed by NGO
+                        </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation -->
+<div class="fixed bottom-0 left-0 w-full bg-white dark:bg-surface-dark border-t border-earth-light dark:border-earth-dark pb-safe-bottom pt-2 px-6 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] z-50">
+<div class="flex justify-between items-end pb-2">
+<button class="flex flex-col items-center gap-1 text-primary w-16">
+<span class="material-symbols-outlined text-[28px] fill-1">home</span>
+<span class="text-[10px] font-bold">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 w-16 transition-colors">
+<span class="material-symbols-outlined text-[28px]">receipt_long</span>
+<span class="text-[10px] font-medium">Orders</span>
+</button>
+<div class="relative -top-6">
+<button class="flex items-center justify-center w-14 h-14 rounded-full bg-text-main dark:bg-primary text-white dark:text-black shadow-lg shadow-green-900/20 dark:shadow-primary/40 transform hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[28px]">map</span>
+</button>
+</div>
+<button class="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 w-16 transition-colors">
+<span class="material-symbols-outlined text-[28px]">chat_bubble</span>
+<span class="text-[10px] font-medium">Chats</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 w-16 transition-colors">
+<span class="material-symbols-outlined text-[28px]">person</span>
+<span class="text-[10px] font-medium">Profile</span>
+</button>
+</div>
+</div>
+</body></html>

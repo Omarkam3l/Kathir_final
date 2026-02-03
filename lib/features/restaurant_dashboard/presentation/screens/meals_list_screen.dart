@@ -156,6 +156,12 @@ class _MealsListScreenState extends State<MealsListScreen> {
             ),
           ),
           IconButton(
+            onPressed: () {
+              context.go('/restaurant/chats');
+            },
+            icon: const Icon(Icons.chat_bubble_outline),
+          ),
+          IconButton(
             onPressed: _loadData,
             icon: const Icon(Icons.refresh),
           ),
