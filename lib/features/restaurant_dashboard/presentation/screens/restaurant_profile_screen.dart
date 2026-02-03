@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../authentication/presentation/blocs/auth_provider.dart';
 import '../widgets/restaurant_bottom_nav.dart';
+import '../../data/services/rush_hour_service.dart';
+import '../../domain/entities/rush_hour_config.dart';
 
 /// Restaurant Profile Screen - View and edit restaurant details
 class RestaurantProfileScreen extends StatefulWidget {
@@ -17,15 +19,20 @@ class RestaurantProfileScreen extends StatefulWidget {
 
 class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
   final _supabase = Supabase.instance.client;
+  late final RushHourService _rushHourService;
   
   Map<String, dynamic>? _restaurantData;
+  RushHourConfig? _rushHourConfig;
   bool _isLoading = true;
   bool _isUploadingImage = false;
+  bool _isLoadingRushHour = true;
 
   @override
   void initState() {
     super.initState();
+    _rushHourService = RushHourService(_supabase);
     _loadRestaurantData();
+    _loadRushHourConfig();
   }
 
   Future<void> _loadRestaurantData() async {
@@ -450,6 +457,12 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                           ),
                           const SizedBox(height: 24),
 
+                          // Rush Hour Settings
+                          _buildSectionTitle('Rush Hour Settings'),
+                          const SizedBox(height: 12),
+                          _buildRushHourCard(surface, isDark),
+                          const SizedBox(height: 24),
+
                           // Account Information
                           _buildSectionTitle('Account Information'),
                           const SizedBox(height: 12),
@@ -638,6 +651,193 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
               size: 16,
               color: isDark ? Colors.grey[600] : Colors.grey[400],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _loadRushHourConfig() async {
+    setState(() => _isLoadingRushHour = true);
+    try {
+      final config = await _rushHourService.getMyRushHour();
+      if (mounted) {
+        setState(() {
+          _rushHourConfig = config;
+          _isLoadingRushHour = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingRushHour = false);
+      }
+    }
+  }
+
+  Widget _buildRushHourCard(Color surface, bool isDark) {
+    if (_isLoadingRushHour) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
+          ),
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    final isActive = _rushHourConfig?.isActive ?? false;
+    final activeNow = _rushHourConfig?.activeNow ?? false;
+    final discountPercentage = _rushHourConfig?.discountPercentage ?? 50;
+
+    return InkWell(
+      onTap: () async {
+        await context.push('/restaurant-dashboard/surplus-settings');
+        // Reload rush hour config when returning
+        _loadRushHourConfig();
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: activeNow
+                ? AppColors.primaryGreen.withValues(alpha: 0.3)
+                : (isDark ? Colors.grey[800]! : Colors.grey[200]!),
+            width: activeNow ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: activeNow
+                        ? AppColors.primaryGreen.withValues(alpha: 0.1)
+                        : (isDark
+                            ? Colors.grey[800]
+                            : Colors.grey[200]),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.access_time,
+                    color: activeNow
+                        ? AppColors.primaryGreen
+                        : (isDark ? Colors.grey[400] : Colors.grey[600]),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Rush Hour',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isActive
+                                  ? AppColors.primaryGreen.withValues(alpha: 0.1)
+                                  : Colors.grey.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              isActive ? 'ON' : 'OFF',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: isActive
+                                    ? AppColors.primaryGreen
+                                    : Colors.grey,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isActive
+                            ? '$discountPercentage% discount during rush hours'
+                            : 'Set up time-based discounts',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: isDark ? Colors.grey[600] : Colors.grey[400],
+                ),
+              ],
+            ),
+            if (activeNow) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primaryGreen,
+                      AppColors.primaryGreen.withValues(alpha: 0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.bolt,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Rush Hour Active Now!',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '$discountPercentage% OFF',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
