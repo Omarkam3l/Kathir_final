@@ -19,8 +19,13 @@ import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/meal_details_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/edit_meal_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_profile_screen.dart';
+<<<<<<< HEAD
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_chat_list_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_chat_screen.dart';
+=======
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_leaderboard_screen.dart';
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_surplus_settings_screen.dart';
+>>>>>>> b6f7169ee0c50027e08dd7d540629e0ce0bcab87
 import 'package:kathir_final/features/onboarding/presentation/screens/onboarding_flow_screen.dart';
 import 'package:provider/provider.dart';
 import '../../authentication/presentation/blocs/auth_provider.dart';
@@ -199,6 +204,7 @@ class AppRouter {
         builder: (context, state) => const RestaurantProfileScreen(),
       ),
       GoRoute(
+<<<<<<< HEAD
         path: '/restaurant/chats',
         builder: (context, state) => ChangeNotifierProvider(
           create: (_) => NgoChatListViewModel(),
@@ -225,6 +231,15 @@ class AppRouter {
         },
       ),
       // NGO Dashboard Routes
+=======
+        path: '/restaurant-dashboard/leaderboard',
+        builder: (context, state) => const RestaurantLeaderboardScreen(),
+      ),
+      GoRoute(
+        path: '/restaurant-dashboard/surplus-settings',
+        builder: (context, state) => const RestaurantSurplusSettingsScreen(),
+      ),
+>>>>>>> b6f7169ee0c50027e08dd7d540629e0ce0bcab87
       GoRoute(
         name: RouteNames.ngoDashboard,
         path: '/ngo-dashboard',

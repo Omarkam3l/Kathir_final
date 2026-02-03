@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
-import 'package:kathir_final/core/utils/auth_logger.dart';
 import 'package:kathir_final/core/utils/user_role.dart';
 import 'package:kathir_final/features/authentication/presentation/screens/verification_screen.dart';
 import 'package:kathir_final/features/authentication/presentation/viewmodels/auth_viewmodel.dart';
@@ -9,7 +8,6 @@ import 'package:supabase_flutter/supabase_flutter.dart' as s;
 import '../../domain/usecases/sign_up_usecase.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kathir_final/features/_shared/providers/theme_provider.dart';
 
@@ -24,11 +22,9 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   bool isLogin = true;
   UserRole? _selectedRole = UserRole.user;
-  bool _documentsUploaded = false;
   bool _isLoading = false;
   bool _obscurePassword = true;
   final _formKey = GlobalKey<FormState>();
-  List<int>? _legalDocBytes;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -48,7 +44,6 @@ class _AuthScreenState extends State<AuthScreen> {
     setState(() {
       isLogin = !isLogin;
       _selectedRole = isLogin ? null : UserRole.user;
-      _documentsUploaded = false;
       _formKey.currentState?.reset();
     });
     final vm = Provider.of<AuthViewModel>(context, listen: false);
@@ -76,16 +71,7 @@ class _AuthScreenState extends State<AuthScreen> {
       );
       return;
     }
-    if ((_selectedRole == UserRole.ngo ||
-            _selectedRole == UserRole.restaurant) &&
-        !_documentsUploaded) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Please upload your legal documents'),
-            backgroundColor: AppColors.warning),
-      );
-      return;
-    }
+    
     setState(() => _isLoading = true);
     try {
       final vm = Provider.of<AuthViewModel>(context, listen: false);
@@ -106,14 +92,6 @@ class _AuthScreenState extends State<AuthScreen> {
             ? null
             : _phoneController.text.trim(),
       );
-      
-      // ✅ FIX: Don't upload documents here - wait until after OTP verification
-      // Store document bytes for upload after verification
-      if (_legalDocBytes != null && vm.user?.id != null) {
-        // Store in viewmodel for later upload
-        vm.pendingLegalDocBytes = _legalDocBytes;
-        vm.pendingLegalDocFileName = 'legal.pdf';
-      }
       
       if (ok) {
         if (mounted) GoRouter.of(context).go('/home');
@@ -170,142 +148,6 @@ class _AuthScreenState extends State<AuthScreen> {
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _uploadDocuments() async {
-    // Show loading snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
-              ),
-            ),
-            SizedBox(width: 12),
-            Text('Opening file picker...', style: TextStyle(color: AppColors.white)),
-          ],
-        ),
-        backgroundColor: AppColors.primary,
-        duration: Duration(seconds: 2),
-      ),
-    );
-    
-    AuthLogger.info('documentPicker.opening', ctx: {
-      'role': _selectedRole.toString(),
-    });
-    
-    final res = await FilePicker.platform.pickFiles(
-      withReadStream: false,
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-    );
-    
-    if (!mounted) return;
-    
-    if (res != null && res.files.isNotEmpty) {
-      final file = res.files.first;
-      _legalDocBytes = file.bytes;
-      final fileName = file.name;
-      final fileSize = file.size;
-      
-      AuthLogger.info('documentPicker.selected', ctx: {
-        'fileName': fileName,
-        'fileSize': fileSize,
-        'fileSizeKB': (fileSize / 1024).toStringAsFixed(2),
-        'role': _selectedRole.toString(),
-      });
-      
-      if (_legalDocBytes != null) {
-        // Validate file size (max 10MB)
-        if (fileSize > 10 * 1024 * 1024) {
-          AuthLogger.warn('documentPicker.fileTooLarge', ctx: {
-            'fileName': fileName,
-            'fileSize': fileSize,
-            'maxSize': 10 * 1024 * 1024,
-          });
-          
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'File too large! Maximum size is 10MB',
-                  style: TextStyle(color: AppColors.white),
-                ),
-                backgroundColor: AppColors.error,
-                duration: Duration(seconds: 4),
-              ),
-            );
-          }
-          return;
-        }
-        
-        setState(() => _documentsUploaded = true);
-        
-        AuthLogger.info('documentPicker.success', ctx: {
-          'fileName': fileName,
-          'documentsUploaded': true,
-        });
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.check_circle, color: AppColors.white, size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Document selected successfully!',
-                          style: TextStyle(
-                            color: AppColors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          '$fileName (${(fileSize / 1024).toStringAsFixed(1)} KB)',
-                          style: const TextStyle(
-                            color: AppColors.white,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.primary,
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
-      }
-    } else {
-      AuthLogger.info('documentPicker.cancelled', ctx: {
-        'role': _selectedRole.toString(),
-      });
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'No document selected',
-              style: TextStyle(color: AppColors.white),
-            ),
-            backgroundColor: Colors.orange,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
     }
   }
 
@@ -553,13 +395,6 @@ class _AuthScreenState extends State<AuthScreen> {
                           ),
                         ),
                       ],
-                      if (!isLogin &&
-                          (_selectedRole == UserRole.ngo ||
-                              _selectedRole == UserRole.restaurant)) ...[
-                        const SizedBox(height: 20),
-                        _buildDocumentUploadSection(
-                            isDark, textPrimary, textMuted, surface, border),
-                      ],
                       const SizedBox(height: 28),
                       _PrimaryButton(
                         label: isLogin ? 'Sign In' : 'Create Account',
@@ -752,7 +587,6 @@ class _AuthScreenState extends State<AuthScreen> {
             child: GestureDetector(
               onTap: () => setState(() {
                 _selectedRole = e.$1;
-                _documentsUploaded = false;
               }),
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -797,92 +631,6 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         const Expanded(child: Divider(color: AppColors.dividerLight)),
       ],
-    );
-  }
-
-  Widget _buildDocumentUploadSection(bool isDark, Color textPrimary,
-      Color textMuted, Color surface, Color border) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.inputFillDark : AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-            color: _documentsUploaded ? AppColors.primary : border,
-            width: _documentsUploaded ? 2 : 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.description_outlined,
-                  color: AppColors.primary, size: 22),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text('Legal Documents Required',
-                    style: GoogleFonts.plusJakartaSans(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: textPrimary)),
-              ),
-              if (_documentsUploaded)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(20)),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.check_circle,
-                          color: AppColors.primary, size: 14),
-                      const SizedBox(width: 4),
-                      Text('Uploaded',
-                          style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary)),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Please upload your legal documents (Business License, Registration Certificate, etc.)',
-            style: GoogleFonts.plusJakartaSans(fontSize: 12, color: textMuted),
-          ),
-          const SizedBox(height: 12),
-          if (!_documentsUploaded)
-            GestureDetector(
-              onTap: _uploadDocuments,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                decoration: BoxDecoration(
-                  border: Border.all(
-                      color: AppColors.primary, style: BorderStyle.solid),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.cloud_upload_outlined,
-                        color: AppColors.primary, size: 20),
-                    const SizedBox(width: 8),
-                    Text('Upload Documents',
-                        style: GoogleFonts.plusJakartaSans(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary)),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
     );
   }
 }

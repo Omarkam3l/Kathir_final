@@ -94,19 +94,25 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
         ),
       ),
       bottomNavigationBar: RestaurantBottomNav(
-        currentIndex: 2,
+        currentIndex: 1,
         onTap: (index) {
           switch (index) {
             case 0:
               context.go('/restaurant-dashboard');
               break;
             case 1:
-              context.go('/restaurant-dashboard/meals');
-              break;
-            case 2:
               // Already on orders
               break;
+            case 2:
+              context.go('/restaurant-dashboard/meals');
+              break;
             case 3:
+              // TODO: Implement chats
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Chats coming soon')),
+              );
+              break;
+            case 4:
               context.go('/restaurant-dashboard/profile');
               break;
           }

@@ -157,12 +157,18 @@ class _RestaurantHomeScreenState extends State<RestaurantHomeScreen> {
               // Already on home
               break;
             case 1:
-              context.go('/restaurant-dashboard/meals');
-              break;
-            case 2:
               context.go('/restaurant-dashboard/orders');
               break;
+            case 2:
+              context.go('/restaurant-dashboard/meals');
+              break;
             case 3:
+              // TODO: Implement chats
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Chats coming soon')),
+              );
+              break;
+            case 4:
               context.go('/restaurant-dashboard/profile');
               break;
           }

@@ -9,11 +9,15 @@ class ImageUploadWidget extends StatefulWidget {
   final String? initialImageUrl;
   final Function(File?, Uint8List?) onImageSelected;
   final bool isDark;
+  final VoidCallback? onFillWithAi;
+  final bool showAiButton;
 
   const ImageUploadWidget({
     this.initialImageUrl,
     required this.onImageSelected,
     required this.isDark,
+    this.onFillWithAi,
+    this.showAiButton = false,
     super.key,
   });
 
@@ -68,21 +72,53 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _pickImage,
-      child: Container(
-        width: double.infinity,
-        height: 200,
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: AppColors.primaryGreen.withValues(alpha: 0.4),
-            width: 2,
+    final hasImage = _imageFile != null || _imageBytes != null || (_imageUrl != null && _imageUrl!.isNotEmpty);
+    
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: _pickImage,
+          child: Container(
+            width: double.infinity,
+            height: 200,
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: AppColors.primaryGreen.withValues(alpha: 0.4),
+                width: 2,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              color: AppColors.primaryGreen.withValues(alpha: 0.05),
+            ),
+            child: _buildContent(),
           ),
-          borderRadius: BorderRadius.circular(16),
-          color: AppColors.primaryGreen.withValues(alpha: 0.05),
         ),
-        child: _buildContent(),
-      ),
+        if (widget.showAiButton && hasImage && widget.onFillWithAi != null) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton.icon(
+              onPressed: widget.onFillWithAi,
+              icon: const Icon(Icons.auto_awesome, size: 20),
+              label: const Text(
+                'Fill with AI',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 

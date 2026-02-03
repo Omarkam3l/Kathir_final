@@ -92,19 +92,25 @@ class _MealsListScreenState extends State<MealsListScreen> {
         label: const Text('Add Meal', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       bottomNavigationBar: RestaurantBottomNav(
-        currentIndex: 1,
+        currentIndex: 2,
         onTap: (index) {
           switch (index) {
             case 0:
               context.go('/restaurant-dashboard');
               break;
             case 1:
-              // Already on meals
-              break;
-            case 2:
               context.go('/restaurant-dashboard/orders');
               break;
+            case 2:
+              // Already on meals
+              break;
             case 3:
+              // TODO: Implement chats
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Chats coming soon')),
+              );
+              break;
+            case 4:
               context.go('/restaurant-dashboard/profile');
               break;
           }

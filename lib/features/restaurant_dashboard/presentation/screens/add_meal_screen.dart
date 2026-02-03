@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../../core/utils/auth_logger.dart';
+import '../../../../core/services/ai_meal_service.dart';
 import '../widgets/image_upload_widget.dart';
 
 class AddMealScreen extends StatefulWidget {
@@ -18,6 +20,7 @@ class AddMealScreen extends StatefulWidget {
 class _AddMealScreenState extends State<AddMealScreen> {
   final _formKey = GlobalKey<FormState>();
   final _supabase = Supabase.instance.client;
+  late final AiMealService _aiService;
   
   // Controllers
   final _titleController = TextEditingController();
@@ -33,6 +36,7 @@ class _AddMealScreenState extends State<AddMealScreen> {
   File? _imageFile;
   Uint8List? _imageBytes;
   bool _isLoading = false;
+  bool _isAiProcessing = false;
 
   // Categories must match database constraint exactly
   final List<String> _categories = [
@@ -46,6 +50,17 @@ class _AddMealScreenState extends State<AddMealScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    final apiKey = dotenv.env['GEMINI_API_KEY'];
+    if (apiKey == null || apiKey.isEmpty) {
+      AuthLogger.errorLog('ai.init.failed', 
+        error: Exception('GEMINI_API_KEY not found in .env'));
+    }
+    _aiService = AiMealService(apiKey: apiKey ?? '');
+  }
+
+  @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
@@ -53,6 +68,127 @@ class _AddMealScreenState extends State<AddMealScreen> {
     _discountedPriceController.dispose();
     _quantityController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fillWithAi() async {
+    if (_imageFile == null && _imageBytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select an image first'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isAiProcessing = true);
+
+    try {
+      AuthLogger.info('ai.fill.start');
+
+      // Detect mime type from file extension
+      String mimeType = 'image/jpeg'; // default
+      if (_imageFile != null) {
+        final path = _imageFile!.path.toLowerCase();
+        if (path.endsWith('.png')) {
+          mimeType = 'image/png';
+        } else if (path.endsWith('.gif')) {
+          mimeType = 'image/gif';
+        } else if (path.endsWith('.webp')) {
+          mimeType = 'image/webp';
+        } else if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+          mimeType = 'image/jpeg';
+        }
+      }
+
+      AiMealData aiData;
+      
+      if (_imageBytes != null) {
+        // Use bytes for web or when available
+        aiData = await _aiService.extractMealInfoFromBytes(
+          _imageBytes!,
+          mimeType: mimeType,
+        );
+      } else if (_imageFile != null) {
+        // Read file bytes for mobile
+        final bytes = await _imageFile!.readAsBytes();
+        aiData = await _aiService.extractMealInfoFromBytes(
+          Uint8List.fromList(bytes),
+          mimeType: mimeType,
+        );
+      } else {
+        throw Exception('No image data available');
+      }
+
+      // Fill form with AI data
+      setState(() {
+        _titleController.text = aiData.mealTitle;
+        _descriptionController.text = aiData.description;
+        
+        // Map category slug to display name
+        _category = _mapCategorySlugToDisplay(aiData.categorySlug);
+        
+        _originalPriceController.text = 
+            aiData.priceSuggestions.originalPriceEgp.toStringAsFixed(2);
+        _discountedPriceController.text = 
+            aiData.priceSuggestions.discountedPriceEgp.toStringAsFixed(2);
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '✨ Form filled with AI!',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Confidence: Title ${(aiData.confidence.mealTitle * 100).toInt()}%, '
+                  'Category ${(aiData.confidence.categorySlug * 100).toInt()}%',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.success,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+
+      AuthLogger.info('ai.fill.success');
+    } catch (e, stackTrace) {
+      AuthLogger.errorLog('ai.fill.failed', error: e, stackTrace: stackTrace);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('AI extraction failed: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isAiProcessing = false);
+    }
+  }
+
+  String _mapCategorySlugToDisplay(String slug) {
+    // Map from AI response categories to display categories
+    final mapping = {
+      'meals': 'Meals',
+      'bakery': 'Bakery',
+      'meat_poultry': 'Meat & Poultry',
+      'seafood': 'Seafood',
+      'vegetables': 'Vegetables',
+      'desserts': 'Desserts',
+      'groceries': 'Groceries',
+    };
+    
+    return mapping[slug.toLowerCase()] ?? 'Meals';
   }
 
   Future<String?> _uploadImage() async {
@@ -202,6 +338,8 @@ class _AddMealScreenState extends State<AddMealScreen> {
             // Image upload
             ImageUploadWidget(
               isDark: isDark,
+              showAiButton: true,
+              onFillWithAi: _isAiProcessing ? null : _fillWithAi,
               onImageSelected: (file, bytes) {
                 setState(() {
                   _imageFile = file;
@@ -209,6 +347,41 @@ class _AddMealScreenState extends State<AddMealScreen> {
                 });
               },
             ),
+            if (_isAiProcessing) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.primaryGreen.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: const Row(
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primaryGreen,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'AI is analyzing your meal image...',
+                        style: TextStyle(
+                          color: AppColors.primaryGreen,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
 
             // Title
