@@ -23,7 +23,7 @@ class AiMealService {
 
   AiMealService({required this.apiKey}) {
     _model = GenerativeModel(
-      model: 'gemini-2.0-flash-001',
+      model: "gemini-2.5-flash",
       apiKey: apiKey,
       generationConfig:  GenerationConfig(
         temperature: 0.7,

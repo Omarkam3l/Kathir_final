@@ -114,7 +114,7 @@ class _RestaurantLeaderboardScreenState
         ),
       ),
       bottomNavigationBar: RestaurantBottomNav(
-        currentIndex: 3,
+        currentIndex: -1, // Not in bottom nav
         onTap: _onBottomNavTap,
       ),
     );
@@ -723,13 +723,19 @@ class _RestaurantLeaderboardScreenState
         context.go('/restaurant-dashboard');
         break;
       case 1:
-        context.go('/restaurant-dashboard/meals');
-        break;
-      case 2:
         context.go('/restaurant-dashboard/orders');
         break;
+      case 2:
+        context.go('/restaurant-dashboard/meals');
+        break;
       case 3:
-        context.go('/restaurant-dashboard/leaderboard');
+        // Chats - coming soon
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Chats feature coming soon!'),
+            duration: Duration(seconds: 2),
+          ),
+        );
         break;
       case 4:
         context.go('/restaurant-dashboard/profile');

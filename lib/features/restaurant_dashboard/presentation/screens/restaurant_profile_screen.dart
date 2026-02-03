@@ -463,6 +463,12 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                           _buildRushHourCard(surface, isDark),
                           const SizedBox(height: 24),
 
+                          // Leaderboard
+                          _buildSectionTitle('Leaderboard'),
+                          const SizedBox(height: 12),
+                          _buildLeaderboardCard(surface, isDark),
+                          const SizedBox(height: 24),
+
                           // Account Information
                           _buildSectionTitle('Account Information'),
                           const SizedBox(height: 12),
@@ -530,13 +536,16 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
               context.go('/restaurant-dashboard');
               break;
             case 1:
-              context.go('/restaurant-dashboard/meals');
-              break;
-            case 2:
               context.go('/restaurant-dashboard/orders');
               break;
+            case 2:
+              context.go('/restaurant-dashboard/meals');
+              break;
             case 3:
-              context.go('/restaurant-dashboard/leaderboard');
+              // TODO: Implement chats
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Chats coming soon')),
+              );
               break;
             case 4:
               // Already on profile
@@ -838,6 +847,69 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                 ),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLeaderboardCard(Color surface, bool isDark) {
+    return InkWell(
+      onTap: () {
+        context.push('/restaurant-dashboard/leaderboard');
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.leaderboard,
+                color: AppColors.primaryGreen,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Restaurant Rankings',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'See how you rank among other restaurants',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: isDark ? Colors.grey[600] : Colors.grey[400],
+            ),
           ],
         ),
       ),
