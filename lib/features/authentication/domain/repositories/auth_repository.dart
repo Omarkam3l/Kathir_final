@@ -5,13 +5,13 @@ import '../../../../core/utils/either.dart';
 abstract class AuthRepository {
   Future<Either<Failure, UserEntity>> signIn(String email, String password);
   Future<Either<Failure, UserEntity>> signUpUser(
-      String fullName, String email, String password);
+      String fullName, String email, String password, {required String phone});
   Future<Either<Failure, UserEntity>> signUpNGO(
       String orgName, String fullName, String email, String password,
-      {String? phone});
+      {required String phone});
   Future<Either<Failure, UserEntity>> signUpRestaurant(
       String orgName, String fullName, String email, String password,
-      {String? phone});
+      {required String phone});
   Future<Either<Failure, UserEntity>> signInWithGoogle();
   Future<Either<Failure, UserEntity>> signInWithFacebook();
   Future<Either<Failure, UserEntity>> signInWithApple();

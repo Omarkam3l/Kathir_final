@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../authentication/presentation/blocs/auth_provider.dart';
 import '../widgets/restaurant_bottom_nav.dart';
 import '../widgets/kpi_card.dart';
 import '../widgets/recent_meal_card.dart';
@@ -163,10 +165,7 @@ class _RestaurantHomeScreenState extends State<RestaurantHomeScreen> {
               context.go('/restaurant-dashboard/meals');
               break;
             case 3:
-              // TODO: Implement chats
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Chats coming soon')),
-              );
+              context.go('/restaurant-dashboard/leaderboard');
               break;
             case 4:
               context.go('/restaurant-dashboard/profile');
@@ -187,48 +186,73 @@ class _RestaurantHomeScreenState extends State<RestaurantHomeScreen> {
             bottom: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
           ),
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primaryGreen.withValues(alpha: 0.2),
-                border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3), width: 2),
-              ),
-              child: const Icon(Icons.restaurant, color: AppColors.primaryGreen, size: 24),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Welcome back!',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+        child: Consumer<AuthProvider>(
+          builder: (context, auth, _) {
+            final avatarUrl = auth.user?.avatarUrl;
+            
+            return Row(
+              children: [
+                GestureDetector(
+                  onTap: () => context.go('/restaurant-dashboard/profile'),
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.primaryGreen.withValues(alpha: 0.2),
+                      border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3), width: 2),
+                    ),
+                    child: ClipOval(
+                      child: avatarUrl != null
+                          ? Image.network(
+                              avatarUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.restaurant,
+                                color: AppColors.primaryGreen,
+                                size: 24,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.restaurant,
+                              color: AppColors.primaryGreen,
+                              size: 24,
+                            ),
                     ),
                   ),
-                  Text(
-                    _restaurantName ?? 'Restaurant',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Welcome back!',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        ),
+                      ),
+                      Text(
+                        _restaurantName ?? 'Restaurant',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            IconButton(
-              onPressed: () {
-                context.go('/restaurant/chats');
-              },
-              icon: const Icon(Icons.chat_bubble_outline),
-            ),
-            IconButton(
-              onPressed: _loadData,
-              icon: const Icon(Icons.refresh),
-            ),
-          ],
+                ),
+                IconButton(
+                  onPressed: () {
+                    context.go('/restaurant/chats');
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline),
+                ),
+                IconButton(
+                  onPressed: _loadData,
+                  icon: const Icon(Icons.refresh),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

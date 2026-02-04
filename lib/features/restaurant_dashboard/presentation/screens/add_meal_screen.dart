@@ -54,8 +54,10 @@ class _AddMealScreenState extends State<AddMealScreen> {
     super.initState();
     final apiKey = dotenv.env['GEMINI_API_KEY'];
     if (apiKey == null || apiKey.isEmpty) {
-      AuthLogger.errorLog('ai.init.failed', 
-        error: Exception('GEMINI_API_KEY not found in .env'));
+      debugPrint('⚠️ GEMINI_API_KEY not found in .env - AI features will be disabled');
+      debugPrint('Please add GEMINI_API_KEY to your .env file and restart the app');
+    } else {
+      debugPrint('✅ GEMINI_API_KEY loaded successfully');
     }
     _aiService = AiMealService(apiKey: apiKey ?? '');
   }

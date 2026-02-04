@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:kathir_final/features/authentication/presentation/blocs/auth_provider.dart';
 import 'package:kathir_final/features/user_home/domain/entities/meal_offer.dart';
@@ -130,13 +131,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 child: AvailableMealsGridSection(
                   meals: _filteredMeals,
                   onSeeAll: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => AllMealsScreen(
-                          allOffers: vm.meals,
-                        ),
-                      ),
-                    );
+                    context.push('/meals/all', extra: vm.meals);
                   },
                 ),
               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../../core/utils/app_dimensions.dart';
 
@@ -30,38 +31,40 @@ class HomeBottomNavigation extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(AppDimensions.paddingSmall),
-                decoration: BoxDecoration(
-                  color: AppColors.darkText,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+          IconButton(
+            onPressed: () => context.go('/home'),
+            icon: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(AppDimensions.paddingSmall),
+                  decoration: BoxDecoration(
+                    color: AppColors.darkText,
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+                  ),
+                  child: const Icon(
+                    Icons.home,
+                    color: Colors.white,
+                    size: AppDimensions.iconMedium,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.home,
-                  color: Colors.white,
-                  size: AppDimensions.iconMedium,
-                ),
-              ),
-              const SizedBox(height: 4),
-            ],
+              ],
+            ),
           ),
           IconButton(
-            onPressed: () => Navigator.of(context).pushNamed('/favourites'),
+            onPressed: () => context.go('/favorites'),
             icon: const Icon(Icons.favorite_border, color: Colors.grey),
           ),
           IconButton(
-            onPressed: () => Navigator.of(context).pushNamed('/cart'),
+            onPressed: () => context.go('/cart'),
             icon: const Icon(Icons.shopping_cart_outlined, color: Colors.grey),
           ),
           IconButton(
-            onPressed: () => Navigator.of(context).pushNamed('/notifications'),
+            onPressed: () => context.go('/alerts'),
             icon: const Icon(Icons.notifications_none, color: Colors.grey),
           ),
           IconButton(
-            onPressed: () => Navigator.of(context).pushNamed('/profile'),
+            onPressed: () => context.go('/profile'),
             icon: const Icon(Icons.person_outline, color: Colors.grey),
           ),
         ],

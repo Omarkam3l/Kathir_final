@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:kathir_final/features/user_home/presentation/screens/home_screen.dart';
-import 'package:kathir_final/features/user_home/presentation/screens/map_placeholder_screen.dart';
+import 'package:kathir_final/features/user_home/presentation/screens/favorites_screen_new.dart';
+import 'package:kathir_final/features/user_home/presentation/viewmodels/favorites_viewmodel.dart';
 import 'package:kathir_final/features/cart/presentation/screens/cart_screen.dart';
 import 'package:kathir_final/features/orders/presentation/screens/my_orders_screen.dart';
 import 'package:kathir_final/features/profile/presentation/screens/user_profile_screen_new.dart';
 import 'package:kathir_final/features/_shared/widgets/home_bottom_nav_bar.dart';
 
-/// Main shell: Home, Map, Cart (center), Orders, Profile.
+/// Main shell: Home, Favorites, Cart (center), Orders, Profile.
 /// Matches the Kathir user_home_page bottom nav design.
 class MainNavigationScreen extends StatefulWidget {
   final int initialIndex;
@@ -20,12 +22,15 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   late int _index;
 
-  static const List<Widget> _pages = [
-    HomeScreen(),
-    MapPlaceholderScreen(),
-    CartScreen(),
-    MyOrdersScreen(),
-    UserProfileScreenNew(),
+  static final List<Widget> _pages = [
+    const HomeScreen(),
+    ChangeNotifierProvider(
+      create: (_) => FavoritesViewModel()..loadFavorites(),
+      child: const FavoritesScreenNew(),
+    ),
+    const CartScreen(),
+    const MyOrdersScreen(),
+    const UserProfileScreenNew(),
   ];
 
   @override

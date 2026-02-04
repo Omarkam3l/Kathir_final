@@ -9,13 +9,13 @@ import '../models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
   Future<UserModel> signIn(String email, String password);
-  Future<UserModel> signUpUser(String fullName, String email, String password);
+  Future<UserModel> signUpUser(String fullName, String email, String password, {required String phone});
   Future<UserModel> signUpNGO(
       String orgName, String fullName, String email, String password,
-      {String? phone});
+      {required String phone});
   Future<UserModel> signUpRestaurant(
       String orgName, String fullName, String email, String password,
-      {String? phone});
+      {required String phone});
   Future<UserModel> signInWithGoogle();
   Future<UserModel> signInWithFacebook();
   Future<UserModel> signInWithApple();
@@ -62,14 +62,18 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
 
   @override
   Future<UserModel> signUpUser(
-      String fullName, String email, String password) async {
+      String fullName, String email, String password, {required String phone}) async {
     try {
       AuthLogger.signupAttempt(role: 'user', email: email);
       
       final res = await client.auth.signUp(
           email: email,
           password: password,
-          data: {'full_name': fullName, 'role': UserRole.user.wireValue},
+          data: {
+            'full_name': fullName,
+            'role': UserRole.user.wireValue,
+            'phone_number': phone,
+          },
           emailRedirectTo: kIsWeb
               ? Uri.base.toString()
               : 'io.supabase.flutter://login-callback/');
@@ -103,7 +107,7 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
   @override
   Future<UserModel> signUpNGO(
       String orgName, String fullName, String email, String password,
-      {String? phone}) async {
+      {required String phone}) async {
     try {
       AuthLogger.signupAttempt(role: 'ngo', email: email);
       
@@ -111,7 +115,7 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
         'email': email,
         'fullName': fullName,
         'orgName': orgName,
-        'hasPhone': phone != null,
+        'hasPhone': true,
         'role': UserRole.ngo.wireValue,
       });
       
@@ -122,7 +126,7 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
             'full_name': fullName,
             'role': UserRole.ngo.wireValue,
             'organization_name': orgName,
-            if (phone != null) 'phone_number': phone,
+            'phone_number': phone,
           },
           emailRedirectTo: kIsWeb
               ? Uri.base.toString()
@@ -176,7 +180,7 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
   @override
   Future<UserModel> signUpRestaurant(
       String orgName, String fullName, String email, String password,
-      {String? phone}) async {
+      {required String phone}) async {
     try {
       AuthLogger.signupAttempt(role: 'restaurant', email: email);
       
@@ -184,7 +188,7 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
         'email': email,
         'fullName': fullName,
         'orgName': orgName,
-        'hasPhone': phone != null,
+        'hasPhone': true,
         'role': UserRole.restaurant.wireValue,
       });
       
@@ -195,7 +199,7 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
             'full_name': fullName,
             'role': UserRole.restaurant.wireValue,
             'organization_name': orgName,
-            if (phone != null) 'phone_number': phone,
+            'phone_number': phone,
           },
           emailRedirectTo: kIsWeb
               ? Uri.base.toString()

@@ -107,10 +107,7 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
               context.go('/restaurant-dashboard/meals');
               break;
             case 3:
-              // TODO: Implement chats
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Chats coming soon')),
-              );
+              context.go('/restaurant-dashboard/leaderboard');
               break;
             case 4:
               context.go('/restaurant-dashboard/profile');

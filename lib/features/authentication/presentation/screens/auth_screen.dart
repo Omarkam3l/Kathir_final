@@ -88,9 +88,7 @@ class _AuthScreenState extends State<AuthScreen> {
         organizationName: _orgNameController.text.trim().isEmpty
             ? null
             : _orgNameController.text.trim(),
-        phone: _phoneController.text.trim().isEmpty
-            ? null
-            : _phoneController.text.trim(),
+        phone: _phoneController.text.trim(),
       );
       
       if (ok) {
@@ -298,7 +296,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       if (!isLogin)
                         _AuthInput(
                           label: 'Phone Number',
-                          hint: '+1 (555) 000-0000',
+                          hint: '+20 10 1234 5678',
                           controller: _phoneController,
                           prefixIcon: Icons.call_outlined,
                           keyboardType: TextInputType.phone,
@@ -307,6 +305,8 @@ class _AuthScreenState extends State<AuthScreen> {
                           textMuted: textMuted,
                           surface: surface,
                           border: border,
+                          validator: (v) =>
+                              (v ?? '').trim().isEmpty ? 'Phone number is required' : null,
                         ),
                       if (!isLogin) const SizedBox(height: 16),
                       _AuthInput(

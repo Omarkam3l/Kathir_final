@@ -31,7 +31,7 @@ class RestaurantBottomNav extends StatelessWidget {
     
     if (location.contains('/profile')) {
       return 4;
-    } else if (location.contains('/chats')) {
+    } else if (location.contains('/leaderboard')) {
       return 3;
     } else if (location.contains('/orders')) {
       return 1;
@@ -99,12 +99,12 @@ class RestaurantBottomNav extends StatelessWidget {
                 // Spacer for center button
                 SizedBox(width: screenWidth * 0.2),
                 
-                // Chats
+                // Leaderboard
                 Flexible(
                   child: _buildNavItem(
-                    icon: Icons.chat_bubble_outline,
-                    activeIcon: Icons.chat_bubble,
-                    label: 'Chats',
+                    icon: Icons.leaderboard_outlined,
+                    activeIcon: Icons.leaderboard,
+                    label: 'Leaderboard',
                     index: 3,
                     isActive: currentIndex == 3,
                     color: inactiveColor,

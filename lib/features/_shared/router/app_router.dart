@@ -19,19 +19,20 @@ import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/meal_details_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/edit_meal_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_profile_screen.dart';
-<<<<<<< HEAD
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_chat_list_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_chat_screen.dart';
-=======
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_leaderboard_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_surplus_settings_screen.dart';
->>>>>>> b6f7169ee0c50027e08dd7d540629e0ce0bcab87
 import 'package:kathir_final/features/onboarding/presentation/screens/onboarding_flow_screen.dart';
 import 'package:provider/provider.dart';
 import '../../authentication/presentation/blocs/auth_provider.dart';
 import '../../authentication/presentation/screens/pending_approval_screen.dart';
 import '../../authentication/presentation/screens/auth_splash_screen.dart';
 import '../../meals/presentation/screens/meal_detail.dart';
+import '../../meals/presentation/screens/meal_detail_new.dart';
+import '../../user_home/presentation/screens/favorites_screen_new.dart';
+import '../../user_home/presentation/screens/all_meals_screen.dart';
+import '../../user_home/presentation/viewmodels/favorites_viewmodel.dart';
 import '../../user_home/domain/entities/meal_offer.dart';
 import '../../user_home/domain/entities/meal.dart';
 import '../../user_home/domain/entities/restaurant.dart';
@@ -110,10 +111,10 @@ class AppRouter {
       
       // RULE 4: Logged in and initialized - route based on user state
       if (isLoggedIn && isInitialized) {
+        final role = user?.role;
+        
         // If on auth flow or onboarding, redirect to appropriate dashboard
         if (isAuthFlow || isOnboarding) {
-          final role = user?.role;
-          
           // Check approval status (now guaranteed to be accurate)
           if (user != null && user.needsApproval) {
             // If approval status is still unknown, stay on splash
@@ -141,7 +142,6 @@ class AppRouter {
         // If trying to access pending approval but actually approved, redirect
         if (isPendingApproval && user != null) {
           if (!user.needsApproval || user.isApproved) {
-            final role = user.role;
             if (role == 'restaurant') {
               return '/restaurant-dashboard';
             } else if (role == 'ngo') {
@@ -151,6 +151,74 @@ class AppRouter {
             }
             return '/home';
           }
+        }
+        
+        // RULE 5: Role-based access control - prevent unauthorized access
+        // Restaurant trying to access NGO routes
+        if (role == 'restaurant' && (location.startsWith('/ngo') || location == '/ngo-dashboard')) {
+          return '/restaurant-dashboard';
+        }
+        
+        // NGO trying to access Restaurant routes
+        if (role == 'ngo' && (location.startsWith('/restaurant') || location == '/restaurant-dashboard')) {
+          return '/ngo/home';
+        }
+        
+        // Restaurant trying to access User routes
+        if (role == 'restaurant' && (
+          location.startsWith('/home') || 
+          location.startsWith('/meal/') || 
+          location.startsWith('/meals/') ||
+          location.startsWith('/cart') || 
+          location.startsWith('/checkout') || 
+          location.startsWith('/orders') || 
+          location.startsWith('/profile') ||
+          location.startsWith('/favorites') ||
+          location.startsWith('/favourites') ||
+          location.startsWith('/alerts')
+        )) {
+          return '/restaurant-dashboard';
+        }
+        
+        // NGO trying to access User routes
+        if (role == 'ngo' && (
+          location.startsWith('/home') || 
+          location.startsWith('/meal/') || 
+          location.startsWith('/meals/') ||
+          location.startsWith('/cart') || 
+          location.startsWith('/checkout') || 
+          location.startsWith('/orders') || 
+          location.startsWith('/profile') ||
+          location.startsWith('/favorites') ||
+          location.startsWith('/favourites') ||
+          location.startsWith('/alerts')
+        )) {
+          return '/ngo/home';
+        }
+        
+        // User trying to access Restaurant routes
+        if (role == 'user' && (location.startsWith('/restaurant') || location == '/restaurant-dashboard')) {
+          return '/home';
+        }
+        
+        // User trying to access NGO routes
+        if (role == 'user' && (location.startsWith('/ngo') || location == '/ngo-dashboard')) {
+          return '/home';
+        }
+        
+        // Admin trying to access other dashboards
+        if (role == 'admin' && (location.startsWith('/restaurant') || location.startsWith('/ngo') || location == '/restaurant-dashboard' || location == '/ngo-dashboard')) {
+          return '/admin-dashboard';
+        }
+        
+        // Non-admin trying to access admin dashboard
+        if (role != 'admin' && (location.startsWith('/admin') || location == '/admin-dashboard')) {
+          if (role == 'restaurant') {
+            return '/restaurant-dashboard';
+          } else if (role == 'ngo') {
+            return '/ngo/home';
+          }
+          return '/home';
         }
       }
       
@@ -204,7 +272,6 @@ class AppRouter {
         builder: (context, state) => const RestaurantProfileScreen(),
       ),
       GoRoute(
-<<<<<<< HEAD
         path: '/restaurant/chats',
         builder: (context, state) => ChangeNotifierProvider(
           create: (_) => NgoChatListViewModel(),
@@ -230,8 +297,7 @@ class AppRouter {
           );
         },
       ),
-      // NGO Dashboard Routes
-=======
+      GoRoute(
         path: '/restaurant-dashboard/leaderboard',
         builder: (context, state) => const RestaurantLeaderboardScreen(),
       ),
@@ -239,7 +305,7 @@ class AppRouter {
         path: '/restaurant-dashboard/surplus-settings',
         builder: (context, state) => const RestaurantSurplusSettingsScreen(),
       ),
->>>>>>> b6f7169ee0c50027e08dd7d540629e0ce0bcab87
+      // NGO Dashboard Routes
       GoRoute(
         name: RouteNames.ngoDashboard,
         path: '/ngo-dashboard',
@@ -329,13 +395,25 @@ class AppRouter {
         builder: (context, state) => const PendingApprovalScreen(),
       ),
 
+      // All meals route
+      GoRoute(
+        path: '/meals/all',
+        builder: (context, state) {
+          final extra = state.extra as List<MealOffer>?;
+          return AllMealsScreen(meals: extra ?? []);
+        },
+      ),
+
       GoRoute(
         name: RouteNames.product,
         path: '/meal/:id',
         builder: (context, state) {
           final extra = state.extra;
           if (extra is MealOffer) {
-            return ProductDetailPage(product: extra);
+            return ChangeNotifierProvider(
+              create: (_) => FavoritesViewModel()..loadFavorites(),
+              child: MealDetailScreen(product: extra),
+            );
           }
           final id = state.pathParameters['id'] ?? '';
           return ProductDetailPage(

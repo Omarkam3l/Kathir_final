@@ -1,10 +1,11 @@
-name: kathir_final
+﻿name: kathir_final
 description: "A new Flutter project."
-publish_to: 'none' 
+publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.5.3
+  sdk: '>=3.5.3 <4.0.0'
+
 dependencies:
   flutter:
     sdk: flutter
@@ -21,18 +22,14 @@ dependencies:
   intl: ^0.20.2
   image_picker: ^1.0.7
   uuid: ^4.3.3
-<<<<<<< HEAD
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
-=======
   google_generative_ai: ^0.4.6
   http: ^1.1.0
->>>>>>> b6f7169ee0c50027e08dd7d540629e0ce0bcab87
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
   flutter_lints: ^4.0.0
   dartz: ^0.10.0
   flutter_bloc: ^8.1.0

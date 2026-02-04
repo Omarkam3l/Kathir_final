@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
 
-/// Bottom nav matching design: Home, Map, [Cart - elevated], Orders, Profile.
-/// Clean modern design matching the profile screen style.
+/// Bottom nav matching user home page design: Home, Favorites, [Cart - elevated], Orders, Profile.
 class HomeBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -15,51 +14,76 @@ class HomeBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF1A2E22) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB);
+
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        color: bgColor,
+        border: Border(top: BorderSide(color: borderColor)),
       ),
       child: SafeArea(
         child: Container(
           height: 70,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _NavItem(
                 icon: Icons.home,
                 label: 'Home',
                 selected: currentIndex == 0,
                 onTap: () => onTap(0),
+                filled: true,
               ),
               _NavItem(
-                icon: Icons.search,
-                label: 'Explore',
+                icon: Icons.favorite,
+                label: 'Favorites',
                 selected: currentIndex == 1,
                 onTap: () => onTap(1),
+                filled: false,
               ),
-              _CenterButton(
-                icon: Icons.volunteer_activism,
-                onTap: () => onTap(2),
+              // Elevated Cart Button
+              Transform.translate(
+                offset: const Offset(0, -24),
+                child: GestureDetector(
+                  onTap: () => onTap(2),
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primaryGreen.withOpacity(0.4),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.shopping_basket,
+                      size: 28,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
               ),
               _NavItem(
-                icon: Icons.history,
-                label: 'Activity',
+                icon: Icons.receipt_long,
+                label: 'Orders',
                 selected: currentIndex == 3,
                 onTap: () => onTap(3),
+                filled: false,
               ),
               _NavItem(
                 icon: Icons.person,
                 label: 'Profile',
                 selected: currentIndex == 4,
                 onTap: () => onTap(4),
+                filled: false,
               ),
             ],
           ),
@@ -74,81 +98,46 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final bool filled;
 
   const _NavItem({
     required this.icon,
     required this.label,
     required this.selected,
     required this.onTap,
+    required this.filled,
   });
 
   @override
   Widget build(BuildContext context) {
+    final color = selected
+        ? AppColors.primaryGreen
+        : const Color(0xFF9CA3AF);
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              selected ? icon : icon,
+              icon,
               size: 24,
-              color: selected ? AppColors.primary : Colors.grey[600],
+              color: color,
+              fill: (selected && filled) ? 1.0 : 0.0,
             ),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
                 fontSize: 10,
-                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                color: selected ? AppColors.primary : Colors.grey[600],
+                fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+                color: color,
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CenterButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _CenterButton({
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 56,
-        height: 56,
-        margin: const EdgeInsets.only(bottom: 20),
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: AppColors.backgroundLight,
-            width: 4,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Icon(
-          icon,
-          size: 28,
-          color: Colors.black,
         ),
       ),
     );

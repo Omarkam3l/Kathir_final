@@ -65,14 +65,19 @@ class NgoChatViewModel extends ChangeNotifier {
           ),
           callback: (payload) {
             final newMessage = MessageModel.fromJson(payload.newRecord);
-            messages.add(newMessage);
             
-            // Mark as read if not mine
-            if (!newMessage.isMine(currentUserId ?? '')) {
-              _markMessageAsRead(newMessage.id);
+            // Prevent duplicate messages (check if message already exists)
+            final exists = messages.any((m) => m.id == newMessage.id);
+            if (!exists) {
+              messages.add(newMessage);
+              
+              // Mark as read if not mine
+              if (!newMessage.isMine(currentUserId ?? '')) {
+                _markMessageAsRead(newMessage.id);
+              }
+              
+              notifyListeners();
             }
-            
-            notifyListeners();
           },
         )
         .subscribe();
@@ -90,11 +95,16 @@ class NgoChatViewModel extends ChangeNotifier {
         throw Exception('User not authenticated');
       }
 
-      await _supabase.from('messages').insert({
+      final response = await _supabase.from('messages').insert({
         'conversation_id': conversationId,
         'sender_id': userId,
         'content': content.trim(),
-      });
+      }).select().single();
+
+      // Immediately add the sent message to the list
+      final sentMessage = MessageModel.fromJson(response);
+      messages.add(sentMessage);
+      notifyListeners();
     } catch (e) {
       debugPrint('Error sending message: $e');
       error = e.toString();

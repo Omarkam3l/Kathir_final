@@ -22,9 +22,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, UserEntity>> signUpUser(
-      String fullName, String email, String password) async {
+      String fullName, String email, String password, {required String phone}) async {
     try {
-      final u = await remote.signUpUser(fullName, email, password);
+      final u = await remote.signUpUser(fullName, email, password, phone: phone);
       return Right(u);
     } catch (e) {
       return Left(Failure('signUpUser failed', cause: e));
@@ -34,7 +34,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, UserEntity>> signUpNGO(
       String orgName, String fullName, String email, String password,
-      {String? phone}) async {
+      {required String phone}) async {
     try {
       final u = await remote.signUpNGO(orgName, fullName, email, password,
           phone: phone);
@@ -47,7 +47,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, UserEntity>> signUpRestaurant(
       String orgName, String fullName, String email, String password,
-      {String? phone}) async {
+      {required String phone}) async {
     try {
       final u = await remote
           .signUpRestaurant(orgName, fullName, email, password, phone: phone);

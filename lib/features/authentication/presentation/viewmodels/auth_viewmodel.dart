@@ -81,7 +81,7 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   Future<bool> signup(SignUpRole role, String fullName, String email, String password,
-      {String? organizationName, String? phone}) async {
+      {String? organizationName, required String phone}) async {
     loading = true;
     notifyListeners();
     

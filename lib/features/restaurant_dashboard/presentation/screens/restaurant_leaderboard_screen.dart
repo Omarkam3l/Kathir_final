@@ -729,13 +729,7 @@ class _RestaurantLeaderboardScreenState
         context.go('/restaurant-dashboard/meals');
         break;
       case 3:
-        // Chats - coming soon
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Chats feature coming soon!'),
-            duration: Duration(seconds: 2),
-          ),
-        );
+        // Already on leaderboard
         break;
       case 4:
         context.go('/restaurant-dashboard/profile');

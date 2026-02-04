@@ -14,11 +14,11 @@ class SignUpUseCase {
     required String email,
     required String password,
     String? organizationName,
-    String? phone,
+    required String phone,
   }) {
     switch (role) {
       case SignUpRole.user:
-        return repo.signUpUser(fullName, email, password);
+        return repo.signUpUser(fullName, email, password, phone: phone);
       case SignUpRole.ngo:
         return repo.signUpNGO(organizationName ?? '', fullName, email, password, phone: phone);
       case SignUpRole.restaurant:
