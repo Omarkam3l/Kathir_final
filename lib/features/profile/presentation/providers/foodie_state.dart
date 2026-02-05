@@ -82,9 +82,18 @@ class FoodieState extends ChangeNotifier {
   void addToCart(MealOffer meal, {int qty = 1}) {
     final idx = _cart.indexWhere((c) => c.meal.id == meal.id);
     if (idx >= 0) {
-      _cart[idx].qty += qty;
+      // Check if adding more would exceed available quantity
+      final newQty = _cart[idx].qty + qty;
+      if (newQty <= meal.quantity) {
+        _cart[idx].qty = newQty;
+      } else {
+        // Set to max available quantity
+        _cart[idx].qty = meal.quantity;
+      }
     } else {
-      _cart.add(CartItem(meal: meal, qty: qty));
+      // Ensure we don't add more than available
+      final safeQty = qty > meal.quantity ? meal.quantity : qty;
+      _cart.add(CartItem(meal: meal, qty: safeQty));
     }
     notifyListeners();
   }
@@ -92,8 +101,12 @@ class FoodieState extends ChangeNotifier {
   void increment(String id) {
     final idx = _cart.indexWhere((c) => c.meal.id == id);
     if (idx >= 0) {
-      _cart[idx].qty += 1;
-      notifyListeners();
+      final item = _cart[idx];
+      // Only increment if we haven't reached the available quantity
+      if (item.qty < item.meal.quantity) {
+        item.qty += 1;
+        notifyListeners();
+      }
     }
   }
 
@@ -117,5 +130,26 @@ class FoodieState extends ChangeNotifier {
   void clearCart() {
     _cart.clear();
     notifyListeners();
+  }
+
+  /// Check if we can add more of this item to cart
+  bool canAddMore(String mealId) {
+    final idx = _cart.indexWhere((c) => c.meal.id == mealId);
+    if (idx >= 0) {
+      final item = _cart[idx];
+      return item.qty < item.meal.quantity;
+    }
+    return true; // Not in cart yet, so can add
+  }
+
+  /// Get remaining quantity available for a meal
+  int getRemainingQuantity(String mealId) {
+    final idx = _cart.indexWhere((c) => c.meal.id == mealId);
+    if (idx >= 0) {
+      final item = _cart[idx];
+      return item.meal.quantity - item.qty;
+    }
+    // Find the meal to get its quantity
+    return 999; // Default high number if not in cart
   }
 }

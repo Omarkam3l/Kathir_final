@@ -25,9 +25,29 @@ class SupabaseHomeRemoteDataSource implements HomeRemoteDataSource {
 
   @override
   Future<List<Restaurant>> getTopRatedRestaurants() async {
-    final res = await client.from('restaurants').select().order('rating', ascending: false);
+    final res = await client
+        .from('restaurants')
+        .select('''
+          profile_id,
+          restaurant_name,
+          rating,
+          profiles!inner(avatar_url)
+        ''')
+        .order('rating', ascending: false)
+        .limit(10);
+    
     final data = (res as List).cast<Map<String, dynamic>>();
-    return data.map((e) => RestaurantModel.fromJson(e)).toList();
+    return data.map((e) {
+      final profileData = e['profiles'] as Map<String, dynamic>?;
+      return RestaurantModel.fromJson({
+        'id': e['profile_id'],
+        'name': e['restaurant_name'] ?? 'Unknown Restaurant',
+        'rating': e['rating'] ?? 0.0,
+        'logo_url': profileData?['avatar_url'],
+        'verified': true,
+        'reviews_count': 0,
+      });
+    }).toList();
   }
 
   @override

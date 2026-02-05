@@ -6,6 +6,9 @@ import 'presentation/screens/payment_method_screen.dart';
 import 'presentation/screens/payment_screen.dart';
 
 List<GoRoute> checkoutRoutes() => [
+  // Payment screen (main checkout)
+  GoRoute(path: '/payment', builder: (context, state) => const CheckoutScreen()),
+  // Legacy route for backward compatibility
   GoRoute(path: CheckoutScreen.routeName, builder: (context, state) => const CheckoutScreen()),
   GoRoute(path: CouponsScreen.routeName, builder: (context, state) => const CouponsScreen()),
   GoRoute(path: ChooseAddressScreen.routeName, builder: (context, state) => const ChooseAddressScreen()),

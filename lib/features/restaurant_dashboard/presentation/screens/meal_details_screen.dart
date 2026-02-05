@@ -92,7 +92,8 @@ class _MealDetailsScreenState extends State<MealDetailsScreen> {
             backgroundColor: AppColors.success,
           ),
         );
-        context.go('/restaurant-dashboard/meals');
+        // Return true to indicate deletion success
+        context.pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -121,7 +122,13 @@ class _MealDetailsScreenState extends State<MealDetailsScreen> {
           if (_meal != null) ...[
             IconButton(
               icon: const Icon(Icons.edit),
-              onPressed: () => context.push('/restaurant-dashboard/edit-meal/${widget.mealId}'),
+              onPressed: () async {
+                final result = await context.push('/restaurant-dashboard/edit-meal/${widget.mealId}');
+                // Reload meal details if it was updated
+                if (result == true) {
+                  _loadMealDetails();
+                }
+              },
             ),
             IconButton(
               icon: const Icon(Icons.delete, color: AppColors.error),
@@ -242,9 +249,9 @@ class _MealDetailsScreenState extends State<MealDetailsScreen> {
                       const Divider(height: 24),
                       _buildDetailRow(Icons.inventory, 'Quantity', '${meal['quantity_available'] ?? 0}'),
                       const Divider(height: 24),
-                      _buildDetailRow(Icons.attach_money, 'Original Price', '\$${meal['original_price'] ?? 0}'),
+                      _buildDetailRow(Icons.attach_money, 'Original Price', 'EGP ${meal['original_price'] ?? 0}'),
                       const Divider(height: 24),
-                      _buildDetailRow(Icons.local_offer, 'Discounted Price', '\$${meal['discounted_price'] ?? 0}'),
+                      _buildDetailRow(Icons.local_offer, 'Discounted Price', 'EGP ${meal['discounted_price'] ?? 0}'),
                       const Divider(height: 24),
                       _buildDetailRow(
                         Icons.access_time,

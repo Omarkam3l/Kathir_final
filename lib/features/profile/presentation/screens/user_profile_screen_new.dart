@@ -40,11 +40,14 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
           .select('id')
           .eq('user_id', userId);
       
-      setState(() {
-        _totalOrders = (ordersResponse as List).length;
-        // Calculate food saved (example: 0.5kg per order)
-        _foodSaved = _totalOrders * 0.5;
-      });
+      // Check if widget is still mounted before calling setState
+      if (mounted) {
+        setState(() {
+          _totalOrders = (ordersResponse as List).length;
+          // Calculate food saved (example: 0.5kg per order)
+          _foodSaved = _totalOrders * 0.5;
+        });
+      }
     } catch (e) {
       debugPrint('Error loading stats: $e');
     }
@@ -338,9 +341,9 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
           
           const SizedBox(height: 4),
           
-          // Member Since
+          
           Text(
-            'Food Rescuer since 2023',
+            'Start an impact !',
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey[600],
@@ -552,7 +555,7 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
                   title: 'My Orders',
                   subtitle: 'View past meals',
                   onTap: () {
-                    Navigator.of(context).pushNamed(MyOrdersScreen.routeName);
+                    context.go('/my-orders');
                   },
                   showDivider: true,
                 ),
@@ -572,15 +575,13 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
                   showDivider: true,
                 ),
                 _buildSettingsTile(
-                  icon: Icons.credit_card,
+                  icon: Icons.favorite,
                   iconBgColor: AppColors.primary.withOpacity(0.2),
                   iconColor: AppColors.primary,
-                  title: 'Payment Methods',
-                  subtitle: 'Manage payment options',
+                  title: 'Favorites',
+                  subtitle: 'View your favorite meals & restaurants',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Payment methods coming soon')),
-                    );
+                    context.go('/favorites');
                   },
                   showDivider: false,
                 ),

@@ -171,35 +171,38 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
   }
 
   Widget _buildNotificationButton(bool isDark, NgoHomeViewModel viewModel) {
-    return Stack(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1A2E22) : Colors.white,
-            shape: BoxShape.circle,
-            border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+    return GestureDetector(
+      onTap: () => context.go('/ngo-notifications'),
+      child: Stack(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1A2E22) : Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+            ),
+            child: const Icon(Icons.notifications_outlined, size: 20),
           ),
-          child: const Icon(Icons.notifications_outlined, size: 20),
-        ),
-        if (viewModel.hasNotifications)
-          Positioned(
-            top: 8,
-            right: 10,
-            child: Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isDark ? const Color(0xFF1A2E22) : Colors.white,
-                  width: 1.5,
+          if (viewModel.hasNotifications)
+            Positioned(
+              top: 8,
+              right: 10,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF1A2E22) : Colors.white,
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 

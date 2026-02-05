@@ -131,7 +131,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 child: AvailableMealsGridSection(
                   meals: _filteredMeals,
                   onSeeAll: () {
-                    context.push('/meals/all', extra: vm.meals);
+                    context.go('/meals/all', extra: vm.meals);
                   },
                 ),
               ),

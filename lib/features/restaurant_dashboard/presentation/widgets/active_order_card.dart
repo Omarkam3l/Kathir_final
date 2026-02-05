@@ -17,9 +17,9 @@ class ActiveOrderCard extends StatelessWidget {
     final status = order['status'] as String? ?? 'pending';
     final orderCode = order['order_code']?.toString() ?? '#N/A';
     final customerName = order['profiles']?['full_name'] ?? 'Customer';
-    final mealName = (order['meals']?['title'] ?? order['meals']?['meal_name'] ?? '').isEmpty 
+    final mealName = (order['meals']?['title'] ?? '').isEmpty 
         ? 'Delicious Meal' 
-        : (order['meals']?['title'] ?? order['meals']?['meal_name'] ?? 'Delicious Meal');
+        : (order['meals']?['title'] ?? 'Delicious Meal');
     final totalAmount = (order['total_amount'] as num?)?.toDouble() ?? 0.0;
     final createdAt = DateTime.parse(order['created_at']);
     final timeAgo = _getTimeAgo(createdAt);

@@ -18,6 +18,7 @@ class _MealsListScreenState extends State<MealsListScreen> {
   bool _isLoading = true;
   String? _restaurantId;
   String? _restaurantName;
+  String? _restaurantLogo;
 
   @override
   void initState() {
@@ -32,16 +33,21 @@ class _MealsListScreenState extends State<MealsListScreen> {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      // Get restaurant info
+      // Get restaurant info with logo
       final restaurantRes = await _supabase
           .from('restaurants')
-          .select('profile_id, restaurant_name')
+          .select('''
+            profile_id,
+            restaurant_name,
+            profiles!inner(avatar_url)
+          ''')
           .eq('profile_id', userId)
           .maybeSingle();
 
       if (restaurantRes != null) {
         _restaurantId = restaurantRes['profile_id'];
         _restaurantName = restaurantRes['restaurant_name'];
+        _restaurantLogo = restaurantRes['profiles']?['avatar_url'];
       }
 
       // Get meals
@@ -137,7 +143,20 @@ class _MealsListScreenState extends State<MealsListScreen> {
               color: AppColors.primaryGreen.withValues(alpha: 0.2),
               border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3), width: 2),
             ),
-            child: const Icon(Icons.restaurant_menu, color: AppColors.primaryGreen),
+            child: _restaurantLogo != null && _restaurantLogo!.isNotEmpty
+                ? ClipOval(
+                    child: Image.network(
+                      _restaurantLogo!,
+                      width: 44,
+                      height: 44,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.restaurant_menu,
+                        color: AppColors.primaryGreen,
+                      ),
+                    ),
+                  )
+                : const Icon(Icons.restaurant_menu, color: AppColors.primaryGreen),
           ),
           const SizedBox(width: 12),
           Expanded(

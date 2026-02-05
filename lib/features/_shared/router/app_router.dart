@@ -7,6 +7,7 @@ import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_pro
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_meal_detail_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_chat_list_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_chat_screen.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_notifications_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/viewmodels/ngo_home_viewmodel.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/viewmodels/ngo_map_viewmodel.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/viewmodels/ngo_profile_viewmodel.dart';
@@ -170,12 +171,14 @@ class AppRouter {
           location.startsWith('/meal/') || 
           location.startsWith('/meals/') ||
           location.startsWith('/cart') || 
-          location.startsWith('/checkout') || 
+          location.startsWith('/checkout') ||
+          location.startsWith('/payment') ||
+          location.startsWith('/order-summary') ||
           location.startsWith('/orders') || 
           location.startsWith('/profile') ||
           location.startsWith('/favorites') ||
           location.startsWith('/favourites') ||
-          location.startsWith('/alerts')
+          location.startsWith('/my-orders')
         )) {
           return '/restaurant-dashboard';
         }
@@ -186,12 +189,14 @@ class AppRouter {
           location.startsWith('/meal/') || 
           location.startsWith('/meals/') ||
           location.startsWith('/cart') || 
-          location.startsWith('/checkout') || 
+          location.startsWith('/checkout') ||
+          location.startsWith('/payment') ||
+          location.startsWith('/order-summary') ||
           location.startsWith('/orders') || 
           location.startsWith('/profile') ||
           location.startsWith('/favorites') ||
           location.startsWith('/favourites') ||
-          location.startsWith('/alerts')
+          location.startsWith('/my-orders')
         )) {
           return '/ngo/home';
         }
@@ -342,6 +347,10 @@ class AppRouter {
             ),
           ),
         ),
+      ),
+      GoRoute(
+        path: '/ngo-notifications',
+        builder: (context, state) => const NgoNotificationsScreen(),
       ),
       GoRoute(
         path: '/ngo/chats',

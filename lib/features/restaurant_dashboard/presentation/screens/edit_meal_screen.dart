@@ -137,7 +137,8 @@ class _EditMealScreenState extends State<EditMealScreen> {
             backgroundColor: AppColors.success,
           ),
         );
-        context.go('/restaurant-dashboard/meals');
+        // Return true to indicate update success
+        context.pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -272,12 +273,12 @@ class _EditMealScreenState extends State<EditMealScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildLabel('Original Price *'),
+                              _buildLabel('Original Price (EGP) *'),
                               const SizedBox(height: 8),
                               TextFormField(
                                 controller: _originalPriceController,
                                 keyboardType: TextInputType.number,
-                                decoration: _inputDecoration('\$0.00', isDark),
+                                decoration: _inputDecoration('0.00', isDark),
                                 validator: (v) => v?.isEmpty == true ? 'Required' : null,
                               ),
                             ],
@@ -288,12 +289,12 @@ class _EditMealScreenState extends State<EditMealScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildLabel('Discounted Price *'),
+                              _buildLabel('Discounted Price (EGP) *'),
                               const SizedBox(height: 8),
                               TextFormField(
                                 controller: _discountedPriceController,
                                 keyboardType: TextInputType.number,
-                                decoration: _inputDecoration('\$0.00', isDark),
+                                decoration: _inputDecoration('0.00', isDark),
                                 validator: (v) => v?.isEmpty == true ? 'Required' : null,
                               ),
                             ],

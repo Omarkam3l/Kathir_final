@@ -82,24 +82,23 @@ class _RestaurantHomeScreenState extends State<RestaurantHomeScreen> {
       _recentMeals = List<Map<String, dynamic>>.from(recentMealsRes);
 
       // Get active orders (not completed or cancelled)
-      final activeOrdersRes = await _supabase
-          .from('orders')
-          .select('''
-            *,
-            meals:meal_id (
-              title,
-              meal_name,
-              image_url
-            ),
-            profiles:user_id (
-              full_name
-            )
-          ''')
-          .eq('restaurant_id', _restaurantId ?? userId)
-          .not('status', 'in', '(completed,cancelled)')
-          .order('created_at', ascending: false);
+        final activeOrdersRes = await _supabase
+            .from('orders')
+            .select('''
+              *,
+              meals:meal_id (
+                title,
+                image_url
+              ),
+              profiles:user_id (
+                full_name
+              )
+            ''')
+            .eq('restaurant_id', _restaurantId ?? userId)
+            .not('status', 'in', '(completed,cancelled)')
+            .order('created_at', ascending: false);
 
-      _activeOrders = List<Map<String, dynamic>>.from(activeOrdersRes);
+        _activeOrders = List<Map<String, dynamic>>.from(activeOrdersRes);
 
       // Calculate KPIs
       final allOrdersRes = await _supabase
@@ -301,7 +300,7 @@ class _RestaurantHomeScreenState extends State<RestaurantHomeScreen> {
                 Expanded(
                   child: KPICard(
                     title: 'Today Revenue',
-                    value: '\$${_todayRevenue.toStringAsFixed(2)}',
+                    value: 'EGP ${_todayRevenue.toStringAsFixed(2)}',
                     icon: Icons.attach_money,
                     color: Colors.orange,
                     surface: surface,
@@ -351,7 +350,7 @@ class _RestaurantHomeScreenState extends State<RestaurantHomeScreen> {
             _recentMeals.isEmpty
                 ? _buildEmptyMeals(isDark)
                 : SizedBox(
-                    height: 180,
+                    height: 205, // Increased from 180 to accommodate donate button
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       itemCount: _recentMeals.length,
@@ -368,6 +367,7 @@ class _RestaurantHomeScreenState extends State<RestaurantHomeScreen> {
                               );
                               if (result == true) _loadData();
                             },
+                            onDonated: _loadData,
                           ),
                         );
                       },

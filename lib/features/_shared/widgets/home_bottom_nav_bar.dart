@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
 
 /// Bottom nav matching user home page design: Home, Favorites, [Cart - elevated], Orders, Profile.
 class HomeBottomNavBar extends StatelessWidget {
   final int currentIndex;
-  final ValueChanged<int> onTap;
+  final ValueChanged<int>? onTap;
 
   const HomeBottomNavBar({
     super.key,
     required this.currentIndex,
-    required this.onTap,
+    this.onTap,
   });
 
   @override
@@ -34,21 +35,39 @@ class HomeBottomNavBar extends StatelessWidget {
                 icon: Icons.home,
                 label: 'Home',
                 selected: currentIndex == 0,
-                onTap: () => onTap(0),
+                onTap: () {
+                  if (onTap != null) {
+                    onTap!(0);
+                  } else {
+                    context.go('/home');
+                  }
+                },
                 filled: true,
               ),
               _NavItem(
                 icon: Icons.favorite,
                 label: 'Favorites',
                 selected: currentIndex == 1,
-                onTap: () => onTap(1),
+                onTap: () {
+                  if (onTap != null) {
+                    onTap!(1);
+                  } else {
+                    context.go('/favorites');
+                  }
+                },
                 filled: false,
               ),
               // Elevated Cart Button
               Transform.translate(
                 offset: const Offset(0, -24),
                 child: GestureDetector(
-                  onTap: () => onTap(2),
+                  onTap: () {
+                    if (onTap != null) {
+                      onTap!(2);
+                    } else {
+                      context.go('/cart');
+                    }
+                  },
                   child: Container(
                     width: 56,
                     height: 56,
@@ -75,14 +94,26 @@ class HomeBottomNavBar extends StatelessWidget {
                 icon: Icons.receipt_long,
                 label: 'Orders',
                 selected: currentIndex == 3,
-                onTap: () => onTap(3),
+                onTap: () {
+                  if (onTap != null) {
+                    onTap!(3);
+                  } else {
+                    context.go('/my-orders');
+                  }
+                },
                 filled: false,
               ),
               _NavItem(
                 icon: Icons.person,
                 label: 'Profile',
                 selected: currentIndex == 4,
-                onTap: () => onTap(4),
+                onTap: () {
+                  if (onTap != null) {
+                    onTap!(4);
+                  } else {
+                    context.go('/profile');
+                  }
+                },
                 filled: false,
               ),
             ],

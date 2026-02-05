@@ -53,7 +53,13 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
             child: Row(
               children: [
                 IconButton(
-                  onPressed: () => context.pop(),
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/home');
+                    }
+                  },
                   icon: Icon(Icons.arrow_back, color: textMain),
                   style: IconButton.styleFrom(
                     backgroundColor: Colors.transparent,

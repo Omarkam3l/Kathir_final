@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import '../../../profile/presentation/providers/foodie_state.dart';
 import '../../../../core/utils/app_colors.dart';
-import '../../../orders/presentation/screens/order_summary_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   static const routeName = '/checkout';
@@ -100,17 +100,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         // Clear Cart
                         foodie.clearCart();
 
-                        // Navigate using pushReplacement so user can't go back to checkout with empty cart
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(
-                            builder: (_) => OrderSummaryScreen(
-                              items: items,
-                              total: total,
-                              subtotal: subtotal,
-                              deliveryFee: deliveryFee,
-                            ),
-                          ),
-                        );
+                        // Navigate to order summary
+                        context.go('/order-summary', extra: {
+                          'items': items,
+                          'total': total,
+                          'subtotal': subtotal,
+                          'deliveryFee': deliveryFee,
+                          'orderId': 'ORD${DateTime.now().millisecondsSinceEpoch}',
+                        });
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,

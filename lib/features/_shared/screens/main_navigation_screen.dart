@@ -20,8 +20,6 @@ class MainNavigationScreen extends StatefulWidget {
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  late int _index;
-
   static final List<Widget> _pages = [
     const HomeScreen(),
     ChangeNotifierProvider(
@@ -34,35 +32,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   ];
 
   @override
-  void initState() {
-    super.initState();
-    _index = widget.initialIndex.clamp(0, _pages.length - 1);
-  }
-
-  @override
-  void didUpdateWidget(MainNavigationScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Update index if initialIndex changes
-    if (widget.initialIndex != oldWidget.initialIndex) {
-      setState(() {
-        _index = widget.initialIndex.clamp(0, _pages.length - 1);
-      });
-    }
-  }
-
-  void _select(int i) {
-    if (_index != i) {
-      setState(() => _index = i);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final index = widget.initialIndex.clamp(0, _pages.length - 1);
+    
     return Scaffold(
-      body: IndexedStack(index: _index, children: _pages),
+      body: _pages[index],
       bottomNavigationBar: HomeBottomNavBar(
-        currentIndex: _index,
-        onTap: _select,
+        currentIndex: index,
+        // Don't pass onTap - let the nav bar use context.go() for proper URL updates
       ),
     );
   }

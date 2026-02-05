@@ -110,28 +110,6 @@ class _RestaurantChatListScreenState extends State<RestaurantChatListScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: RestaurantBottomNav(
-        currentIndex: 3,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              context.go('/restaurant-dashboard');
-              break;
-            case 1:
-              context.go('/restaurant-dashboard/meals');
-              break;
-            case 2:
-              context.go('/restaurant-dashboard/orders');
-              break;
-            case 3:
-              // Already on chats
-              break;
-            case 4:
-              context.go('/restaurant-dashboard/profile');
-              break;
-          }
-        },
-      ),
     );
   }
 
@@ -148,6 +126,19 @@ class _RestaurantChatListScreenState extends State<RestaurantChatListScreen> {
       ),
       child: Row(
         children: [
+          IconButton(
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/restaurant-dashboard');
+              }
+            },
+            icon: const Icon(Icons.arrow_back_ios, size: 20),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+          ),
+          const SizedBox(width: 8),
           Text(
             'Messages',
             style: TextStyle(

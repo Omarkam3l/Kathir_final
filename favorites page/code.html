@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NGO Favorites Page - Kathir</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-900 dark:text-gray-100 antialiased">
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark group/design-root overflow-x-hidden max-w-[430px] mx-auto shadow-2xl">
+<!-- TopAppBar -->
+<div class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-50">
+<div class="text-gray-900 dark:text-white flex size-12 shrink-0 items-center">
+<span class="material-symbols-outlined cursor-pointer">arrow_back_ios</span>
+</div>
+<h2 class="text-gray-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Favorites</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 bg-transparent text-gray-900 dark:text-white gap-2 text-base font-bold leading-normal tracking-[0.015em] min-w-0 p-0">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+</div>
+<!-- SegmentedButtons -->
+<div class="flex px-4 py-3">
+<div class="flex h-11 flex-1 items-center justify-center rounded-xl bg-gray-200 dark:bg-gray-800 p-1">
+<label class="flex cursor-pointer h-full grow items-center justify-center gap-2 overflow-hidden rounded-lg px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-gray-700 has-[:checked]:shadow-sm text-gray-500 dark:text-gray-400 has-[:checked]:text-primary text-sm font-semibold transition-all">
+<span class="material-symbols-outlined text-[18px]">storefront</span>
+<span class="truncate">Restaurants</span>
+<input checked="" class="invisible w-0" name="fav-toggle" type="radio" value="Restaurants"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center gap-2 overflow-hidden rounded-lg px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-gray-700 has-[:checked]:shadow-sm text-gray-500 dark:text-gray-400 has-[:checked]:text-primary text-sm font-semibold transition-all">
+<span class="material-symbols-outlined text-[18px]">category</span>
+<span class="truncate">Meal Categories</span>
+<input class="invisible w-0" name="fav-toggle" type="radio" value="Meal Categories"/>
+</label>
+</div>
+</div>
+<!-- Section: Favorited Restaurants -->
+<div class="flex items-center justify-between px-4 pt-4">
+<h3 class="text-gray-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Favorited Restaurants</h3>
+<span class="text-primary text-sm font-medium">View Map</span>
+</div>
+<!-- Restaurant Card 1 -->
+<div class="p-4">
+<div class="flex items-stretch justify-between gap-4 rounded-xl bg-white dark:bg-gray-900 p-4 shadow-sm border border-gray-100 dark:border-gray-800">
+<div class="flex flex-[2_2_0px] flex-col justify-between">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-primary text-[16px]">favorite</span>
+<p class="text-primary text-xs font-bold leading-normal uppercase tracking-wider">Favorited</p>
+</div>
+<p class="text-gray-900 dark:text-white text-base font-bold leading-tight">Green Garden Bistro</p>
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">2.4 miles away • Open now</p>
+</div>
+<button class="mt-4 flex min-w-[120px] max-w-fit cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-primary text-gray-900 gap-2 text-sm font-bold leading-normal">
+<span class="truncate">View Menu</span>
+<span class="material-symbols-outlined text-[18px]">shopping_cart</span>
+</button>
+</div>
+<div class="w-32 h-32 bg-center bg-no-repeat bg-cover rounded-lg shrink-0" data-alt="Fresh salad bowl at green bistro" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA3S1ZEt0VDpaHPo_H045dxy08XhKs3JNHjl5uKka-8gybJWAUn259I8F5BRWIkF09uZg7pQ7NqN8OEq-fvOCEr7LHPeqBdITidxeoCZR2gPtqtRhnKts5EjxQkLu-06y3kGOnrh8DM34SqxpGd9PBhlCtfgtvXYhYtarKzU2Swo62pcJA-n6Ovz6QYhlksPyJ3vya94EKCwkDlJx2_dg8G-X_pFiG8hvHg7xa_gpaITLdZ7XlUCdYX3hCsax1mRaXdXV43NpgVCFU");'></div>
+</div>
+</div>
+<!-- Restaurant Card 2 -->
+<div class="px-4 pb-4">
+<div class="flex items-stretch justify-between gap-4 rounded-xl bg-white dark:bg-gray-900 p-4 shadow-sm border border-gray-100 dark:border-gray-800">
+<div class="flex flex-[2_2_0px] flex-col justify-between">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-primary text-[16px]">favorite</span>
+<p class="text-primary text-xs font-bold leading-normal uppercase tracking-wider">Favorited</p>
+</div>
+<p class="text-gray-900 dark:text-white text-base font-bold leading-tight">Healthy Bites Cafe</p>
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">1.1 miles away • Closes 9PM</p>
+</div>
+<button class="mt-4 flex min-w-[120px] max-w-fit cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-primary text-gray-900 gap-2 text-sm font-bold leading-normal">
+<span class="truncate">View Menu</span>
+<span class="material-symbols-outlined text-[18px]">shopping_cart</span>
+</button>
+</div>
+<div class="w-32 h-32 bg-center bg-no-repeat bg-cover rounded-lg shrink-0" data-alt="Healthy avocado toast breakfast" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDzJjo5cHphcTaZ3_4rbKo9nZE8DcOww1C2dg9n9WuTife2QeicF_uugdPXmtS1Mao869R6wwjO_OvtFvy_Vemna2tWEBB717VnjcqVAQK93gsc3avFnQP9G4R_bn6S-dkgYHgNK8o8n4-Ia9W5SqwhNAnkePVumcVVlnOmZQMLpN_hFW4Gq40pRgG-3FE4Kplmax-X9eKENN0Jq6LHAbqDwTSRMOXRXQQ_FNM_XLGCoZ9f6bpr1ST-km44mQW0BuHzS_uRO37NEdE");'></div>
+</div>
+</div>
+<!-- SectionHeader: Recurring Meal Types -->
+<div class="px-4 pt-6 pb-2">
+<h3 class="text-gray-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Recurring Meal Categories</h3>
+<p class="text-gray-500 dark:text-gray-400 text-sm">Notifications enabled for these types</p>
+</div>
+<!-- Meal Category Grid -->
+<div class="grid grid-cols-2 gap-4 p-4">
+<!-- Category Item 1 -->
+<div class="flex flex-col gap-3 rounded-xl bg-white dark:bg-gray-900 p-4 shadow-sm border border-gray-100 dark:border-gray-800">
+<div class="flex items-center justify-between">
+<div class="flex size-10 items-center justify-center rounded-full bg-primary/20 text-primary">
+<span class="material-symbols-outlined">bakery_dining</span>
+</div>
+<span class="material-symbols-outlined text-primary">check_circle</span>
+</div>
+<div>
+<p class="text-gray-900 dark:text-white text-base font-bold">Bakery</p>
+<p class="text-gray-500 dark:text-gray-400 text-xs">Fresh bread &amp; pastries</p>
+</div>
+</div>
+<!-- Category Item 2 -->
+<div class="flex flex-col gap-3 rounded-xl bg-white dark:bg-gray-900 p-4 shadow-sm border border-gray-100 dark:border-gray-800">
+<div class="flex items-center justify-between">
+<div class="flex size-10 items-center justify-center rounded-full bg-primary/20 text-primary">
+<span class="material-symbols-outlined">egg_alt</span>
+</div>
+<span class="material-symbols-outlined text-primary">check_circle</span>
+</div>
+<div>
+<p class="text-gray-900 dark:text-white text-base font-bold">Proteins</p>
+<p class="text-gray-500 dark:text-gray-400 text-xs">Meat, eggs &amp; dairy</p>
+</div>
+</div>
+<!-- Category Item 3 -->
+<div class="flex flex-col gap-3 rounded-xl bg-white dark:bg-gray-900 p-4 shadow-sm border border-gray-100 dark:border-gray-800">
+<div class="flex items-center justify-between">
+<div class="flex size-10 items-center justify-center rounded-full bg-primary/20 text-primary">
+<span class="material-symbols-outlined">nutrition</span>
+</div>
+<span class="material-symbols-outlined text-primary">check_circle</span>
+</div>
+<div>
+<p class="text-gray-900 dark:text-white text-base font-bold">Vegetables</p>
+<p class="text-gray-500 dark:text-gray-400 text-xs">Farm fresh produce</p>
+</div>
+</div>
+<!-- Category Item 4 - Non favorited placeholder style -->
+<div class="flex flex-col gap-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 p-4 border border-dashed border-gray-300 dark:border-gray-700">
+<div class="flex items-center justify-between">
+<div class="flex size-10 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-gray-400">
+<span class="material-symbols-outlined">add</span>
+</div>
+</div>
+<div>
+<p class="text-gray-500 dark:text-gray-400 text-base font-bold">Add New</p>
+<p class="text-gray-400 dark:text-gray-500 text-xs">Track more types</p>
+</div>
+</div>
+</div>
+<!-- Spacer for Bottom Nav -->
+<div class="h-24 bg-background-light dark:bg-background-dark"></div>
+<!-- iOS Style Bottom Navigation Bar -->
+<div class="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 flex justify-around items-center py-3 px-6 z-50">
+<div class="flex flex-col items-center text-gray-400">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] mt-1">Home</span>
+</div>
+<div class="flex flex-col items-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">favorite</span>
+<span class="text-[10px] mt-1 font-bold">Favorites</span>
+</div>
+<div class="flex flex-col items-center text-gray-400">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="text-[10px] mt-1">Orders</span>
+</div>
+<div class="flex flex-col items-center text-gray-400">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] mt-1">Profile</span>
+</div>
+</div>
+</div>
+</body></html>

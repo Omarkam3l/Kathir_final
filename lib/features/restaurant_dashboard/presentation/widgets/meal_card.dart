@@ -112,7 +112,7 @@ class MealCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '\$${meal['discounted_price']?.toStringAsFixed(2) ?? '0.00'}',
+                              'EGP ${meal['discounted_price']?.toStringAsFixed(2) ?? '0.00'}',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -121,7 +121,7 @@ class MealCard extends StatelessWidget {
                             ),
                             if (meal['original_price'] != meal['discounted_price'])
                               Text(
-                                '\$${meal['original_price']?.toStringAsFixed(2) ?? '0.00'}',
+                                'EGP ${meal['original_price']?.toStringAsFixed(2) ?? '0.00'}',
                                 style: TextStyle(
                                   fontSize: 11,
                                   decoration: TextDecoration.lineThrough,

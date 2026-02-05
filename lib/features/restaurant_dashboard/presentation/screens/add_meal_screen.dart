@@ -279,7 +279,7 @@ class _AddMealScreenState extends State<AddMealScreen> {
       if (restaurantId == null) throw Exception('Not authenticated');
 
       // Save meal
-      await _supabase.from('meals').insert({
+      final mealResponse = await _supabase.from('meals').insert({
         'restaurant_id': restaurantId,
         'title': _titleController.text.trim(),
         'description': _descriptionController.text.trim(),
@@ -290,12 +290,37 @@ class _AddMealScreenState extends State<AddMealScreen> {
         'quantity_available': int.parse(_quantityController.text),
         'expiry_date': _expiryDate!.toIso8601String(),
         'pickup_deadline': _pickupDeadline?.toIso8601String(),
-      });
+        'status': 'active',
+      }).select().single();
+
+      final mealId = mealResponse['id'];
 
       AuthLogger.info('meal.created', ctx: {
         'title': _titleController.text.trim(),
         'category': _category,
+        'mealId': mealId,
       });
+
+      // Create notifications for subscribed users
+      try {
+        final notificationResult = await _supabase.rpc('create_meal_notifications', params: {
+          'p_meal_id': mealId,
+          'p_category': _category,
+          'p_restaurant_id': restaurantId,
+        });
+        
+        final notificationsCreated = notificationResult[0]['notifications_created'] as int;
+        AuthLogger.info('notifications.created', ctx: {
+          'count': notificationsCreated,
+          'category': _category,
+        });
+        
+        debugPrint('✅ Created $notificationsCreated notifications for category: $_category');
+      } catch (e) {
+        AuthLogger.errorLog('notifications.create.failed', error: e);
+        debugPrint('⚠️ Failed to create notifications: $e');
+        // Don't fail the meal creation if notifications fail
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -429,12 +454,12 @@ class _AddMealScreenState extends State<AddMealScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildLabel('Original Price *'),
+                      _buildLabel('Original Price (EGP) *'),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _originalPriceController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: _inputDecoration('\$0.00', isDark),
+                        decoration: _inputDecoration('0.00', isDark),
                         validator: (v) {
                           if (v == null || v.isEmpty) return 'Required';
                           final price = double.tryParse(v);
@@ -450,12 +475,12 @@ class _AddMealScreenState extends State<AddMealScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildLabel('Discounted Price *'),
+                      _buildLabel('Discounted Price (EGP) *'),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _discountedPriceController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: _inputDecoration('\$0.00', isDark),
+                        decoration: _inputDecoration('0.00', isDark),
                         validator: (v) {
                           if (v == null || v.isEmpty) return 'Required';
                           final discounted = double.tryParse(v);

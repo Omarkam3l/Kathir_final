@@ -27,6 +27,7 @@ class HomeHeaderWidget extends StatelessWidget {
 
     final auth = context.watch<AuthProvider>();
     final name = auth.user?.name ?? 'Guest';
+    final avatarUrl = auth.user?.avatarUrl;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
@@ -40,15 +41,19 @@ class HomeHeaderWidget extends StatelessWidget {
               CircleAvatar(
                 radius: 20,
                 backgroundColor: card,
-                backgroundImage: null,
-                child: Text(
-                  name.isNotEmpty ? name[0].toUpperCase() : 'G',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
+                backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
+                    ? NetworkImage(avatarUrl)
+                    : null,
+                child: avatarUrl == null || avatarUrl.isEmpty
+                    ? Text(
+                        name.isNotEmpty ? name[0].toUpperCase() : 'G',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      )
+                    : null,
               ),
               Positioned(
                 bottom: 0,
@@ -96,7 +101,7 @@ class HomeHeaderWidget extends StatelessWidget {
           Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () => context.push('/profile/notifications'),
+              onTap: () => context.go('/profile/notifications'),
               borderRadius: BorderRadius.circular(20),
               child: Container(
                 width: 40,

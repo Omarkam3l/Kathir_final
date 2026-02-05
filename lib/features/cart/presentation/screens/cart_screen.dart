@@ -214,11 +214,15 @@ class _CartItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foodie = context.read<FoodieState>();
+    final foodie = context.watch<FoodieState>();
     final meal = item.meal;
     final discount =
         ((meal.originalPrice - meal.donationPrice) / meal.originalPrice * 100)
             .round();
+    
+    // Check if we can add more
+    final canAddMore = item.qty < meal.quantity;
+    final isAtMax = item.qty >= meal.quantity;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -350,11 +354,29 @@ class _CartItemCard extends StatelessWidget {
                           style: TextStyle(
                               fontWeight: FontWeight.bold, color: textColor)),
                     ),
-                    _qtyBtn(context, '+', () => foodie.increment(meal.id),
-                        isAdd: true, accentColor: accentColor),
+                    _qtyBtn(
+                      context, 
+                      '+', 
+                      canAddMore ? () => foodie.increment(meal.id) : () {},
+                      isAdd: true, 
+                      accentColor: accentColor,
+                      isDisabled: isAtMax,
+                    ),
                   ],
                 ),
               ),
+              if (isAtMax)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Max qty',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.orange[700],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
             ],
           ),
         ],
@@ -363,21 +385,23 @@ class _CartItemCard extends StatelessWidget {
   }
 
   Widget _qtyBtn(BuildContext context, String label, VoidCallback onTap,
-      {bool isAdd = false, Color? accentColor}) {
+      {bool isAdd = false, Color? accentColor, bool isDisabled = false}) {
     return InkWell(
-      onTap: onTap,
+      onTap: isDisabled ? null : onTap,
       borderRadius: BorderRadius.circular(6),
       child: Container(
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          color: isAdd
-              ? accentColor
-              : (Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white10
-                  : Colors.white),
+          color: isDisabled
+              ? Colors.grey[300]
+              : (isAdd
+                  ? accentColor
+                  : (Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white10
+                      : Colors.white)),
           borderRadius: BorderRadius.circular(6),
-          boxShadow: isAdd
+          boxShadow: isAdd && !isDisabled
               ? null
               : [
                   BoxShadow(
@@ -389,7 +413,9 @@ class _CartItemCard extends StatelessWidget {
             label,
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: isAdd ? Colors.white : Colors.grey[600],
+              color: isDisabled
+                  ? Colors.grey[500]
+                  : (isAdd ? Colors.white : Colors.grey[600]),
             ),
           ),
         ),
@@ -744,10 +770,8 @@ class _StickyCheckoutBar extends StatelessWidget {
           ),
           child: ElevatedButton(
             onPressed: () {
-              // Proceed to Checkout Screen
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const CheckoutScreen()),
-              );
+              // Proceed to Payment Screen
+              context.go('/payment');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: accentColor,

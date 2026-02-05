@@ -41,7 +41,6 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
             *,
             meals:meal_id (
               title,
-              meal_name,
               image_url
             ),
             profiles:user_id (

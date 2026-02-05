@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../user_home/presentation/screens/home_screen.dart';
 import '../../favorites/presentation/screens/favourites_screen.dart';
 import '../../cart/presentation/screens/cart_screen.dart';
-import '../../profile/presentation/screens/notifications_screen.dart';
+import '../../profile/presentation/screens/notifications_screen_new.dart';
 import '../../profile/presentation/screens/user_profile_screen_new.dart';
 
 class NavItem {
@@ -25,7 +25,7 @@ class UiConfig {
         NavItem(key: 'home', icon: Icons.home, label: 'Home', builder: HomeScreen.new),
         NavItem(key: 'favourites', icon: Icons.favorite_border, label: 'Favourites', builder: FavouritesScreen.new),
         NavItem(key: 'cart', icon: Icons.shopping_cart_outlined, label: 'Cart', builder: CartScreen.new),
-        NavItem(key: 'alerts', icon: Icons.notifications_none, label: 'Alerts', builder: NotificationsScreen.new),
+        NavItem(key: 'alerts', icon: Icons.notifications_none, label: 'Alerts', builder: NotificationsScreenNew.new),
         NavItem(key: 'profile', icon: Icons.person_outline, label: 'Profile', builder: UserProfileScreenNew.new),
       ];
 

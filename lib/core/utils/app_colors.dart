@@ -73,7 +73,7 @@ import 'package:flutter/material.dart';
 /// Based on Kathir design system with vibrant lime green primary
 class AppColors {
   // Primary Color Palette - Kathir Green Theme
-  static const Color primary = Color(0xFF13EC5B);        // Vibrant lime green
+  static const Color primary = Color(0xFF2FAE66);        // Vibrant lime green
   static const Color primaryDark = Color(0xFF0FB847);    // Darker green for pressed states
   static const Color primarySoft = Color(0xFF7FEDD9);    // Soft green for highlights
   static const Color primaryGreen = primary;
