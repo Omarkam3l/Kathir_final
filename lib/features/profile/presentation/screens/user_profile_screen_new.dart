@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../authentication/presentation/blocs/auth_provider.dart';
 import '../../../../core/utils/app_colors.dart';
 import 'package:go_router/go_router.dart';
@@ -631,9 +632,7 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
                   iconColor: Colors.grey[600]!,
                   title: 'Change Password',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Change password coming soon')),
-                    );
+                    context.push('/profile/change-password');
                   },
                   showDivider: true,
                 ),
@@ -824,32 +823,61 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit Profile'),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Text('Edit Profile',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            )),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Full Name',
-                prefixIcon: Icon(Icons.person),
+                labelStyle: GoogleFonts.plusJakartaSans(color: Colors.grey[600]),
+                prefixIcon: const Icon(Icons.person, color: Colors.grey),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                focusedBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: AppColors.primaryGreen, width: 2),
+                ),
               ),
+              style: GoogleFonts.plusJakartaSans(color: Colors.black),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: phoneController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Phone Number',
-                prefixIcon: Icon(Icons.phone),
+                labelStyle: GoogleFonts.plusJakartaSans(color: AppColors.primaryGreen),
+                prefixIcon: const Icon(Icons.phone, color: Colors.grey),
+                enabledBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: AppColors.primaryGreen, width: 2),
+                ),
+                focusedBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: AppColors.primaryGreen, width: 2),
+                ),
               ),
               keyboardType: TextInputType.phone,
+              style: GoogleFonts.plusJakartaSans(color: Colors.black),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text('Cancel',
+                style: GoogleFonts.plusJakartaSans(
+                  color: AppColors.primaryGreen,
+                  fontWeight: FontWeight.w600,
+                )),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -866,7 +894,7 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Profile updated successfully'),
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: AppColors.primaryGreen,
                     ),
                   );
                 }
@@ -882,9 +910,18 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: AppColors.primaryGreen,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
             ),
-            child: const Text('Save'),
+            child: Text('Save',
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                )),
           ),
         ],
       ),

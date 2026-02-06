@@ -1,24 +1,38 @@
 import 'package:go_router/go_router.dart';
-import 'presentation/screens/my_orders_screen.dart';
+import 'presentation/screens/my_orders_screen_new.dart';
 import 'presentation/screens/order_details_screen.dart';
 import 'presentation/screens/order_tracking_screen.dart';
+import 'presentation/screens/order_qr_screen.dart';
 import 'presentation/screens/order_summary_screen.dart';
 
 List<GoRoute> ordersRoutes() => [
-  GoRoute(path: MyOrdersScreen.routeName, builder: (context, state) => const MyOrdersScreen()),
-  GoRoute(path: OrderDetailsScreen.routeName, builder: (context, state) => const OrderDetailsScreen()),
-  GoRoute(path: OrderTrackingScreen.routeName, builder: (context, state) => const OrderTrackingScreen()),
   GoRoute(
-    path: '/order-summary',
+    path: '/my-orders',
+    builder: (context, state) => const MyOrdersScreenNew(),
+  ),
+  GoRoute(
+    path: '/order-details',
+    builder: (context, state) => const OrderDetailsScreen(),
+  ),
+  GoRoute(
+    path: '/order-tracking/:orderId',
     builder: (context, state) {
-      final extra = state.extra as Map<String, dynamic>?;
-      return OrderSummaryScreen(
-        items: extra?['items'] ?? [],
-        total: extra?['total'] ?? 0.0,
-        subtotal: extra?['subtotal'] ?? 0.0,
-        deliveryFee: extra?['deliveryFee'] ?? 0.0,
-        orderId: extra?['orderId'] ?? '',
-      );
+      final orderId = state.pathParameters['orderId'] ?? '';
+      return OrderTrackingScreen(orderId: orderId);
+    },
+  ),
+  GoRoute(
+    path: '/order-qr/:orderId',
+    builder: (context, state) {
+      final orderId = state.pathParameters['orderId'] ?? '';
+      return OrderQRScreen(orderId: orderId);
+    },
+  ),
+  GoRoute(
+    path: '/order-summary/:orderId',
+    builder: (context, state) {
+      final orderId = state.pathParameters['orderId'] ?? '';
+      return OrderSummaryScreen(orderId: orderId);
     },
   ),
 ];

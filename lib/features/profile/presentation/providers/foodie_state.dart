@@ -1,26 +1,46 @@
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../user_home/domain/entities/meal_offer.dart';
+import '../../../cart/data/services/cart_service.dart';
 
 class CartItem {
   final MealOffer meal;
   int qty;
   CartItem({required this.meal, this.qty = 1});
 
-  double get lineTotal => meal.donationPrice * qty;
+  double get lineTotal {
+    try {
+      final price = meal.donationPrice;
+      if (price.isNaN || price.isInfinite || price < 0) {
+        print('Warning: Invalid price for meal ${meal.id}: $price');
+        return 0.0;
+      }
+      final total = price * qty;
+      return total.isNaN || total.isInfinite ? 0.0 : total;
+    } catch (e) {
+      print('Error calculating line total: $e');
+      return 0.0;
+    }
+  }
 }
 
 enum DeliveryMethod { pickup, delivery, donate }
 
 class FoodieState extends ChangeNotifier {
+  final CartService _cartService = CartService();
+  final _supabase = Supabase.instance.client;
+  
   final List<MealOffer> _favourites = [];
   final List<CartItem> _cart = [];
-  DeliveryMethod _deliveryMethod = DeliveryMethod.pickup; // Defaults to Pickup (Free)
+  DeliveryMethod _deliveryMethod = DeliveryMethod.pickup;
   String? _promoCode;
+  bool _isLoadingCart = false;
 
   // ... (existing favourites logic)
 
   DeliveryMethod get deliveryMethod => _deliveryMethod;
   String? get promoCode => _promoCode;
+  bool get isLoadingCart => _isLoadingCart;
 
   void setDeliveryMethod(DeliveryMethod method) {
     _deliveryMethod = method;
@@ -59,7 +79,22 @@ class FoodieState extends ChangeNotifier {
   List<CartItem> get cartItems => List.unmodifiable(_cart);
   int get cartCount => _cart.fold<int>(0, (sum, item) => sum + item.qty);
   
-  double get subtotal => _cart.fold<double>(0.0, (sum, item) => sum + item.lineTotal);
+  double get subtotal {
+    try {
+      final total = _cart.fold<double>(0.0, (sum, item) {
+        final lineTotal = item.lineTotal;
+        if (lineTotal.isNaN || lineTotal.isInfinite) {
+          print('Warning: Invalid line total for meal ${item.meal.id}');
+          return sum;
+        }
+        return sum + lineTotal;
+      });
+      return total.isNaN || total.isInfinite ? 0.0 : total;
+    } catch (e) {
+      print('Error calculating subtotal: $e');
+      return 0.0;
+    }
+  }
   
   double get deliveryFee {
     if (_cart.isEmpty) return 0.0;
@@ -73,63 +108,137 @@ class FoodieState extends ChangeNotifier {
 
   double get platformFee {
     if (_cart.isEmpty) return 0.0;
-    if (_deliveryMethod == DeliveryMethod.donate) return 0.0; // Fee Waived for donation
-    return 1.5; // Standard fee
+    if (_deliveryMethod == DeliveryMethod.donate) return 0.0;
+    return 1.5;
   }
   
-  double get total => subtotal + deliveryFee + platformFee;
-
-  void addToCart(MealOffer meal, {int qty = 1}) {
-    final idx = _cart.indexWhere((c) => c.meal.id == meal.id);
-    if (idx >= 0) {
-      // Check if adding more would exceed available quantity
-      final newQty = _cart[idx].qty + qty;
-      if (newQty <= meal.quantity) {
-        _cart[idx].qty = newQty;
-      } else {
-        // Set to max available quantity
-        _cart[idx].qty = meal.quantity;
-      }
-    } else {
-      // Ensure we don't add more than available
-      final safeQty = qty > meal.quantity ? meal.quantity : qty;
-      _cart.add(CartItem(meal: meal, qty: safeQty));
+  double get total {
+    try {
+      final sum = subtotal + deliveryFee + platformFee;
+      return sum.isNaN || sum.isInfinite ? 0.0 : sum;
+    } catch (e) {
+      print('Error calculating total: $e');
+      return 0.0;
     }
+  }
+
+  /// Load cart from database
+  Future<void> loadCart() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    _isLoadingCart = true;
     notifyListeners();
-  }
 
-  void increment(String id) {
-    final idx = _cart.indexWhere((c) => c.meal.id == id);
-    if (idx >= 0) {
-      final item = _cart[idx];
-      // Only increment if we haven't reached the available quantity
-      if (item.qty < item.meal.quantity) {
-        item.qty += 1;
-        notifyListeners();
-      }
-    }
-  }
-
-  void decrement(String id) {
-    final idx = _cart.indexWhere((c) => c.meal.id == id);
-    if (idx >= 0) {
-      final item = _cart[idx];
-      item.qty -= 1;
-      if (item.qty <= 0) {
-        _cart.removeAt(idx);
-      }
+    try {
+      final items = await _cartService.loadCart(userId);
+      _cart.clear();
+      _cart.addAll(items);
+    } catch (e) {
+      debugPrint('Error loading cart: $e');
+    } finally {
+      _isLoadingCart = false;
       notifyListeners();
     }
   }
 
-  void removeFromCart(String id) {
-    _cart.removeWhere((c) => c.meal.id == id);
-    notifyListeners();
+  /// Add to cart (database + memory)
+  Future<void> addToCart(MealOffer meal, {int qty = 1}) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      final idx = _cart.indexWhere((c) => c.meal.id == meal.id);
+      if (idx >= 0) {
+        final newQty = _cart[idx].qty + qty;
+        if (newQty <= meal.quantity) {
+          _cart[idx].qty = newQty;
+          await _cartService.updateQuantity(userId, meal.id, newQty);
+        } else {
+          _cart[idx].qty = meal.quantity;
+          await _cartService.updateQuantity(userId, meal.id, meal.quantity);
+        }
+      } else {
+        final safeQty = qty > meal.quantity ? meal.quantity : qty;
+        _cart.add(CartItem(meal: meal, qty: safeQty));
+        await _cartService.addToCart(userId, meal.id, safeQty);
+      }
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error adding to cart: $e');
+      rethrow;
+    }
   }
 
-  void clearCart() {
-    _cart.clear();
-    notifyListeners();
+  /// Increment quantity (database + memory)
+  Future<void> increment(String id) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      final idx = _cart.indexWhere((c) => c.meal.id == id);
+      if (idx >= 0) {
+        final item = _cart[idx];
+        if (item.qty < item.meal.quantity) {
+          item.qty += 1;
+          await _cartService.updateQuantity(userId, id, item.qty);
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error incrementing cart: $e');
+    }
+  }
+
+  /// Decrement quantity (database + memory)
+  Future<void> decrement(String id) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      final idx = _cart.indexWhere((c) => c.meal.id == id);
+      if (idx >= 0) {
+        final item = _cart[idx];
+        item.qty -= 1;
+        if (item.qty <= 0) {
+          _cart.removeAt(idx);
+          await _cartService.removeFromCart(userId, id);
+        } else {
+          await _cartService.updateQuantity(userId, id, item.qty);
+        }
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error decrementing cart: $e');
+    }
+  }
+
+  /// Remove from cart (database + memory)
+  Future<void> removeFromCart(String id) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      _cart.removeWhere((c) => c.meal.id == id);
+      await _cartService.removeFromCart(userId, id);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error removing from cart: $e');
+    }
+  }
+
+  /// Clear cart (database + memory)
+  Future<void> clearCart() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      _cart.clear();
+      await _cartService.clearCart(userId);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error clearing cart: $e');
+    }
   }
 
   /// Check if we can add more of this item to cart
@@ -139,7 +248,7 @@ class FoodieState extends ChangeNotifier {
       final item = _cart[idx];
       return item.qty < item.meal.quantity;
     }
-    return true; // Not in cart yet, so can add
+    return true;
   }
 
   /// Get remaining quantity available for a meal
@@ -149,7 +258,6 @@ class FoodieState extends ChangeNotifier {
       final item = _cart[idx];
       return item.meal.quantity - item.qty;
     }
-    // Find the meal to get its quantity
-    return 999; // Default high number if not in cart
+    return 999;
   }
 }

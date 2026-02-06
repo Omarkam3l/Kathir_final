@@ -86,16 +86,21 @@ class _RestaurantHomeScreenState extends State<RestaurantHomeScreen> {
             .from('orders')
             .select('''
               *,
-              meals:meal_id (
-                title,
-                image_url
+              order_items(
+                id,
+                quantity,
+                unit_price,
+                meals!meal_id(
+                  title,
+                  image_url
+                )
               ),
-              profiles:user_id (
+              profiles!user_id(
                 full_name
               )
             ''')
             .eq('restaurant_id', _restaurantId ?? userId)
-            .not('status', 'in', '(completed,cancelled)')
+            .inFilter('status', ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'out_for_delivery'])
             .order('created_at', ascending: false);
 
         _activeOrders = List<Map<String, dynamic>>.from(activeOrdersRes);

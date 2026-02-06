@@ -724,15 +724,29 @@ class MealDetailScreen extends StatelessWidget {
                   child: SizedBox(
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: () {
-                        context.read<FoodieState>().addToCart(product);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${product.title} added to cart'),
-                            backgroundColor: AppColors.primaryGreen,
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
+                      onPressed: () async {
+                        try {
+                          await context.read<FoodieState>().addToCart(product);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${product.title} added to cart'),
+                                backgroundColor: AppColors.primaryGreen,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error adding to cart'),
+                                backgroundColor: Colors.red,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryGreen,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../authentication/presentation/blocs/auth_provider.dart';
 
 class AddressesScreen extends StatefulWidget {
   static const routeName = '/addresses';
@@ -85,6 +87,19 @@ class _AddressesScreenState extends State<AddressesScreen> {
         'is_default': isDefault,
       });
 
+      // If this is the default address, update profile
+      if (isDefault) {
+        await _supabase
+            .from('profiles')
+            .update({'default_location': result['address']})
+            .eq('id', userId);
+        
+        // Refresh auth provider to update UI
+        if (mounted) {
+          await Provider.of<AuthProvider>(context, listen: false).refreshUser();
+        }
+      }
+
       await _loadAddresses();
 
       if (mounted) {
@@ -124,22 +139,41 @@ class _AddressesScreenState extends State<AddressesScreen> {
         'address_text': result['address'],
       }).eq('id', address['id']);
 
-      await _loadAddresses();
+      // If this is the default address, update profile
+      if (address['is_default'] == true) {
+        final userId = _supabase.auth.currentUser?.id;
+        if (userId != null) {
+          await _supabase
+              .from('profiles')
+              .update({'default_location': result['address']})
+              .eq('id', userId);
+          
+          // Refresh auth provider to update UI
+          if (mounted) {
+            await Provider.of<AuthProvider>(context, listen: false).refreshUser();
+          }
+        }
+      }
 
+      // Show success message first
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Address updated successfully'),
             backgroundColor: AppColors.primary,
+            duration: Duration(seconds: 2),
           ),
         );
       }
+
+      await _loadAddresses();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error updating address: $e'),
             backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
           ),
         );
       }
@@ -210,22 +244,43 @@ class _AddressesScreenState extends State<AddressesScreen> {
           .update({'is_default': true})
           .eq('id', addressId);
 
-      await _loadAddresses();
+      // Get the address text to update profile
+      final addressData = await _supabase
+          .from('user_addresses')
+          .select('address_text')
+          .eq('id', addressId)
+          .single();
 
+      // Update the default_location in profiles table
+      await _supabase
+          .from('profiles')
+          .update({'default_location': addressData['address_text']})
+          .eq('id', userId);
+
+      // Refresh auth provider to update UI immediately
+      if (mounted) {
+        await Provider.of<AuthProvider>(context, listen: false).refreshUser();
+      }
+
+      // Show success message first
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Default address updated'),
             backgroundColor: AppColors.primary,
+            duration: Duration(seconds: 2),
           ),
         );
       }
+
+      await _loadAddresses();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error setting default address: $e'),
             backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
           ),
         );
       }

@@ -502,11 +502,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                             'Change Password',
                             Icons.lock,
                             () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Change password coming soon'),
-                                ),
-                              );
+                              context.push('/profile/change-password');
                             },
                             surface,
                             isDark,

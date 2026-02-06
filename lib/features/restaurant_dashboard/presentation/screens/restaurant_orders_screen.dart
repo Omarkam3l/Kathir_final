@@ -17,7 +17,7 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
   bool _isLoading = true;
   String? _restaurantId;
   List<Map<String, dynamic>> _orders = [];
-  String _selectedFilter = 'all'; // all, pending, processing, completed
+  String _selectedFilter = 'all'; // all, active, pending, preparing, ready_for_pickup, completed
 
   @override
   void initState() {
@@ -39,11 +39,16 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
           .from('orders')
           .select('''
             *,
-            meals:meal_id (
-              title,
-              image_url
+            order_items(
+              id,
+              quantity,
+              unit_price,
+              meals!meal_id(
+                title,
+                image_url
+              )
             ),
-            profiles:user_id (
+            profiles!user_id (
               full_name
             )
           ''')
@@ -52,7 +57,7 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
       // Apply filter
       if (_selectedFilter != 'all') {
         if (_selectedFilter == 'active') {
-          query = query.not('status', 'in', '(completed,cancelled)');
+          query = query.inFilter('status', ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'out_for_delivery']);
         } else {
           query = query.eq('status', _selectedFilter);
         }
@@ -178,7 +183,9 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
             const SizedBox(width: 8),
             _buildFilterChip('Pending', 'pending', isDark),
             const SizedBox(width: 8),
-            _buildFilterChip('Processing', 'processing', isDark),
+            _buildFilterChip('Preparing', 'preparing', isDark),
+            const SizedBox(width: 8),
+            _buildFilterChip('Ready', 'ready_for_pickup', isDark),
             const SizedBox(width: 8),
             _buildFilterChip('Completed', 'completed', isDark),
           ],
@@ -234,8 +241,7 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
             child: ActiveOrderCard(
               order: _orders[index],
               onTap: () {
-                // TODO: Navigate to order details
-                debugPrint('Order tapped: ${_orders[index]['id']}');
+                context.push('/restaurant-dashboard/order-detail/${_orders[index]['id']}');
               },
             ),
           );

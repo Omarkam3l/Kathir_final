@@ -15,11 +15,30 @@ class ActiveOrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final status = order['status'] as String? ?? 'pending';
-    final orderCode = order['order_code']?.toString() ?? '#N/A';
-    final customerName = order['profiles']?['full_name'] ?? 'Customer';
-    final mealName = (order['meals']?['title'] ?? '').isEmpty 
-        ? 'Delicious Meal' 
-        : (order['meals']?['title'] ?? 'Delicious Meal');
+    final pickupCode = order['pickup_code']?.toString() ?? '';
+    final orderCode = pickupCode.isNotEmpty ? pickupCode : order['id']?.toString().substring(0, 6).toUpperCase() ?? '#N/A';
+    
+    // Get customer name - handle both nested profile object and direct field
+    String customerName = 'Customer';
+    if (order['profiles'] != null) {
+      customerName = order['profiles']['full_name'] ?? 'Customer';
+    } else if (order['user_id'] is Map) {
+      customerName = order['user_id']['full_name'] ?? 'Customer';
+    }
+    
+    // Get meal name from order_items
+    String mealName = 'Order';
+    final orderItems = order['order_items'] as List<dynamic>?;
+    if (orderItems != null && orderItems.isNotEmpty) {
+      final firstItem = orderItems[0] as Map<String, dynamic>;
+      // Handle nested meals object
+      final meal = firstItem['meals'] as Map<String, dynamic>?;
+      mealName = meal?['title'] ?? 'Meal';
+      if (orderItems.length > 1) {
+        mealName += ' +${orderItems.length - 1} more';
+      }
+    }
+    
     final totalAmount = (order['total_amount'] as num?)?.toDouble() ?? 0.0;
     final createdAt = DateTime.parse(order['created_at']);
     final timeAgo = _getTimeAgo(createdAt);
@@ -112,7 +131,7 @@ class ActiveOrderCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '\$${totalAmount.toStringAsFixed(2)}',
+                  'EGP ${totalAmount.toStringAsFixed(2)}',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -135,15 +154,15 @@ class ActiveOrderCard extends StatelessWidget {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'pending':
+      case 'confirmed':
         return Colors.amber;
-      case 'paid':
+      case 'preparing':
         return Colors.blue;
-      case 'processing':
-        return Colors.orange;
       case 'ready_for_pickup':
-        return Colors.purple;
+        return AppColors.primaryGreen;
       case 'out_for_delivery':
-        return Colors.indigo;
+        return Colors.purple;
+      case 'delivered':
       case 'completed':
         return Colors.green;
       case 'cancelled':
@@ -156,15 +175,15 @@ class ActiveOrderCard extends StatelessWidget {
   IconData _getStatusIcon(String status) {
     switch (status) {
       case 'pending':
+      case 'confirmed':
         return Icons.pending_actions;
-      case 'paid':
-        return Icons.payment;
-      case 'processing':
+      case 'preparing':
         return Icons.restaurant;
       case 'ready_for_pickup':
         return Icons.shopping_bag;
       case 'out_for_delivery':
         return Icons.delivery_dining;
+      case 'delivered':
       case 'completed':
         return Icons.check_circle;
       case 'cancelled':
@@ -178,14 +197,16 @@ class ActiveOrderCard extends StatelessWidget {
     switch (status) {
       case 'pending':
         return 'Pending';
-      case 'paid':
-        return 'Paid';
-      case 'processing':
-        return 'Processing';
+      case 'confirmed':
+        return 'Confirmed';
+      case 'preparing':
+        return 'Preparing';
       case 'ready_for_pickup':
         return 'Ready';
       case 'out_for_delivery':
         return 'Delivering';
+      case 'delivered':
+        return 'Delivered';
       case 'completed':
         return 'Completed';
       case 'cancelled':

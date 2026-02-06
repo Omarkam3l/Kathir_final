@@ -4,8 +4,11 @@ import 'presentation/screens/coupons_screen.dart';
 import 'presentation/screens/choose_address_screen.dart';
 import 'presentation/screens/payment_method_screen.dart';
 import 'presentation/screens/payment_screen.dart';
+import '../orders/presentation/screens/order_summary_screen.dart';
 
 List<GoRoute> checkoutRoutes() => [
+  // Checkout screen (new proper route)
+  GoRoute(path: '/checkout', builder: (context, state) => const CheckoutScreen()),
   // Payment screen (main checkout)
   GoRoute(path: '/payment', builder: (context, state) => const CheckoutScreen()),
   // Legacy route for backward compatibility
@@ -14,5 +17,13 @@ List<GoRoute> checkoutRoutes() => [
   GoRoute(path: ChooseAddressScreen.routeName, builder: (context, state) => const ChooseAddressScreen()),
   GoRoute(path: PaymentMethodScreen.routeName, builder: (context, state) => const PaymentMethodScreen()),
   GoRoute(path: PaymentScreen.routeName, builder: (context, state) => const PaymentScreen()),
+  // Order summary screen
+  GoRoute(
+    path: '/order-summary/:orderId',
+    builder: (context, state) {
+      final orderId = state.pathParameters['orderId']!;
+      return OrderSummaryScreen(orderId: orderId);
+    },
+  ),
 ];
 
