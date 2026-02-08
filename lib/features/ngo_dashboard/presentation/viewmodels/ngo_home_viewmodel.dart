@@ -60,6 +60,8 @@ class NgoHomeViewModel extends ChangeNotifier {
   }
 
   Future<void> loadData() async {
+    if (!hasListeners) return;
+    
     isLoading = true;
     error = null;
     notifyListeners();
@@ -73,7 +75,9 @@ class NgoHomeViewModel extends ChangeNotifier {
       error = e.toString();
     } finally {
       isLoading = false;
-      notifyListeners();
+      if (hasListeners) {
+        notifyListeners();
+      }
     }
   }
 
@@ -176,12 +180,16 @@ class NgoHomeViewModel extends ChangeNotifier {
 
   void setFilter(String filter) {
     selectedFilter = filter;
-    notifyListeners();
+    if (hasListeners) {
+      notifyListeners();
+    }
   }
 
   void setSearchQuery(String query) {
     searchQuery = query;
-    notifyListeners();
+    if (hasListeners) {
+      notifyListeners();
+    }
   }
 
   Future<void> claimMeal(Meal meal, BuildContext context) async {

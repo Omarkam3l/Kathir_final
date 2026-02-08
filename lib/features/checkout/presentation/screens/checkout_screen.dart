@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../profile/presentation/providers/foodie_state.dart';
+import '../../../profile/presentation/screens/addresses_screen.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../checkout/data/services/order_service.dart';
 
 class CheckoutScreen extends StatefulWidget {
   static const routeName = '/checkout';
@@ -14,7 +17,81 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
+  final _supabase = Supabase.instance.client;
+  final _orderService = OrderService();
   String _paymentMethod = 'card'; // card, wallet, cod
+  bool _isCreatingOrder = false;
+  String? _deliveryAddress;
+  bool _isLoadingAddress = true;
+  String? _selectedNgoId;
+  List<Map<String, dynamic>> _ngos = [];
+  bool _isLoadingNgos = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDefaultAddress();
+    _loadNgos();
+  }
+
+  Future<void> _loadNgos() async {
+    setState(() => _isLoadingNgos = true);
+    try {
+      final response = await _supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .eq('role', 'ngo')
+          .order('full_name');
+
+      setState(() {
+        _ngos = List<Map<String, dynamic>>.from(response);
+        _isLoadingNgos = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading NGOs: $e');
+      setState(() => _isLoadingNgos = false);
+    }
+  }
+
+  Future<void> _loadDefaultAddress() async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) {
+        setState(() => _isLoadingAddress = false);
+        return;
+      }
+
+      final response = await _supabase
+          .from('user_addresses')
+          .select('address_text, label')
+          .eq('user_id', userId)
+          .eq('is_default', true)
+          .maybeSingle();
+
+      if (response != null) {
+        setState(() {
+          _deliveryAddress = response['address_text'];
+          _isLoadingAddress = false;
+        });
+      } else {
+        // No default address, try to get any address
+        final anyAddress = await _supabase
+            .from('user_addresses')
+            .select('address_text, label')
+            .eq('user_id', userId)
+            .limit(1)
+            .maybeSingle();
+
+        setState(() {
+          _deliveryAddress = anyAddress?['address_text'];
+          _isLoadingAddress = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading address: $e');
+      setState(() => _isLoadingAddress = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,24 +108,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final borderColor = isDark ? Colors.white10 : Colors.grey[200]!;
 
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         title: Text('Payment',
             style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
-        backgroundColor: surfaceColor.withOpacity(0.8),
+        backgroundColor: Colors.white.withOpacity(0.8),
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: textColor),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.go('/cart'),
         ),
       ),
       bottomNavigationBar: Consumer<FoodieState>(builder: (context, foodie, _) {
         return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: surfaceColor,
+            color: Colors.white,
             border: Border(top: BorderSide(color: borderColor)),
             boxShadow: [
               BoxShadow(
@@ -62,13 +139,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             children: [
               _buildFooterRow(
                   'Subtotal',
-                  '\$${foodie.subtotal.toStringAsFixed(2)}',
+                  'EGP ${foodie.subtotal.toStringAsFixed(2)}',
                   subTextColor,
                   textColor),
               const SizedBox(height: 8),
               _buildFooterRow(
                   'Service Fee',
-                  '\$${foodie.platformFee.toStringAsFixed(2)}',
+                  'EGP ${foodie.platformFee.toStringAsFixed(2)}',
                   subTextColor,
                   textColor),
               const SizedBox(height: 12),
@@ -80,7 +157,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     children: [
                       Text('Total Amount',
                           style: TextStyle(fontSize: 12, color: subTextColor)),
-                      Text('\$${foodie.total.toStringAsFixed(2)}',
+                      Text('EGP ${foodie.total.toStringAsFixed(2)}',
                           style: GoogleFonts.plusJakartaSans(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -90,42 +167,112 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   SizedBox(
                     width: 180,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // Capture data before clearing
-                        final items = List<CartItem>.from(foodie.cartItems);
-                        final total = foodie.total;
-                        final subtotal = foodie.subtotal;
-                        final deliveryFee = foodie.deliveryFee;
+                      onPressed: _isCreatingOrder ? null : () async {
+                        final userId = _supabase.auth.currentUser?.id;
+                        if (userId == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please login first')),
+                          );
+                          return;
+                        }
 
-                        // Clear Cart
-                        foodie.clearCart();
+                        if (foodie.cartItems.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Cart is empty')),
+                          );
+                          return;
+                        }
 
-                        // Navigate to order summary
-                        context.go('/order-summary', extra: {
-                          'items': items,
-                          'total': total,
-                          'subtotal': subtotal,
-                          'deliveryFee': deliveryFee,
-                          'orderId': 'ORD${DateTime.now().millisecondsSinceEpoch}',
-                        });
+                        setState(() => _isCreatingOrder = true);
+
+                        try {
+                          // Get delivery address based on delivery method
+                          String? finalAddress;
+                          if (foodie.deliveryMethod == DeliveryMethod.delivery) {
+                            if (_deliveryAddress == null || _deliveryAddress!.isEmpty) {
+                              throw Exception('Please add a delivery address in your profile');
+                            }
+                            finalAddress = _deliveryAddress;
+                          } else if (foodie.deliveryMethod == DeliveryMethod.pickup) {
+                            finalAddress = 'Self Pickup';
+                          } else {
+                            finalAddress = 'Donated to NGO';
+                          }
+
+                          // Create order in database (may create multiple orders if multiple restaurants)
+                          final results = await _orderService.createOrder(
+                            userId: userId,
+                            items: foodie.cartItems,
+                            deliveryType: foodie.deliveryMethod.name,
+                            subtotal: foodie.subtotal,
+                            serviceFee: foodie.platformFee,
+                            deliveryFee: foodie.deliveryFee,
+                            total: foodie.total,
+                            paymentMethod: _paymentMethod,
+                            deliveryAddress: finalAddress,
+                          );
+
+                          // Clear memory cart
+                          await foodie.clearCart();
+
+                          // Navigate to order summary (show first order, or create a multi-order summary)
+                          if (mounted) {
+                            if (results.length == 1) {
+                              // Single restaurant order
+                              context.go('/order-summary/${results[0]['order_id']}');
+                            } else {
+                              // Multiple restaurant orders - navigate to my orders screen
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('${results.length} orders created successfully!'),
+                                  backgroundColor: Colors.green,
+                                  duration: const Duration(seconds: 3),
+                                ),
+                              );
+                              context.go('/my-orders');
+                            }
+                          }
+                        } catch (e) {
+                          setState(() => _isCreatingOrder = false);
+                          
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error creating order: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
+                        backgroundColor: AppColors.primaryGreen,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                         elevation: 4,
-                        shadowColor: primaryColor.withOpacity(0.4),
+                        shadowColor: AppColors.primaryGreen.withOpacity(0.4),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('Pay Now',
-                              style: GoogleFonts.plusJakartaSans(
-                                  fontWeight: FontWeight.bold, fontSize: 16)),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.check_circle, size: 20),
+                          if (_isCreatingOrder)
+                            const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          else ...[
+                            Text('Pay Now',
+                                style: GoogleFonts.plusJakartaSans(
+                                    fontWeight: FontWeight.bold, fontSize: 16)),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.check_circle, size: 20),
+                          ],
                         ],
                       ),
                     ),
@@ -157,15 +304,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: surfaceColor,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: borderColor),
                     boxShadow: [
-                      if (!isDark)
-                        BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4)),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
                     ],
                   ),
                   child: Column(
@@ -181,23 +327,226 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 Border(top: BorderSide(color: borderColor))),
                         child: Column(
                           children: [
-                            _buildSummaryRow(
-                                Icon(Icons.local_shipping,
-                                    size: 16, color: subTextColor),
-                                'Delivery Fee',
-                                '\$${foodie.deliveryFee.toStringAsFixed(2)}',
-                                textColor,
-                                subTextColor),
-                            const SizedBox(height: 8),
-                            _buildSummaryRow(
-                                Icon(Icons.location_on,
-                                    size: 16, color: subTextColor),
-                                'Delivery to',
-                                '12 Hassan Sabry St.',
-                                textColor,
-                                subTextColor),
+                            if (foodie.deliveryMethod == DeliveryMethod.delivery) ...[
+                              _buildSummaryRow(
+                                  Icon(Icons.local_shipping,
+                                      size: 16, color: subTextColor),
+                                  'Delivery Fee',
+                                  'EGP ${foodie.deliveryFee.toStringAsFixed(2)}',
+                                  textColor,
+                                  subTextColor),
+                              const SizedBox(height: 8),
+                              _isLoadingAddress
+                                  ? Row(
+                                      children: [
+                                        Icon(Icons.location_on,
+                                            size: 16, color: subTextColor),
+                                        const SizedBox(width: 6),
+                                        const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text('Loading address...',
+                                            style: TextStyle(fontSize: 14, color: subTextColor)),
+                                      ],
+                                    )
+                                  : _deliveryAddress != null
+                                      ? _buildSummaryRow(
+                                          Icon(Icons.location_on,
+                                              size: 16, color: subTextColor),
+                                          'Delivery to',
+                                          _deliveryAddress!,
+                                          textColor,
+                                          subTextColor)
+                                      : InkWell(
+                                          onTap: () {
+                                            // Navigate to addresses screen
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (context) => const AddressesScreen(),
+                                              ),
+                                            ).then((_) => _loadDefaultAddress());
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.all(12),
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange[50],
+                                              borderRadius: BorderRadius.circular(8),
+                                              border: Border.all(color: Colors.orange[200]!),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.warning_amber, size: 20, color: Colors.orange[700]),
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: Text(
+                                                    'No delivery address found. Tap to add one.',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.orange[900],
+                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Icon(Icons.arrow_forward_ios, size: 14, color: Colors.orange[700]),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                            ] else if (foodie.deliveryMethod == DeliveryMethod.pickup) ...[
+                              _buildSummaryRow(
+                                  Icon(Icons.store,
+                                      size: 16, color: subTextColor),
+                                  'Pickup Method',
+                                  'Self Pickup',
+                                  textColor,
+                                  subTextColor),
+                            ] else ...[
+                              _buildSummaryRow(
+                                  Icon(Icons.volunteer_activism,
+                                      size: 16, color: subTextColor),
+                                  'Donation',
+                                  'To NGO',
+                                  textColor,
+                                  subTextColor),
+                              const SizedBox(height: 12),
+                              // NGO Dropdown
+                              _isLoadingNgos
+                                  ? const Center(
+                                      child: Padding(
+                                        padding: EdgeInsets.all(8.0),
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      ),
+                                    )
+                                  : Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: borderColor),
+                                      ),
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton<String>(
+                                          value: _selectedNgoId,
+                                          hint: Row(
+                                            children: [
+                                              Icon(Icons.business, size: 16, color: subTextColor),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                'Select NGO',
+                                                style: GoogleFonts.plusJakartaSans(
+                                                  color: subTextColor,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          isExpanded: true,
+                                          icon: Icon(Icons.arrow_drop_down, color: subTextColor),
+                                          dropdownColor: Colors.white,
+                                          items: _ngos.map((ngo) {
+                                            return DropdownMenuItem<String>(
+                                              value: ngo['id'],
+                                              child: Row(
+                                                children: [
+                                                  CircleAvatar(
+                                                    radius: 14,
+                                                    backgroundImage: ngo['avatar_url'] != null
+                                                        ? NetworkImage(ngo['avatar_url'])
+                                                        : null,
+                                                    backgroundColor: primaryColor.withOpacity(0.1),
+                                                    child: ngo['avatar_url'] == null
+                                                        ? Text(
+                                                            (ngo['full_name'] as String).isNotEmpty
+                                                                ? (ngo['full_name'] as String)[0].toUpperCase()
+                                                                : 'N',
+                                                            style: const TextStyle(
+                                                              fontSize: 12,
+                                                              color: primaryColor,
+                                                              fontWeight: FontWeight.bold,
+                                                            ),
+                                                          )
+                                                        : null,
+                                                  ),
+                                                  const SizedBox(width: 12),
+                                                  Expanded(
+                                                    child: Text(
+                                                      ngo['full_name'] ?? 'NGO',
+                                                      style: GoogleFonts.plusJakartaSans(
+                                                        fontSize: 14,
+                                                        fontWeight: FontWeight.w500,
+                                                      ),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (value) {
+                                            setState(() => _selectedNgoId = value);
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                            ],
                           ],
                         ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Promo Code Section
+                Text('Offers & Discounts',
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textColor)),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.local_offer, color: primaryColor, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Enter promo code',
+                            hintStyle: GoogleFonts.plusJakartaSans(
+                              color: Colors.grey[400],
+                              fontSize: 14,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          style: GoogleFonts.plusJakartaSans(
+                              color: textColor, fontWeight: FontWeight.w500, fontSize: 14),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {},
+                        child: Text('Apply',
+                            style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.bold, 
+                                color: primaryColor,
+                                fontSize: 14)),
                       ),
                     ],
                   ),
@@ -240,7 +589,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     'Credit / Debit Card',
                     'Visa, Mastercard (via Paymob)',
                     Icons.credit_card,
-                    surfaceColor,
                     borderColor,
                     primaryColor,
                     textColor,
@@ -251,7 +599,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     'Mobile Wallet',
                     'Vodafone, Orange, Etisalat Cash',
                     Icons.account_balance_wallet,
-                    surfaceColor,
                     borderColor,
                     primaryColor,
                     textColor,
@@ -262,58 +609,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     'Cash on Delivery',
                     'Pay cash when order arrives',
                     Icons.payments,
-                    surfaceColor,
                     borderColor,
                     primaryColor,
                     textColor,
                     subTextColor),
 
-                // Discount
-                const SizedBox(height: 24),
-                Text('DISCOUNT',
-                    style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: subTextColor,
-                        letterSpacing: 1.0)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                            color: surfaceColor,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: borderColor)),
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: 'Add promo code',
-                            prefixIcon:
-                                Icon(Icons.sell_outlined, color: subTextColor),
-                            border: InputBorder.none,
-                            contentPadding:
-                                const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: surfaceColor,
-                        foregroundColor: primaryColor,
-                        elevation: 0,
-                        side: BorderSide(color: borderColor),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 16),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text('Apply'),
-                    ),
-                  ],
-                ),
+                const SizedBox(height: 100),
               ],
             ),
           );
@@ -353,7 +654,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 fontWeight: FontWeight.bold, color: textColor),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis)),
-                    Text('\$${item.lineTotal.toStringAsFixed(2)}',
+                    Text('EGP ${item.lineTotal.toStringAsFixed(2)}',
                         style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.bold, color: textColor)),
                   ],
@@ -401,6 +702,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _buildSummaryRow(Widget icon, String label, String value,
       Color textColor, Color subTextColor) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
@@ -410,8 +712,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Text(label, style: TextStyle(fontSize: 14, color: subTextColor)),
           ],
         ),
-        Text(value,
-            style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
+            textAlign: TextAlign.right,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
       ],
     );
   }
@@ -433,7 +743,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       String title,
       String subtitle,
       IconData icon,
-      Color surfaceColor,
       Color borderColor,
       Color primaryColor,
       Color textColor,
@@ -446,19 +755,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: surfaceColor,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
               color: isSelected ? primaryColor : borderColor,
               width: isSelected ? 2 : 1),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                      color: primaryColor.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4))
-                ]
-              : [],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [

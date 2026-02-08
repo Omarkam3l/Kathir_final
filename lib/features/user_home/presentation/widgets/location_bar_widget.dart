@@ -9,7 +9,7 @@ class LocationBarWidget extends StatelessWidget {
 
   const LocationBarWidget({
     super.key,
-    this.location = 'Downtown, San Francisco',
+    this.location = 'Cairo, Egypt',
     this.onTap,
   });
 

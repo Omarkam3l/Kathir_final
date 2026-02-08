@@ -1,459 +1,483 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/utils/app_colors.dart';
-import '../../../profile/presentation/providers/foodie_state.dart';
+import '../../../checkout/data/services/order_service.dart';
 
-class OrderSummaryScreen extends StatelessWidget {
-  static const routeName = '/order-summary';
-
-  final List<CartItem> items;
-  final double total;
-  final double subtotal;
-  final double deliveryFee;
+class OrderSummaryScreen extends StatefulWidget {
   final String orderId;
+  const OrderSummaryScreen({required this.orderId, super.key});
 
-  const OrderSummaryScreen({
-    super.key,
-    required this.items,
-    required this.total,
-    required this.subtotal,
-    required this.deliveryFee,
-    this.orderId = '#KATH-8921', // Mock ID for now
-  });
+  @override
+  State<OrderSummaryScreen> createState() => _OrderSummaryScreenState();
+}
+
+class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
+  final _orderService = OrderService();
+  Map<String, dynamic>? _order;
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOrder();
+  }
+
+  Future<void> _loadOrder() async {
+    try {
+      final order = await _orderService.getOrder(widget.orderId);
+      setState(() {
+        _order = order;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = Theme.of(context).scaffoldBackgroundColor;
-    final surfaceColor = Theme.of(context).cardColor;
-    final textColor =
-        Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
-    final subTextColor =
-        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
-    const primaryColor = AppColors.primary;
-    final borderColor = isDark ? Colors.white10 : Colors.grey[200]!;
+    final bgColor = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
+    final textColor = isDark ? Colors.white : const Color(0xFF111827);
+    final textSub = isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280);
+
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: bgColor,
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
+    if (_error != null || _order == null) {
+      return Scaffold(
+        backgroundColor: bgColor,
+        appBar: AppBar(
+          title: Text('Order Summary', style: GoogleFonts.plusJakartaSans()),
+          backgroundColor: bgColor,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                'Order not found',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _error ?? 'Unable to load order details',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  color: textSub,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => context.go('/home'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Go to Home'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final orderItems = _order!['order_items'] as List;
+    final restaurant = _order!['restaurants'];
+    final createdAt = DateTime.parse(_order!['created_at']);
 
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: Text('Order Summary',
-            style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.bold, fontSize: 18)),
-        centerTitle: true,
-        backgroundColor: surfaceColor.withOpacity(0.95),
-        elevation: 0,
+        title: Text('Order Summary', style: GoogleFonts.plusJakartaSans()),
+        backgroundColor: bgColor,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textColor),
-          onPressed: () => context.go('/home'), // Go home on back
-        ),
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: surfaceColor,
-          border: Border(top: BorderSide(color: borderColor)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: textColor,
-                      side: BorderSide(color: borderColor),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('Need Help?'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.map, size: 20),
-                        SizedBox(width: 8),
-                        Text('Track Live Map'),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: () => context.go('/home'),
-              child:
-                  Text('Back to Home', style: TextStyle(color: subTextColor)),
-            ),
-          ],
+          icon: const Icon(Icons.close),
+          onPressed: () => context.go('/home'),
         ),
       ),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Hero Section
+            // Success Icon
             Container(
-              height: 200,
-              width: double.infinity,
-              margin: const EdgeInsets.all(16),
+              width: 100,
+              height: 100,
               decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_circle,
+                size: 60,
+                color: AppColors.primaryGreen,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Success Message
+            Text(
+              'Order Placed Successfully!',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Your order has been confirmed',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                color: textSub,
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // Order Details Card
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                image: const DecorationImage(
-                  image: NetworkImage(
-                      'https://lh3.googleusercontent.com/aida-public/AB6AXuCRQV7qW-7PljqTSvHwDmsQ9DXr-gsc5sjzwxfw4gP0ezVRztuxkH7QYvVManLBGQMw0pWYieYPEmbwFLjjRfixXKXJsfKv22dRZWtA0ZbxZwTw6tjaN1TE2VHq35-ma0ytlB_Y82aSbUQ7lJ7TkdjNua3179jvNHEbaLH_wWjC6X6a22f_xH_UFzYjTCl1yfUPh91-voNHMmZc4Uo4ZQ0UDVq_d08GObxXtElUONgArv8rAglYGFcdxc0LrH92f8_XzQjdoz0KlA0'), // Use placeholder from HTML or asset
-                  fit: BoxFit.cover,
+                border: Border.all(
+                  color: isDark ? Colors.white10 : Colors.grey[200]!,
                 ),
               ),
-              child: Stack(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
-                          colors: [
-                            Colors.black.withOpacity(0.8),
-                            Colors.transparent
-                          ],
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 16,
-                    left: 16,
-                    right: 16,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.check_circle,
-                                color: Colors.greenAccent, size: 20),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                  color: Colors.black45,
-                                  borderRadius: BorderRadius.circular(4)),
-                              child: const Text('CONFIRMED',
-                                  style: TextStyle(
-                                      color: Colors.greenAccent,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold)),
-                            ),
-                          ],
+                  // Order Number
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Order Number',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          color: textSub,
                         ),
-                        const SizedBox(height: 8),
-                        const Text('Order Placed Successfully!',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold)),
-                        const Text('Thank you for your donation.',
-                            style:
-                                TextStyle(color: Colors.white70, fontSize: 12)),
-                      ],
-                    ),
+                      ),
+                      Text(
+                        _order!['order_number'] ?? 'N/A',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Order Date
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Order Date',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          color: textSub,
+                        ),
+                      ),
+                      Text(
+                        DateFormat('MMM dd, yyyy • hh:mm a').format(createdAt),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: textColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Restaurant
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Restaurant',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          color: textSub,
+                        ),
+                      ),
+                      Text(
+                        restaurant?['restaurant_name'] ?? 'Restaurant',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: textColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Status
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Status',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          color: textSub,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryGreen.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          (_order!['status'] as String).toUpperCase(),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryGreen,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: 24),
 
-            // Impact Badge
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                padding: const EdgeInsets.all(12),
+            // Order Items
+            Text(
+              'Order Items',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            ...orderItems.map((item) {
+              final meal = item['meals'];
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
+                  color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: primaryColor.withOpacity(0.2)),
+                  border: Border.all(
+                    color: isDark ? Colors.white10 : Colors.grey[200]!,
+                  ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.eco, color: primaryColor),
+                    // Meal Image
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: meal?['image_url'] != null
+                          ? Image.network(
+                              meal['image_url'],
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                width: 60,
+                                height: 60,
+                                color: Colors.grey[300],
+                                child: const Icon(Icons.restaurant),
+                              ),
+                            )
+                          : Container(
+                              width: 60,
+                              height: 60,
+                              color: Colors.grey[300],
+                              child: const Icon(Icons.restaurant),
+                            ),
+                    ),
                     const SizedBox(width: 12),
+
+                    // Meal Details
                     Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: TextStyle(color: textColor, fontSize: 14),
-                          children: const [
-                            TextSpan(
-                                text: 'Your contribution saved approx. '),
-                            TextSpan(
-                                text: '1.2kg',
-                                style: TextStyle(
-                                    color: primaryColor,
-                                    fontWeight: FontWeight.bold)),
-                            TextSpan(text: ' of food from waste.'),
-                          ],
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item['meal_title'] ?? 'Meal',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Qty: ${item['quantity']}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              color: textSub,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Price
+                    Text(
+                      'EGP ${(item['unit_price'] * item['quantity']).toStringAsFixed(2)}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
                       ),
                     ),
                   ],
                 ),
+              );
+            }).toList(),
+
+            const SizedBox(height: 24),
+
+            // Total
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? Colors.white10 : Colors.grey[200]!,
+                ),
               ),
-            ),
-
-            // Live Tracker
-            Padding(
-              padding: const EdgeInsets.all(16),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Tracking Order',
-                      style: GoogleFonts.plusJakartaSans(
-                          fontSize: 16,
+                  _buildRow('Subtotal', _order!['subtotal'], textSub, textColor),
+                  const SizedBox(height: 8),
+                  _buildRow('Service Fee', _order!['service_fee'], textSub, textColor),
+                  const SizedBox(height: 8),
+                  _buildRow('Delivery Fee', _order!['delivery_fee'], textSub, textColor),
+                  const Divider(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Total',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: textColor)),
-                  const SizedBox(height: 16),
-                  _buildTrackerStep(
-                      'Order Accepted',
-                      'Restaurant has confirmed your order.',
-                      true,
-                      true,
-                      primaryColor,
-                      textColor,
-                      subTextColor),
-                  _buildTrackerStep(
-                      'Food Being Packed',
-                      'Preparing for handover.',
-                      true,
-                      true,
-                      primaryColor,
-                      textColor,
-                      subTextColor,
-                      isActive: true),
-                  _buildTrackerStep('Driver on the way', '', false, true,
-                      primaryColor, textColor, subTextColor),
-                  _buildTrackerStep('Delivered / Donated', '', false, false,
-                      primaryColor, textColor, subTextColor,
-                      isLast: true),
-                ],
-              ),
-            ),
-
-            Divider(color: borderColor, thickness: 8),
-
-            // Order Details
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Order Details',
-                      style: GoogleFonts.plusJakartaSans(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: textColor)),
-                  const SizedBox(height: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: surfaceColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: borderColor),
-                    ),
-                    child: Column(
-                      children: [
-                        // Items
-                        ...items.map((item) => Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                  border: Border(
-                                      bottom: BorderSide(color: borderColor))),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                            color: Colors.green.shade100,
-                                            borderRadius:
-                                                BorderRadius.circular(4)),
-                                        child: Text('${item.qty}x',
-                                            style: TextStyle(
-                                                color: Colors.green.shade800,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 12)),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(item.meal.title,
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: textColor)),
-                                          Text(item.meal.restaurant.name,
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: subTextColor)),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                  Text('\$${item.lineTotal.toStringAsFixed(2)}',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: textColor)),
-                                ],
-                              ),
-                            )),
-
-                        // Meta Data
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          color: isDark
-                              ? Colors.white.withOpacity(0.05)
-                              : Colors.grey[50],
-                          child: Column(
-                            children: [
-                              _buildMetaRow(
-                                  'Order ID', orderId, textColor, subTextColor),
-                              const SizedBox(height: 8),
-                              _buildMetaRow('Date', 'Oct 24, 2023, 10:30 AM',
-                                  textColor, subTextColor), // Mock Date
-                              const SizedBox(height: 8),
-                              _buildMetaRow('Payment', 'Paid via Card',
-                                  textColor, subTextColor),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 8),
-                                child: Divider(color: borderColor),
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('Total Amount',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: textColor)),
-                                  Text('\$${total.toStringAsFixed(2)}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: primaryColor,
-                                          fontSize: 16)),
-                                ],
-                              ),
-                            ],
-                          ),
+                          color: textColor,
                         ),
-                      ],
-                    ),
+                      ),
+                      Text(
+                        'EGP ${_order!['total_amount'].toStringAsFixed(2)}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryGreen,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: 32),
+
+            // Action Buttons
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => context.go('/my-orders'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryGreen,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'View My Orders',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => context.go('/home'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primaryGreen,
+                  side: const BorderSide(color: AppColors.primaryGreen),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Back to Home',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTrackerStep(String title, String subtitle, bool isCompleted,
-      bool showLine, Color primaryColor, Color textColor, Color subTextColor,
-      {bool isActive = false, bool isLast = false}) {
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Column(
-            children: [
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: isCompleted
-                      ? primaryColor
-                      : (isActive ? Colors.white : Colors.transparent),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                      color: isCompleted || isActive
-                          ? primaryColor
-                          : Colors.grey[300]!,
-                      width: 2),
-                ),
-                child: isCompleted
-                    ? const Icon(Icons.check, size: 14, color: Colors.white)
-                    : (isActive
-                        ? Center(
-                            child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                    color: primaryColor,
-                                    shape: BoxShape.circle)))
-                        : null),
-              ),
-              if (!isLast)
-                Expanded(
-                    child: Container(
-                        width: 2,
-                        color: isCompleted ? primaryColor : Colors.grey[300])),
-            ],
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isCompleted || isActive
-                              ? textColor
-                              : subTextColor)),
-                  if (subtitle.isNotEmpty)
-                    Text(subtitle,
-                        style: TextStyle(fontSize: 12, color: subTextColor)),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetaRow(
-      String label, String value, Color textColor, Color subTextColor) {
+  Widget _buildRow(String label, dynamic value, Color labelColor, Color valueColor) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label.toUpperCase(),
-            style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: subTextColor)),
-        Text(value,
-            style: TextStyle(
-                fontWeight: FontWeight.w500, color: textColor, fontSize: 13)),
+        Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            color: labelColor,
+          ),
+        ),
+        Text(
+          'EGP ${(value as num).toStringAsFixed(2)}',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: valueColor,
+          ),
+        ),
       ],
     );
   }

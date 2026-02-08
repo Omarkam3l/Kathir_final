@@ -101,7 +101,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               SliverToBoxAdapter(
                 child: LocationBarWidget(
                   location: context.watch<AuthProvider>().user?.defaultLocation ??
-                      'Downtown, San Francisco',
+                      'Cairo, Egypt',
                 ),
               ),
               SliverToBoxAdapter(

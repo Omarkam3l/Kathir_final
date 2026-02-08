@@ -16,6 +16,7 @@ import 'package:kathir_final/features/ngo_dashboard/presentation/viewmodels/ngo_
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_dashboard_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/meals_list_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_orders_screen.dart';
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_order_detail_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/add_meal_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/meal_details_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/edit_meal_screen.dart';
@@ -175,7 +176,7 @@ class AppRouter {
           location.startsWith('/payment') ||
           location.startsWith('/order-summary') ||
           location.startsWith('/orders') || 
-          location.startsWith('/profile') ||
+          (location.startsWith('/profile') && location != '/profile/change-password') ||
           location.startsWith('/favorites') ||
           location.startsWith('/favourites') ||
           location.startsWith('/my-orders')
@@ -193,7 +194,7 @@ class AppRouter {
           location.startsWith('/payment') ||
           location.startsWith('/order-summary') ||
           location.startsWith('/orders') || 
-          location.startsWith('/profile') ||
+          (location.startsWith('/profile') && location != '/profile/change-password') ||
           location.startsWith('/favorites') ||
           location.startsWith('/favourites') ||
           location.startsWith('/my-orders')
@@ -253,6 +254,13 @@ class AppRouter {
       GoRoute(
         path: '/restaurant-dashboard/orders',
         builder: (context, state) => const RestaurantOrdersScreen(),
+      ),
+      GoRoute(
+        path: '/restaurant-dashboard/order-detail/:orderId',
+        builder: (context, state) {
+          final orderId = state.pathParameters['orderId'] ?? '';
+          return RestaurantOrderDetailScreen(orderId: orderId);
+        },
       ),
       GoRoute(
         path: '/restaurant-dashboard/add-meal',
