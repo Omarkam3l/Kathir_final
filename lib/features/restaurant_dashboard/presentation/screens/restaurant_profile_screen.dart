@@ -499,20 +499,6 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                           ),
                           const SizedBox(height: 12),
                           _buildActionButton(
-                            'Change Password',
-                            Icons.lock,
-                            () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Change password coming soon'),
-                                ),
-                              );
-                            },
-                            surface,
-                            isDark,
-                          ),
-                          const SizedBox(height: 12),
-                          _buildActionButton(
                             'Logout',
                             Icons.logout,
                             _logout,
