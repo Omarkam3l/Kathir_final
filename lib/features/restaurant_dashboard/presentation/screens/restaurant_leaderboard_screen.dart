@@ -114,7 +114,7 @@ class _RestaurantLeaderboardScreenState
         ),
       ),
       bottomNavigationBar: RestaurantBottomNav(
-        currentIndex: -1, // Not in bottom nav
+        currentIndex: 3, // Leaderboard
         onTap: _onBottomNavTap,
       ),
     );
