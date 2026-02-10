@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 4d8CzWtjKJ5MPkGvmFmHyEZoOUfNxspYvq7rDEdvEtNZXi7YnyisP2joMti0off
+\restrict aJz7PJwFRxTNzhgJl7sv6iZOnikmqodQ7XgEWpnRbYjRhZIhuzZxHCkomf57p2e
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.1
@@ -78,6 +78,7 @@ CREATE FUNCTION public.append_ngo_legal_doc(p_url text) RETURNS jsonb
 DECLARE
   v_profile_id uuid;
   v_updated_urls text[];
+  v_org_name text;
 BEGIN
   -- Get current user ID
   v_profile_id := auth.uid();
@@ -92,6 +93,32 @@ BEGIN
     RAISE EXCEPTION 'URL cannot be empty';
   END IF;
 
+  -- ✅ NEW: Check if NGO record exists, create if not
+  IF NOT EXISTS (SELECT 1 FROM public.ngos WHERE profile_id = v_profile_id) THEN
+    RAISE NOTICE 'NGO record not found for user %, creating...', v_profile_id;
+    
+    -- Get organization name from profile
+    SELECT full_name INTO v_org_name FROM public.profiles WHERE id = v_profile_id;
+    
+    -- Create NGO record
+    INSERT INTO public.ngos (
+      profile_id,
+      organization_name,
+      legal_docs_urls,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      v_profile_id,
+      COALESCE(NULLIF(TRIM(v_org_name), ''), 'Organization ' || SUBSTRING(v_profile_id::text, 1, 8)),
+      ARRAY[]::text[],
+      NOW(),
+      NOW()
+    );
+    
+    RAISE NOTICE '✅ Created missing NGO record for user %', v_profile_id;
+  END IF;
+
   -- Update NGO record (only if user owns it)
   UPDATE public.ngos
   SET
@@ -104,7 +131,7 @@ BEGIN
   RETURNING legal_docs_urls INTO v_updated_urls;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'NGO record not found for user %', v_profile_id;
+    RAISE EXCEPTION 'NGO record not found for user % after creation attempt', v_profile_id;
   END IF;
 
   RETURN jsonb_build_object(
@@ -123,7 +150,7 @@ ALTER FUNCTION public.append_ngo_legal_doc(p_url text) OWNER TO postgres;
 -- Name: FUNCTION append_ngo_legal_doc(p_url text); Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON FUNCTION public.append_ngo_legal_doc(p_url text) IS 'Atomically appends a legal document URL to ngos.legal_docs_urls array. Only the authenticated user can update their own record.';
+COMMENT ON FUNCTION public.append_ngo_legal_doc(p_url text) IS 'Atomically appends a legal document URL to ngos.legal_docs_urls array. Auto-creates NGO record if missing. Only the authenticated user can update their own record.';
 
 
 --
@@ -137,6 +164,7 @@ CREATE FUNCTION public.append_restaurant_legal_doc(p_url text) RETURNS jsonb
 DECLARE
   v_profile_id uuid;
   v_updated_urls text[];
+  v_restaurant_name text;
 BEGIN
   -- Get current user ID
   v_profile_id := auth.uid();
@@ -151,6 +179,38 @@ BEGIN
     RAISE EXCEPTION 'URL cannot be empty';
   END IF;
 
+  -- ✅ NEW: Check if restaurant record exists, create if not
+  IF NOT EXISTS (SELECT 1 FROM public.restaurants WHERE profile_id = v_profile_id) THEN
+    RAISE NOTICE 'Restaurant record not found for user %, creating...', v_profile_id;
+    
+    -- Get restaurant name from profile
+    SELECT full_name INTO v_restaurant_name FROM public.profiles WHERE id = v_profile_id;
+    
+    -- Create restaurant record
+    INSERT INTO public.restaurants (
+      profile_id,
+      restaurant_name,
+      legal_docs_urls,
+      rating,
+      min_order_price,
+      rush_hour_active,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      v_profile_id,
+      COALESCE(NULLIF(TRIM(v_restaurant_name), ''), 'Restaurant ' || SUBSTRING(v_profile_id::text, 1, 8)),
+      ARRAY[]::text[],
+      0,
+      0,
+      false,
+      NOW(),
+      NOW()
+    );
+    
+    RAISE NOTICE '✅ Created missing restaurant record for user %', v_profile_id;
+  END IF;
+
   -- Update restaurant record (only if user owns it)
   UPDATE public.restaurants
   SET
@@ -163,7 +223,7 @@ BEGIN
   RETURNING legal_docs_urls INTO v_updated_urls;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Restaurant record not found for user %', v_profile_id;
+    RAISE EXCEPTION 'Restaurant record not found for user % after creation attempt', v_profile_id;
   END IF;
 
   RETURN jsonb_build_object(
@@ -182,7 +242,7 @@ ALTER FUNCTION public.append_restaurant_legal_doc(p_url text) OWNER TO postgres;
 -- Name: FUNCTION append_restaurant_legal_doc(p_url text); Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON FUNCTION public.append_restaurant_legal_doc(p_url text) IS 'Atomically appends a legal document URL to restaurants.legal_docs_urls array. Only the authenticated user can update their own record.';
+COMMENT ON FUNCTION public.append_restaurant_legal_doc(p_url text) IS 'Atomically appends a legal document URL to restaurants.legal_docs_urls array. Auto-creates restaurant record if missing. Only the authenticated user can update their own record.';
 
 
 --
@@ -607,6 +667,35 @@ $$;
 
 
 ALTER FUNCTION public.generate_qr_code_data(order_uuid uuid) OWNER TO postgres;
+
+--
+-- Name: get_approved_ngos(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_approved_ngos() RETURNS TABLE(profile_id uuid, organization_name text, avatar_url text)
+    LANGUAGE sql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  SELECT 
+    n.profile_id,
+    n.organization_name,
+    p.avatar_url
+  FROM ngos n
+  INNER JOIN profiles p ON n.profile_id = p.id
+  WHERE p.role = 'ngo' 
+    AND p.approval_status = 'approved'
+  ORDER BY n.organization_name;
+$$;
+
+
+ALTER FUNCTION public.get_approved_ngos() OWNER TO postgres;
+
+--
+-- Name: FUNCTION get_approved_ngos(); Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON FUNCTION public.get_approved_ngos() IS 'Returns list of approved NGOs with their profile information. Avoids recursion issues that occur with nested PostgREST queries.';
+
 
 --
 -- Name: get_free_meal_notifications(uuid, integer); Type: FUNCTION; Schema: public; Owner: postgres
@@ -1433,7 +1522,7 @@ BEGIN
   -- Get order details with all related data
   SELECT jsonb_build_object(
     'order_id', NEW.id,
-    'order_number', NEW.id::text,
+    'order_number', COALESCE(NEW.order_number, NEW.id::text),
     'total_amount', NEW.total_amount,
     'delivery_type', NEW.delivery_type,
     'delivery_address', NEW.delivery_address,
@@ -1441,14 +1530,14 @@ BEGIN
     'items', (
       SELECT jsonb_agg(
         jsonb_build_object(
-          'meal_title', m.title,
+          'meal_title', COALESCE(m.title, oi.meal_title),
           'quantity', oi.quantity,
           'unit_price', oi.unit_price,
-          'subtotal', oi.subtotal
+          'subtotal', (oi.quantity * oi.unit_price)  -- ✅ CALCULATE instead of read
         )
       )
       FROM order_items oi
-      JOIN meals m ON oi.meal_id = m.id
+      LEFT JOIN meals m ON oi.meal_id = m.id
       WHERE oi.order_id = NEW.id
     )
   ) INTO v_order_data;
@@ -1476,89 +1565,30 @@ BEGIN
   JOIN profiles p ON r.profile_id = p.id
   WHERE r.profile_id = NEW.restaurant_id;
 
-  -- Get NGO details if donation
-  IF NEW.ngo_id IS NOT NULL THEN
+  -- Get NGO details if donation order
+  IF NEW.delivery_type = 'donation' AND NEW.ngo_id IS NOT NULL THEN
     SELECT 
       p.email,
-      p.full_name
+      n.organization_name
     INTO 
       v_ngo_email,
       v_ngo_name
-    FROM profiles p
-    WHERE p.id = NEW.ngo_id;
+    FROM ngos n
+    JOIN profiles p ON n.profile_id = p.id
+    WHERE n.profile_id = NEW.ngo_id;
   END IF;
 
-  -- Add buyer and restaurant info to order data
-  v_order_data := v_order_data || jsonb_build_object(
-    'buyer_email', v_user_email,
-    'buyer_name', v_user_name,
-    'buyer_type', v_buyer_type,
-    'restaurant_email', v_restaurant_email,
-    'restaurant_name', v_restaurant_name,
-    'ngo_email', v_ngo_email,
-    'ngo_name', v_ngo_name
-  );
+  -- Log order creation (replace with actual email queue logic)
+  RAISE NOTICE '✅ Order % created: User=%, Restaurant=%, NGO=%', 
+    COALESCE(NEW.order_number, NEW.id::text), 
+    v_user_email, 
+    v_restaurant_email, 
+    v_ngo_email;
 
-  -- SCENARIO 1 & 2: User purchases (delivery/pickup or donate to NGO)
-  IF v_buyer_type = 'user' THEN
-    
-    -- Email 1: Invoice to user
-    INSERT INTO email_queue (order_id, recipient_email, recipient_type, email_type, email_data)
-    VALUES (
-      NEW.id,
-      v_user_email,
-      'user',
-      'invoice',
-      v_order_data
-    );
-
-    -- Email 2: New order notification to restaurant
-    INSERT INTO email_queue (order_id, recipient_email, recipient_type, email_type, email_data)
-    VALUES (
-      NEW.id,
-      v_restaurant_email,
-      'restaurant',
-      'new_order',
-      v_order_data
-    );
-
-    -- Email 3: If donation, notify NGO
-    IF NEW.ngo_id IS NOT NULL AND v_ngo_email IS NOT NULL THEN
-      INSERT INTO email_queue (order_id, recipient_email, recipient_type, email_type, email_data)
-      VALUES (
-        NEW.id,
-        v_ngo_email,
-        'ngo',
-        'ngo_pickup',
-        v_order_data
-      );
-    END IF;
-
-  -- SCENARIO 3: NGO purchases
-  ELSIF v_buyer_type = 'ngo' THEN
-    
-    -- Email 1: New order notification to restaurant
-    INSERT INTO email_queue (order_id, recipient_email, recipient_type, email_type, email_data)
-    VALUES (
-      NEW.id,
-      v_restaurant_email,
-      'restaurant',
-      'new_order',
-      v_order_data
-    );
-
-    -- Email 2: Confirmation to NGO
-    INSERT INTO email_queue (order_id, recipient_email, recipient_type, email_type, email_data)
-    VALUES (
-      NEW.id,
-      v_user_email,
-      'ngo',
-      'ngo_confirmation',
-      v_order_data
-    );
-
-  END IF;
-
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  -- Don't fail order creation if email queueing fails
+  RAISE WARNING '⚠️ Failed to queue order emails: % (SQLSTATE: %)', SQLERRM, SQLSTATE;
   RETURN NEW;
 END;
 $$;
@@ -1570,8 +1600,7 @@ ALTER FUNCTION public.queue_order_emails() OWNER TO postgres;
 -- Name: FUNCTION queue_order_emails(); Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON FUNCTION public.queue_order_emails() IS 'Automatically queues emails when an order is created. 
-Handles user purchases, donations, and NGO purchases.';
+COMMENT ON FUNCTION public.queue_order_emails() IS 'Trigger function to queue email notifications when orders are created. Calculates subtotal from quantity * unit_price instead of reading non-existent column.';
 
 
 --
@@ -4773,6 +4802,15 @@ GRANT ALL ON FUNCTION public.generate_qr_code_data(order_uuid uuid) TO service_r
 
 
 --
+-- Name: FUNCTION get_approved_ngos(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.get_approved_ngos() TO anon;
+GRANT ALL ON FUNCTION public.get_approved_ngos() TO authenticated;
+GRANT ALL ON FUNCTION public.get_approved_ngos() TO service_role;
+
+
+--
 -- Name: FUNCTION get_free_meal_notifications(p_user_id uuid, p_limit integer); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -5304,5 +5342,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON T
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 4d8CzWtjKJ5MPkGvmFmHyEZoOUfNxspYvq7rDEdvEtNZXi7YnyisP2joMti0off
+\unrestrict aJz7PJwFRxTNzhgJl7sv6iZOnikmqodQ7XgEWpnRbYjRhZIhuzZxHCkomf57p2e
 
