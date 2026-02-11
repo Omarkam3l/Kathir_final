@@ -44,7 +44,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       debugPrint('✅ NGO Query successful. Raw response count: ${(response as List).length}');
 
-      if (response == null || (response as List).isEmpty) {
+      if ((response).isEmpty) {
         debugPrint('⚠️ No approved NGOs found in database');
         setState(() {
           _ngos = [];
@@ -54,7 +54,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       }
 
       setState(() {
-        _ngos = (response as List).map((ngo) {
+        _ngos = (response).map((ngo) {
           debugPrint('  Processing NGO: ${ngo['organization_name']} (ID: ${ngo['profile_id']})');
           return {
             'id': ngo['profile_id'],
@@ -631,7 +631,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.local_offer, color: primaryColor, size: 20),
+                      const Icon(Icons.local_offer, color: primaryColor, size: 20),
                       const SizedBox(width: 12),
                       Expanded(
                         child: TextField(

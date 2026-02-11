@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/utils/user_role.dart';
 import '../../../../core/utils/auth_logger.dart';
 import '../../../../di/global_injection/app_locator.dart';
+import '../../../user_home/presentation/viewmodels/home_viewmodel.dart';
 import '../../data/models/user_model.dart';
 
 /// Explicit approval status enum to prevent fallback confusion
@@ -316,12 +317,33 @@ class AuthProvider extends ChangeNotifier {
     _passwordRecovery = false;
     _userProfile = null; // Clear profile data
     _isInitialized = true; // Set to true so router doesn't show splash for logged out state
+    
+    // Clear ViewModels state on logout
+    _clearViewModelsState();
+    
     notifyListeners();
   }
 
   void logout() {
     // alias for existing signOut
     signOut();
+  }
+  
+  /// Clear all ViewModels state to prevent cross-session data leakage
+  void _clearViewModelsState() {
+    // Clear HomeViewModel state if it exists
+    // HomeViewModel is registered as lazy singleton in DI
+    try {
+      final homeVM = AppLocator.I.get<HomeViewModel>();
+      homeVM.clearState();
+    } catch (_) {
+      // HomeViewModel might not be registered yet (e.g., first app launch)
+      // or user never visited home screen
+    }
+    
+    // Note: NgoHomeViewModel is created via ChangeNotifierProvider in router,
+    // not registered in DI, so it will be disposed naturally when user logs out
+    // and navigates away from NGO screens.
   }
 
   Future<void> updateProfile({String? name, String? phone}) async {

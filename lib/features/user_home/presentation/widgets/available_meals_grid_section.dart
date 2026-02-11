@@ -57,11 +57,11 @@ class AvailableMealsGridSection extends StatelessWidget {
           child: GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               mainAxisSpacing: 16,
               crossAxisSpacing: 16,
-              childAspectRatio: 0.72,
+              childAspectRatio: MediaQuery.of(context).size.width > 600 ? 0.8 : 0.65,
             ),
             itemCount: meals.length,
             itemBuilder: (_, i) => MealCardGrid(offer: meals[i]),

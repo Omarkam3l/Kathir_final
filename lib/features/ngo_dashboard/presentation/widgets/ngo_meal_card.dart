@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/utils/app_colors.dart';
 import '../../../user_home/domain/entities/meal.dart';
 
 class NgoMealCard extends StatelessWidget {

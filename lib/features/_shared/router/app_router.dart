@@ -32,7 +32,6 @@ import '../../authentication/presentation/screens/pending_approval_screen.dart';
 import '../../authentication/presentation/screens/auth_splash_screen.dart';
 import '../../meals/presentation/screens/meal_detail.dart';
 import '../../meals/presentation/screens/meal_detail_new.dart';
-import '../../user_home/presentation/screens/favorites_screen_new.dart';
 import '../../user_home/presentation/screens/all_meals_screen.dart';
 import '../../user_home/presentation/viewmodels/favorites_viewmodel.dart';
 import '../../user_home/domain/entities/meal_offer.dart';

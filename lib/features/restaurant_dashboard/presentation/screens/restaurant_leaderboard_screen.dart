@@ -286,7 +286,7 @@ class _RestaurantLeaderboardScreenState
     final top3 = _leaderboard.take(3).toList();
     
     // Arrange as: 2nd, 1st, 3rd
-    final rank1 = top3.length > 0 ? top3[0] : null;
+    final rank1 = top3.isNotEmpty ? top3[0] : null;
     final rank2 = top3.length > 1 ? top3[1] : null;
     final rank3 = top3.length > 2 ? top3[2] : null;
     
@@ -458,7 +458,7 @@ class _RestaurantLeaderboardScreenState
               color: AppColors.primaryGreen.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
@@ -466,7 +466,7 @@ class _RestaurantLeaderboardScreenState
                   size: 12,
                   color: AppColors.primaryGreen,
                 ),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 Text(
                   'HERO',
                   style: TextStyle(
@@ -608,7 +608,7 @@ class _RestaurantLeaderboardScreenState
           // Score
           Text(
             '${entry.score}',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
               color: AppColors.primaryGreen,
@@ -625,7 +625,7 @@ class _RestaurantLeaderboardScreenState
       child: Center(
         child: Text(
           name.isNotEmpty ? name[0].toUpperCase() : '?',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: AppColors.primaryGreen,
@@ -654,9 +654,9 @@ class _RestaurantLeaderboardScreenState
               color: Colors.red,
             ),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'Failed to load leaderboard',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),

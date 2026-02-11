@@ -94,9 +94,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
+      return const Scaffold(
         backgroundColor: AppColors.backgroundLight,
-        body: const Center(child: CircularProgressIndicator()),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -578,7 +578,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

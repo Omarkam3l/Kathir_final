@@ -129,7 +129,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                       ),
                       prefixIcon: Icon(Icons.search, color: textSub),
                       suffixIcon: IconButton(
-                        icon: Icon(Icons.tune, color: AppColors.primaryGreen, size: 20),
+                        icon: const Icon(Icons.tune, color: AppColors.primaryGreen, size: 20),
                         onPressed: () {
                           // TODO: Show filter options
                         },
@@ -228,7 +228,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                             color: AppColors.primaryGreen,
                           ),
                         ),
-                        Icon(
+                        const Icon(
                           Icons.expand_more,
                           size: 16,
                           color: AppColors.primaryGreen,

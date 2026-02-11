@@ -427,7 +427,7 @@ class _RestaurantOrderDetailScreenState extends State<RestaurantOrderDetailScree
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

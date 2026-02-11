@@ -61,57 +61,38 @@ class _RestaurantHomeScreenState extends State<RestaurantHomeScreen> {
         _restaurantName = restaurantRes['restaurant_name'];
       }
 
-      // Get all meals for KPIs
-      final allMeals = await _supabase
+      // OPTIMIZED: Reduced queries and columns
+      // Query 1: Get meals with minimal columns (was fetching all columns)
+      final mealsRes = await _supabase
           .from('meals')
-          .select()
-          .eq('restaurant_id', _restaurantId ?? userId);
+          .select('id, title, image_url, quantity_available, status, expiry_date, created_at')
+          .eq('restaurant_id', _restaurantId ?? userId)
+          .order('created_at', ascending: false);
 
-      _activeMeals = (allMeals as List).where((m) => 
+      final allMeals = List<Map<String, dynamic>>.from(mealsRes);
+      
+      _activeMeals = allMeals.where((m) => 
         DateTime.parse(m['expiry_date']).isAfter(DateTime.now())
       ).length;
 
       // Get recent meals (last 4)
-      final recentMealsRes = await _supabase
-          .from('meals')
-          .select()
+      _recentMeals = allMeals.take(4).toList();
+
+      // Query 2: Get orders with minimal columns (reduced from deep 3-level join)
+      final ordersRes = await _supabase
+          .from('orders')
+          .select('id, status, total_amount, created_at, user_id')
           .eq('restaurant_id', _restaurantId ?? userId)
-          .order('created_at', ascending: false)
-          .limit(4);
+          .order('created_at', ascending: false);
 
-      _recentMeals = List<Map<String, dynamic>>.from(recentMealsRes);
-
-      // Get active orders (not completed or cancelled)
-        final activeOrdersRes = await _supabase
-            .from('orders')
-            .select('''
-              *,
-              order_items(
-                id,
-                quantity,
-                unit_price,
-                meals!meal_id(
-                  title,
-                  image_url
-                )
-              ),
-              profiles!user_id(
-                full_name
-              )
-            ''')
-            .eq('restaurant_id', _restaurantId ?? userId)
-            .inFilter('status', ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'out_for_delivery'])
-            .order('created_at', ascending: false);
-
-        _activeOrders = List<Map<String, dynamic>>.from(activeOrdersRes);
+      final allOrders = List<Map<String, dynamic>>.from(ordersRes);
+      
+      // Filter active orders in memory (faster than DB filter for small datasets)
+      _activeOrders = allOrders.where((o) => 
+        ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'out_for_delivery'].contains(o['status'])
+      ).toList();
 
       // Calculate KPIs
-      final allOrdersRes = await _supabase
-          .from('orders')
-          .select('total_amount, created_at, status')
-          .eq('restaurant_id', _restaurantId ?? userId);
-
-      final allOrders = allOrdersRes as List;
       _totalOrders = allOrders.length;
       _pendingOrders = _activeOrders.where((o) => o['status'] == 'pending').length;
 

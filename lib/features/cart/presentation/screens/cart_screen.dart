@@ -723,7 +723,7 @@ class _BillDetailsCard extends StatelessWidget {
               foodie.deliveryFee == 0 ? accentColor : textColor,
               isValueStyled: foodie.deliveryFee == 0),
           const SizedBox(height: 8),
-          _row('Taxes & Charges', '\0.00', textColor), // Mocked for now
+          _row('Taxes & Charges', '0.00', textColor), // Mocked for now
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Divider(color: isDark ? Colors.white10 : Colors.grey[200]),

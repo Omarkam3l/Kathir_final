@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
 
-/// Horizontal filter chips: All (selected), Vegetarian, Under 5km, Bakery, Produce.
+/// Horizontal filter chips: All (selected), Meals, Bakery, Meat & Poultry, Seafood, Vegetables, Desserts, Groceries.
 class CategoryChipsWidget extends StatelessWidget {
   final String selectedCategory;
   final ValueChanged<String> onCategoryChanged;
 
   static const List<String> categories = [
     'All',
-    'Vegetarian',
-    'Under 5km',
+    'Meals',
     'Bakery',
-    'Produce',
+    'Meat & Poultry',
+    'Seafood',
+    'Vegetables',
+    'Desserts',
+    'Groceries',
   ];
 
   const CategoryChipsWidget({
