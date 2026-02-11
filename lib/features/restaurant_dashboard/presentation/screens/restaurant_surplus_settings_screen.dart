@@ -224,7 +224,7 @@ class _RestaurantSurplusSettingsScreenState
                 color: AppColors.primaryGreen.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.access_time,
                 color: AppColors.primaryGreen,
                 size: 24,
@@ -290,7 +290,7 @@ class _RestaurantSurplusSettingsScreenState
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
+                  const Text(
                     'High discount period',
                     style: TextStyle(
                       fontSize: 14,
@@ -328,7 +328,7 @@ class _RestaurantSurplusSettingsScreenState
                           _isActive = value;
                         });
                       },
-                      activeColor: AppColors.primaryGreen,
+                      activeThumbColor: AppColors.primaryGreen,
                     ),
                   ],
                 ),
@@ -385,7 +385,7 @@ class _RestaurantSurplusSettingsScreenState
       children: [
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: AppColors.primaryGreen,
@@ -491,7 +491,7 @@ class _RestaurantSurplusSettingsScreenState
               ),
               Text(
                 '${_discountPercentage.round()}%',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                   color: AppColors.primaryGreen,

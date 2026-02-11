@@ -332,7 +332,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         );
       },

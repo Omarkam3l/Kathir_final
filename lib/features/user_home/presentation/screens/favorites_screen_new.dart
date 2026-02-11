@@ -1016,7 +1016,7 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
                                     ],
                                   ),
                                 ),
-                                Icon(
+                                const Icon(
                                   Icons.add_circle_outline,
                                   color: AppColors.primary,
                                 ),

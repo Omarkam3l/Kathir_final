@@ -360,7 +360,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                   ],
                 ),
               );
-            }).toList(),
+            }),
 
             const SizedBox(height: 24),
 

@@ -24,7 +24,7 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<NgoHomeViewModel>().loadData();
+      context.read<NgoHomeViewModel>().loadIfNeeded();
     });
   }
 
@@ -45,7 +45,7 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
         child: Consumer<NgoHomeViewModel>(
           builder: (context, viewModel, _) {
             return RefreshIndicator(
-              onRefresh: () => viewModel.loadData(),
+              onRefresh: () => viewModel.loadData(forceRefresh: true),
               child: CustomScrollView(
                 slivers: [
                   _buildHeader(isDark, viewModel),

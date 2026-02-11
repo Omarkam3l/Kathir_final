@@ -409,7 +409,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '${(_restaurantData?['rating'] as num?)?.toStringAsFixed(1) ?? '0.0'}',
+                                (_restaurantData?['rating'] as num?)?.toStringAsFixed(1) ?? '0.0',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -451,7 +451,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                               _buildInfoRow(
                                 Icons.star,
                                 'Rating',
-                                '${(_restaurantData?['rating'] as num?)?.toStringAsFixed(1) ?? '0.0'}',
+                                (_restaurantData?['rating'] as num?)?.toStringAsFixed(1) ?? '0.0',
                               ),
                             ],
                           ),
@@ -494,16 +494,6 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                             'Edit Profile',
                             Icons.edit,
                             _showEditDialog,
-                            surface,
-                            isDark,
-                          ),
-                          const SizedBox(height: 12),
-                          _buildActionButton(
-                            'Change Password',
-                            Icons.lock,
-                            () {
-                              context.push('/profile/change-password');
-                            },
                             surface,
                             isDark,
                           ),

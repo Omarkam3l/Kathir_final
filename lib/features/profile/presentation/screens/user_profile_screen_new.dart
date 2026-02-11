@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,7 +7,6 @@ import '../../../authentication/presentation/blocs/auth_provider.dart';
 import '../../../../core/utils/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'addresses_screen.dart';
-import '../../../orders/presentation/screens/my_orders_screen.dart';
 
 class UserProfileScreenNew extends StatefulWidget {
   static const routeName = '/user-profile-new';

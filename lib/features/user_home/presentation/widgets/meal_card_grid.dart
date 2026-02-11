@@ -39,7 +39,7 @@ class MealCardGrid extends StatelessWidget {
             border: Border.all(color: border, width: 1),
             boxShadow: [
               BoxShadow(
-                color: AppColors.black.withOpacity(0.05),
+                color: AppColors.black.withValues(alpha: 0.05),
                 blurRadius: 4,
                 offset: const Offset(0, 1),
               ),
@@ -49,14 +49,13 @@ class MealCardGrid extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Image + "X left" badge - exactly 128px height
+              // Image + "X left" badge - responsive height
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(12),
                 ),
-                child: SizedBox(
-                  height: 128,
-                  width: double.infinity,
+                child: AspectRatio(
+                  aspectRatio: 1.2,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -64,7 +63,7 @@ class MealCardGrid extends StatelessWidget {
                         offer.imageUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: AppColors.primary.withValues(alpha: 0.1),
                           child: const Icon(
                             Icons.restaurant,
                             size: 40,
@@ -103,48 +102,48 @@ class MealCardGrid extends StatelessWidget {
                   ),
                 ),
               ),
-              // Content - exactly 12px padding
-              Padding(
-                padding: const EdgeInsets.all(12),
+              // Content - flexible padding
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title - 14px font
+                    // Title - 13px font, max 2 lines
                     Text(
                       offer.title.isEmpty ? 'Delicious Meal' : offer.title,
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: textMain,
-                        height: 1.3,
+                        height: 1.2,
                       ),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
-                    // Restaurant - 12px font
+                    const SizedBox(height: 3),
+                    // Restaurant - 11px font
                     Text(
                       offer.restaurant.name,
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
+                        fontSize: 11,
                         color: muted,
                         height: 1.2,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
-                    // Location - 10px font
+                    const SizedBox(height: 6),
+                    // Location - 9px font
                     Row(
                       children: [
-                        const Icon(Icons.location_on, size: 14, color: muted),
-                        const SizedBox(width: 4),
+                        const Icon(Icons.location_on, size: 12, color: muted),
+                        const SizedBox(width: 3),
                         Flexible(
                           child: Text(
                             'Cairo, Egypt • $pickupStr',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10,
+                              fontSize: 9,
                               fontWeight: FontWeight.w500,
                               color: muted,
                               height: 1.2,
@@ -155,7 +154,7 @@ class MealCardGrid extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const Spacer(),
                     // Price row with button
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -165,22 +164,23 @@ class MealCardGrid extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Original price - 12px font
-                              Text(
-                                'EGP ${offer.originalPrice.toStringAsFixed(2)}',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: const Color(0xFF9CA3AF),
-                                  decoration: TextDecoration.lineThrough,
-                                  height: 1.2,
+                              // Original price - 11px font, only show if different
+                              if (offer.originalPrice > offer.donationPrice)
+                                Text(
+                                  'EGP ${offer.originalPrice.toStringAsFixed(0)}',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF9CA3AF),
+                                    decoration: TextDecoration.lineThrough,
+                                    height: 1.2,
+                                  ),
                                 ),
-                              ),
-                              // Discounted price - 18px font
+                              // Discounted price - 16px font
                               Text(
-                                'EGP ${offer.donationPrice.toStringAsFixed(2)}',
+                                'EGP ${offer.donationPrice.toStringAsFixed(0)}',
                                 style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 18,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.primary,
                                   height: 1.2,
@@ -189,11 +189,12 @@ class MealCardGrid extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         _AddButton(offer: offer),
                       ],
                     ),
                   ],
+                ),
                 ),
               ),
             ],

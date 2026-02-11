@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../ngo_dashboard/presentation/viewmodels/ngo_chat_list_viewmodel.dart';
 import '../../../ngo_dashboard/domain/entities/conversation.dart';
-import '../widgets/restaurant_bottom_nav.dart';
 
 class RestaurantChatListScreen extends StatefulWidget {
   const RestaurantChatListScreen({super.key});

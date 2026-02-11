@@ -160,14 +160,14 @@ class MealCardWithRushHour extends StatelessWidget {
                   // Rush Hour Badge
                   if (meal.rushHourActiveNow) ...[
                     const SizedBox(height: 6),
-                    Row(
+                    const Row(
                       children: [
                         Icon(
                           Icons.bolt,
                           size: 14,
                           color: AppColors.primaryGreen,
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Text(
                           'Rush Hour Active',
                           style: TextStyle(

@@ -173,7 +173,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
           SnackBar(
             content: Text('Error updating address: $e'),
             backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -280,7 +280,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
           SnackBar(
             content: Text('Error setting default address: $e'),
             backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
+            duration: const Duration(seconds: 3),
           ),
         );
       }

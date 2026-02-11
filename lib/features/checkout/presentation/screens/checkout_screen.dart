@@ -37,19 +37,42 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Future<void> _loadNgos() async {
     setState(() => _isLoadingNgos = true);
     try {
-      final response = await _supabase
-          .from('profiles')
-          .select('id, full_name, avatar_url')
-          .eq('role', 'ngo')
-          .order('full_name');
+      debugPrint('🔍 Loading NGOs using RPC function...');
+      
+      // Use RPC function to avoid recursion issues
+      final response = await _supabase.rpc('get_approved_ngos');
+
+      debugPrint('✅ NGO Query successful. Raw response count: ${(response as List).length}');
+
+      if ((response).isEmpty) {
+        debugPrint('⚠️ No approved NGOs found in database');
+        setState(() {
+          _ngos = [];
+          _isLoadingNgos = false;
+        });
+        return;
+      }
 
       setState(() {
-        _ngos = List<Map<String, dynamic>>.from(response);
+        _ngos = (response).map((ngo) {
+          debugPrint('  Processing NGO: ${ngo['organization_name']} (ID: ${ngo['profile_id']})');
+          return {
+            'id': ngo['profile_id'],
+            'full_name': ngo['organization_name'],
+            'avatar_url': ngo['avatar_url'],
+          };
+        }).toList();
         _isLoadingNgos = false;
       });
-    } catch (e) {
-      debugPrint('Error loading NGOs: $e');
-      setState(() => _isLoadingNgos = false);
+      
+      debugPrint('✅ Loaded ${_ngos.length} approved NGOs');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error loading NGOs: $e');
+      debugPrint('Stack trace: $stackTrace');
+      setState(() {
+        _ngos = [];
+        _isLoadingNgos = false;
+      });
     }
   }
 
@@ -167,7 +190,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   SizedBox(
                     width: 180,
                     child: ElevatedButton(
-                      onPressed: _isCreatingOrder ? null : () async {
+                      onPressed: _isCreatingOrder || _isButtonDisabled(foodie) ? null : () async {
                         final userId = _supabase.auth.currentUser?.id;
                         if (userId == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -186,6 +209,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         setState(() => _isCreatingOrder = true);
 
                         try {
+                          // Validate NGO selection for donation orders
+                          if (foodie.deliveryMethod == DeliveryMethod.donate) {
+                            if (_selectedNgoId == null || _selectedNgoId!.isEmpty) {
+                              throw Exception('Please select an NGO for donation');
+                            }
+                          }
+
                           // Get delivery address based on delivery method
                           String? finalAddress;
                           if (foodie.deliveryMethod == DeliveryMethod.delivery) {
@@ -210,6 +240,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             total: foodie.total,
                             paymentMethod: _paymentMethod,
                             deliveryAddress: finalAddress,
+                            ngoId: _selectedNgoId,  // Pass NGO ID
                           );
 
                           // Clear memory cart
@@ -232,14 +263,36 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               context.go('/my-orders');
                             }
                           }
-                        } catch (e) {
+                        } catch (e, stackTrace) {
+                          debugPrint('❌ Error creating order: $e');
+                          debugPrint('Stack trace: $stackTrace');
                           setState(() => _isCreatingOrder = false);
                           
                           if (mounted) {
+                            // Parse error message for user-friendly display
+                            String errorMessage = 'Failed to create order';
+                            if (e.toString().contains('platform_fee')) {
+                              errorMessage = 'Database error: Invalid fee structure';
+                            } else if (e.toString().contains('subtotal')) {
+                              errorMessage = 'Database error: Invalid order calculation';
+                            } else if (e.toString().contains('NGO')) {
+                              errorMessage = 'Please select an NGO for donation';
+                            } else if (e.toString().contains('address')) {
+                              errorMessage = 'Please add a delivery address';
+                            } else {
+                              errorMessage = e.toString().replaceAll('Exception: ', '');
+                            }
+                            
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Error creating order: $e'),
+                                content: Text(errorMessage),
                                 backgroundColor: Colors.red,
+                                duration: const Duration(seconds: 5),
+                                action: SnackBarAction(
+                                  label: 'Dismiss',
+                                  textColor: Colors.white,
+                                  onPressed: () {},
+                                ),
                               ),
                             );
                           }
@@ -487,10 +540,65 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                           }).toList(),
                                           onChanged: (value) {
                                             setState(() => _selectedNgoId = value);
+                                            debugPrint('✅ NGO selected: $value');
                                           },
                                         ),
                                       ),
                                     ),
+                              // Warning if no NGO selected
+                              if (_ngos.isEmpty && !_isLoadingNgos) ...[
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange[50],
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.orange[200]!),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.warning_amber, size: 20, color: Colors.orange[700]),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'No approved NGOs available. Please contact support.',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.orange[900],
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ] else if (_selectedNgoId == null && foodie.deliveryMethod == DeliveryMethod.donate) ...[
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red[50],
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.red[200]!),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.error_outline, size: 20, color: Colors.red[700]),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Please select an NGO to continue',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.red[900],
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ],
                           ],
                         ),
@@ -523,7 +631,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.local_offer, color: primaryColor, size: 20),
+                      const Icon(Icons.local_offer, color: primaryColor, size: 20),
                       const SizedBox(width: 12),
                       Expanded(
                         child: TextField(
@@ -804,6 +912,55 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Check if Pay Now button should be disabled
+  bool _isButtonDisabled(FoodieState foodie) {
+    // Check if cart is empty
+    if (foodie.cartItems.isEmpty) {
+      return true;
+    }
+
+    // Check delivery method specific requirements
+    if (foodie.deliveryMethod == DeliveryMethod.delivery) {
+      // Delivery requires address
+      if (_deliveryAddress == null || _deliveryAddress!.isEmpty) {
+        return true;
+      }
+    } else if (foodie.deliveryMethod == DeliveryMethod.donate) {
+      // Donation requires NGO selection
+      if (_selectedNgoId == null || _selectedNgoId!.isEmpty) {
+        return true;
+      }
+      // Also check if NGOs are available
+      if (_ngos.isEmpty && !_isLoadingNgos) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  Widget _diamondButton({required IconData icon, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(icon, size: 20),
       ),
     );
   }

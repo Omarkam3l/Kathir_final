@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import '../../../orders/presentation/models/figma_models.dart';
-import '../../../orders/presentation/screens/order_tracking_screen.dart';
 
 class NotificationsScreen extends StatelessWidget {
   static const routeName = '/notifications';
@@ -123,9 +122,7 @@ class NotificationsScreen extends StatelessWidget {
                                   children: [
                                     Expanded(
                                       child: TextButton(
-                                        onPressed: () => Navigator.of(context)
-                                            .pushNamed(
-                                                OrderTrackingScreen.routeName),
+                                        onPressed: () => context.go('/my-orders'),
                                         style: TextButton.styleFrom(
                                           foregroundColor:
                                               AppColors.secondaryAccent,
@@ -138,7 +135,7 @@ class NotificationsScreen extends StatelessWidget {
                                               borderRadius:
                                                   BorderRadius.circular(14)),
                                         ),
-                                        child: const Text('Track order'),
+                                        child: const Text('View Orders'),
                                       ),
                                     ),
                                   ],

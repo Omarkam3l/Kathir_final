@@ -5,7 +5,6 @@ import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:kathir_final/features/authentication/presentation/blocs/auth_provider.dart';
 import 'package:kathir_final/features/user_home/domain/entities/meal_offer.dart';
 import 'package:kathir_final/features/user_home/presentation/viewmodels/home_viewmodel.dart';
-import 'package:kathir_final/features/meals/presentation/screens/all_meals_screen.dart';
 import '../widgets/home_header_widget.dart';
 import '../widgets/location_bar_widget.dart';
 import '../widgets/search_bar_widget.dart';
@@ -41,31 +40,16 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       }).toList();
     }
 
-    // Category (keyword-based until we have real categories)
+    // Category - filter by actual meal category from database
     if (_category != 'All') {
-      final k = _categoryKeywords(_category);
       list = list.where((m) {
-        final t = '${m.title} ${m.restaurant.name}'.toLowerCase();
-        return k.any((w) => t.contains(w));
+        // Assuming MealOffer has a category field
+        // If not, we'll need to add it to the entity
+        return m.category == _category;
       }).toList();
     }
 
     return list;
-  }
-
-  List<String> _categoryKeywords(String c) {
-    switch (c) {
-      case 'Vegetarian':
-        return ['veg', 'vegetarian', 'vegan'];
-      case 'Bakery':
-        return ['bakery', 'bread', 'pastry', 'cake', 'sweet'];
-      case 'Produce':
-        return ['produce', 'fruit', 'vegetable', 'green', 'salad'];
-      case 'Under 5km':
-        return []; // no filter; show all
-      default:
-        return [];
-    }
   }
 
   List<MealOffer> get _flashDeals {
@@ -93,7 +77,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       backgroundColor: bg,
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () async => vm.loadAll(),
+          onRefresh: () async => vm.loadAll(forceRefresh: true),
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
@@ -124,16 +108,16 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
               SliverToBoxAdapter(
-                child: TopRatedPartnersSection(restaurants: vm.restaurants),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-              SliverToBoxAdapter(
                 child: AvailableMealsGridSection(
                   meals: _filteredMeals,
                   onSeeAll: () {
                     context.go('/meals/all', extra: vm.meals);
                   },
                 ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              SliverToBoxAdapter(
+                child: TopRatedPartnersSection(restaurants: vm.restaurants),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],

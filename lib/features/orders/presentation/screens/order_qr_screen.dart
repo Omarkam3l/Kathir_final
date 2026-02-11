@@ -105,9 +105,9 @@ class _OrderQRScreenState extends State<OrderQRScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
+      return const Scaffold(
         backgroundColor: AppColors.backgroundLight,
-        body: const Center(child: CircularProgressIndicator()),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -330,7 +330,7 @@ class _OrderQRScreenState extends State<OrderQRScreen> {
                             const SizedBox(height: 16),
                             Row(
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.access_time,
                                   size: 20,
                                   color: AppColors.primary,
