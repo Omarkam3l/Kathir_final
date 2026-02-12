@@ -442,12 +442,12 @@ class _NgoMealDetailScreenState extends State<NgoMealDetailScreen> {
                         child: SizedBox(
                           height: 56,
                           child: ElevatedButton(
-                            onPressed: isClaiming ? null : () {
+                            onPressed: isClaiming ? null : () async {
                               setState(() => isClaiming = true);
                               
                               // Add to cart
                               final cart = context.read<NgoCartViewModel>();
-                              cart.addToCart(meal);
+                              await cart.addToCart(meal);
                               
                               setState(() => isClaiming = false);
                               

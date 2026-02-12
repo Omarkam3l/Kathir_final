@@ -389,7 +389,7 @@ class NgoHomeViewModel extends ChangeNotifier {
 
       // Add to cart instead of creating order immediately
       final cartViewModel = context.read<NgoCartViewModel>();
-      cartViewModel.addToCart(meal);
+      await cartViewModel.addToCart(meal);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

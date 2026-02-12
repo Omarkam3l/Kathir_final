@@ -7,8 +7,24 @@ import '../viewmodels/ngo_cart_viewmodel.dart';
 
 /// NGO Cart Screen - Full Implementation
 /// Displays claimed meals pending pickup with checkout functionality
-class NgoCartScreenFull extends StatelessWidget {
+class NgoCartScreenFull extends StatefulWidget {
   const NgoCartScreenFull({super.key});
+
+  @override
+  State<NgoCartScreenFull> createState() => _NgoCartScreenFullState();
+}
+
+class _NgoCartScreenFullState extends State<NgoCartScreenFull> {
+  @override
+  void initState() {
+    super.initState();
+    // Load cart on init
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<NgoCartViewModel>().loadCart();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +37,11 @@ class NgoCartScreenFull extends StatelessWidget {
         bottom: false,
         child: Consumer<NgoCartViewModel>(
           builder: (context, cart, _) {
+            // Show loading state
+            if (cart.isLoading && cart.isEmpty) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
             if (cart.isEmpty) {
               return _buildEmptyCart(context, isDark);
             }
@@ -31,17 +52,20 @@ class NgoCartScreenFull extends StatelessWidget {
                   children: [
                     _buildAppBar(context, cart, isDark),
                     Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 140),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildCartMeta(cart, isDark),
-                            const SizedBox(height: 16),
-                            _buildCartItems(cart, isDark),
-                            const SizedBox(height: 24),
-                            _buildBillSummary(cart, isDark),
-                          ],
+                      child: RefreshIndicator(
+                        onRefresh: () => cart.loadCart(),
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 140),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildCartMeta(cart, isDark),
+                              const SizedBox(height: 16),
+                              _buildCartItems(cart, isDark),
+                              const SizedBox(height: 24),
+                              _buildBillSummary(cart, isDark),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -257,7 +281,9 @@ class NgoCartScreenFull extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
                 icon: const Icon(Icons.close, size: 20, color: Colors.red),
-                onPressed: () => cart.removeFromCart(meal.id),
+                onPressed: () async {
+                  await cart.removeFromCart(meal.id);
+                },
               ),
               const SizedBox(height: 16),
               Container(
@@ -268,7 +294,7 @@ class NgoCartScreenFull extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    _qtyBtn(context, '-', () => cart.decrement(meal.id), isDark),
+                    _qtyBtn(context, '-', () async => await cart.decrement(meal.id), isDark),
                     SizedBox(
                       width: 24,
                       child: Text(
@@ -283,7 +309,7 @@ class NgoCartScreenFull extends StatelessWidget {
                     _qtyBtn(
                       context,
                       '+',
-                      canAddMore ? () => cart.increment(meal.id) : () {},
+                      canAddMore ? () async => await cart.increment(meal.id) : () {},
                       isDark,
                       isAdd: true,
                       isDisabled: isAtMax,
@@ -506,7 +532,7 @@ class NgoCartScreenFull extends StatelessWidget {
               ),
             ),
             child: ElevatedButton(
-              onPressed: () => context.push('/ngo/checkout'),
+              onPressed: () => context.push('/ngo/checkout', extra: cart),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryGreen,
                 foregroundColor: Colors.white,
@@ -665,12 +691,14 @@ class NgoCartScreenFull extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              cart.clearCart();
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Cart cleared')),
-              );
+            onPressed: () async {
+              await cart.clearCart();
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Cart cleared')),
+                );
+              }
             },
             child: const Text('Clear', style: TextStyle(color: Colors.red)),
           ),

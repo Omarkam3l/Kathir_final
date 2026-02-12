@@ -312,7 +312,7 @@ class _NgoCheckoutScreenState extends State<NgoCheckoutScreen> {
       }
 
       // Clear cart
-      widget.cart.clearCart();
+      await widget.cart.clearCart();
       debugPrint('✅ Cart cleared');
 
       if (mounted) {

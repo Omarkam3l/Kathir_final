@@ -520,20 +520,22 @@ class _NgoAllMealsScreenState extends State<NgoAllMealsScreen> {
                             ],
                           ),
                           child: IconButton(
-                            onPressed: () {
-                              cart.addToCart(meal);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('✅ ${meal.title} added to cart'),
-                                  backgroundColor: AppColors.primaryGreen,
-                                  duration: const Duration(seconds: 1),
-                                  action: SnackBarAction(
-                                    label: 'View Cart',
-                                    textColor: Colors.white,
-                                    onPressed: () => context.push('/ngo/cart'),
+                            onPressed: () async {
+                              await cart.addToCart(meal);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('✅ ${meal.title} added to cart'),
+                                    backgroundColor: AppColors.primaryGreen,
+                                    duration: const Duration(seconds: 1),
+                                    action: SnackBarAction(
+                                      label: 'View Cart',
+                                      textColor: Colors.white,
+                                      onPressed: () => context.push('/ngo/cart'),
+                                    ),
                                   ),
-                                ),
-                              );
+                                );
+                              }
                             },
                             icon: const Icon(
                               Icons.add,

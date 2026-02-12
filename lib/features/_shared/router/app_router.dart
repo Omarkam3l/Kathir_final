@@ -385,9 +385,16 @@ class AppRouter {
       GoRoute(
         path: '/ngo/checkout',
         builder: (context, state) {
-          // Get cart from context if available, otherwise create new
-          return Consumer<NgoCartViewModel>(
-            builder: (context, cart, _) => NgoCheckoutScreen(cart: cart),
+          final cart = state.extra as NgoCartViewModel?;
+          if (cart != null) {
+            return NgoCheckoutScreen(cart: cart);
+          }
+          // Fallback: create new instance and load
+          return ChangeNotifierProvider(
+            create: (_) => NgoCartViewModel()..loadCart(),
+            child: Consumer<NgoCartViewModel>(
+              builder: (context, cart, _) => NgoCheckoutScreen(cart: cart),
+            ),
           );
         },
       ),
