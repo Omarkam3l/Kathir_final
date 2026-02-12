@@ -194,7 +194,7 @@ class _NgoChatListScreenState extends State<NgoChatListScreen> {
             // Avatar
             CircleAvatar(
               radius: 28,
-              backgroundColor: AppColors.primaryGreen.withOpacity(0.2),
+              backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.2),
               child: conversation.restaurantAvatar != null
                   ? ClipOval(
                       child: Image.network(

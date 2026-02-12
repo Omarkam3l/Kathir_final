@@ -56,7 +56,7 @@ class MealDetailScreen extends StatelessWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.black.withOpacity(0.4),
+                            Colors.black.withValues(alpha: 0.4),
                             Colors.transparent,
                             Colors.transparent,
                           ],
@@ -74,7 +74,7 @@ class MealDetailScreen extends StatelessWidget {
                             // Back button
                             Container(
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
                               ),
                               child: ClipRRect(
@@ -95,7 +95,7 @@ class MealDetailScreen extends StatelessWidget {
                                 final isFav = favViewModel.isFavorite(product.id);
                                 return Container(
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
+                                    color: Colors.white.withValues(alpha: 0.2),
                                     shape: BoxShape.circle,
                                   ),
                                   child: ClipRRect(
@@ -251,7 +251,7 @@ class MealDetailScreen extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.primaryGreen.withOpacity(0.1),
+                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
                   border: Border.all(color: borderColor),
                 ),
                 child: const Icon(
@@ -298,7 +298,7 @@ class MealDetailScreen extends StatelessWidget {
               TextButton(
                 onPressed: () => _showMoreFromRestaurant(context, isDark),
                 style: TextButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen.withOpacity(0.1),
+                  backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.1),
                   foregroundColor: AppColors.primaryGreen,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   shape: RoundedRectangleBorder(
@@ -362,12 +362,12 @@ class MealDetailScreen extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isDark 
-                  ? const Color(0xFF2D1F0D).withOpacity(0.3)
+                  ? const Color(0xFF2D1F0D).withValues(alpha: 0.3)
                   : const Color(0xFFFFF4E6),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isDark 
-                    ? const Color(0xFF4A3319).withOpacity(0.3)
+                    ? const Color(0xFF4A3319).withValues(alpha: 0.3)
                     : const Color(0xFFFFE4CC),
               ),
             ),
@@ -408,12 +408,12 @@ class MealDetailScreen extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isDark 
-                  ? const Color(0xFF0D2D1F).withOpacity(0.3)
+                  ? const Color(0xFF0D2D1F).withValues(alpha: 0.3)
                   : const Color(0xFFECFDF5),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isDark 
-                    ? const Color(0xFF1A4A33).withOpacity(0.3)
+                    ? const Color(0xFF1A4A33).withValues(alpha: 0.3)
                     : const Color(0xFFD1FAE5),
               ),
             ),
@@ -457,12 +457,12 @@ class MealDetailScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: isDark 
-            ? const Color(0xFF2D0D0D).withOpacity(0.3)
+            ? const Color(0xFF2D0D0D).withValues(alpha: 0.3)
             : const Color(0xFFFEF2F2),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isDark 
-              ? const Color(0xFF4A1919).withOpacity(0.3)
+              ? const Color(0xFF4A1919).withValues(alpha: 0.3)
               : const Color(0xFFFECACA),
         ),
       ),
@@ -507,86 +507,6 @@ class MealDetailScreen extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildIngredientsAllergens(BuildContext context, bool isDark) {
-    final textColor = isDark ? Colors.white : const Color(0xFF0D1B12);
-    final bgColor = isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9);
-    final borderColor = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
-    final allergenBg = isDark ? const Color(0xFF2D1F0D).withOpacity(0.3) : const Color(0xFFFFF4E6);
-    final allergenBorder = isDark ? const Color(0xFF4A3319).withOpacity(0.3) : const Color(0xFFFFE4CC);
-    final allergenText = isDark ? const Color(0xFFFFB366) : const Color(0xFFEA580C);
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Ingredients & Allergens',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
-            ),
-            Icon(Icons.info_outline, color: Colors.grey[400], size: 20),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _buildIngredientChip('Basmati Rice', bgColor, borderColor, isDark),
-            _buildIngredientChip('Carrots', bgColor, borderColor, isDark),
-            _buildIngredientChip('Peas', bgColor, borderColor, isDark),
-            _buildAllergenChip('Contains: Nuts', allergenBg, allergenBorder, allergenText),
-            _buildAllergenChip('Contains: Dairy', allergenBg, allergenBorder, allergenText),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildIngredientChip(String label, Color bgColor, Color borderColor, bool isDark) {
-    final textColor = isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: borderColor),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: textColor,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAllergenChip(String label, Color bgColor, Color borderColor, Color textColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: borderColor),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: textColor,
-        ),
-      ),
     );
   }
 
@@ -638,7 +558,7 @@ class MealDetailScreen extends StatelessWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
+                              color: Colors.black.withValues(alpha: 0.2),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -671,8 +591,8 @@ class MealDetailScreen extends StatelessWidget {
 
   Widget _buildBottomBar(BuildContext context, bool isDark) {
     final bgColor = isDark 
-        ? const Color(0xFF1A2E22).withOpacity(0.9)
-        : Colors.white.withOpacity(0.9);
+        ? const Color(0xFF1A2E22).withValues(alpha: 0.9)
+        : Colors.white.withValues(alpha: 0.9);
     final textColor = isDark ? Colors.white : const Color(0xFF0D1B12);
     final borderColor = isDark ? const Color(0xFF2D4A3A) : const Color(0xFFE2E8F0);
     
@@ -752,7 +672,7 @@ class MealDetailScreen extends StatelessWidget {
                         backgroundColor: AppColors.primaryGreen,
                         foregroundColor: const Color(0xFF052E11),
                         elevation: 0,
-                        shadowColor: AppColors.primaryGreen.withOpacity(0.25),
+                        shadowColor: AppColors.primaryGreen.withValues(alpha: 0.25),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -1100,7 +1020,7 @@ class MealDetailScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.1),
+                            color: Colors.red.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(
@@ -1165,7 +1085,7 @@ class MealDetailScreen extends StatelessWidget {
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? AppColors.primaryGreen.withOpacity(0.1)
+                                        ? AppColors.primaryGreen.withValues(alpha: 0.1)
                                         : Colors.grey[100],
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
@@ -1352,7 +1272,7 @@ class MealDetailScreen extends StatelessWidget {
                     width: 64,
                     height: 64,
                     decoration: BoxDecoration(
-                      color: AppColors.primaryGreen.withOpacity(0.1),
+                      color: AppColors.primaryGreen.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -1506,7 +1426,7 @@ void _showFavoriteDialog(BuildContext context, MealOffer product, FavoritesViewM
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: AppColors.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
@@ -1577,7 +1497,7 @@ void _showFavoriteDialog(BuildContext context, MealOffer product, FavoritesViewM
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.1),
+                          color: Colors.orange.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(

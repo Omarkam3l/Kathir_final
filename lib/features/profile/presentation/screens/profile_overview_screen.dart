@@ -61,7 +61,7 @@ class ProfileOverviewScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(26),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 20,
                             offset: const Offset(0, 12),
                           ),
@@ -259,7 +259,7 @@ class ProfileOverviewScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -333,7 +333,7 @@ class _QuickActionCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(22),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 16,
               offset: const Offset(0, 10),
             ),
@@ -342,7 +342,7 @@ class _QuickActionCard extends StatelessWidget {
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: color.withOpacity(0.18),
+              backgroundColor: color.withValues(alpha: 0.18),
               child: Icon(icon, color: color),
             ),
             const SizedBox(width: 12),
@@ -377,7 +377,7 @@ class _SettingsListSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 8),
           )
@@ -401,7 +401,7 @@ class _SettingsListSection extends StatelessWidget {
               children: [
                 ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                    backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
                     child: Icon(item.icon, color: Theme.of(context).colorScheme.primary),
                   ),
                   title: Text(

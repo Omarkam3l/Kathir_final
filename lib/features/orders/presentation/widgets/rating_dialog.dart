@@ -139,7 +139,7 @@ class _RatingDialogState extends State<RatingDialog> {
                 setState(() => _rating = rating);
               },
               glow: true,
-              glowColor: Colors.amber.withOpacity(0.3),
+              glowColor: Colors.amber.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 8),
             Text(

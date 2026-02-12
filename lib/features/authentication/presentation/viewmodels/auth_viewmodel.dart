@@ -89,7 +89,7 @@ class AuthViewModel extends ChangeNotifier {
       'role': role.toString(),
       'email': email,
       'hasOrgName': organizationName != null,
-      'hasPhone': phone != null,
+      'hasPhone': phone.isNotEmpty,
     });
     
     final res = await signUp(

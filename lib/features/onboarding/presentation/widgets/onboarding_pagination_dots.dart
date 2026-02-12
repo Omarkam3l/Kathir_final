@@ -28,7 +28,7 @@ class OnboardingPaginationDots extends StatelessWidget {
             boxShadow: isActive
                 ? [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.5),
+                      color: AppColors.primary.withValues(alpha: 0.5),
                       blurRadius: 8,
                     ),
                   ]

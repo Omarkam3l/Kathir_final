@@ -264,7 +264,7 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
                   border: Border.all(color: AppColors.white, width: 4),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 20,
                       offset: const Offset(0, 4),
                     ),
@@ -286,7 +286,7 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withValues(alpha: 0.5),
                       shape: BoxShape.circle,
                     ),
                     child: const Center(
@@ -309,7 +309,7 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
                       border: Border.all(color: AppColors.backgroundLight, width: 2),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
+                          color: Colors.black.withValues(alpha: 0.2),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -383,7 +383,7 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
 
   Widget _buildDefaultAvatar(String name) {
     return Container(
-      color: AppColors.primary.withOpacity(0.2),
+      color: AppColors.primary.withValues(alpha: 0.2),
       child: Center(
         child: Text(
           name.isNotEmpty ? name[0].toUpperCase() : '?',
@@ -411,7 +411,7 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
                 border: Border.all(color: Colors.grey[200]!),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 2),
                   ),
@@ -458,7 +458,7 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
                 border: Border.all(color: Colors.grey[200]!),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 2),
                   ),
@@ -539,7 +539,7 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
               border: Border.all(color: Colors.grey[200]!),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -549,7 +549,7 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
               children: [
                 _buildSettingsTile(
                   icon: Icons.receipt,
-                  iconBgColor: AppColors.primary.withOpacity(0.2),
+                  iconBgColor: AppColors.primary.withValues(alpha: 0.2),
                   iconColor: AppColors.primary,
                   title: 'My Orders',
                   subtitle: 'View past meals',
@@ -560,7 +560,7 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
                 ),
                 _buildSettingsTile(
                   icon: Icons.location_on,
-                  iconBgColor: AppColors.primary.withOpacity(0.2),
+                  iconBgColor: AppColors.primary.withValues(alpha: 0.2),
                   iconColor: AppColors.primary,
                   title: 'Addresses',
                   subtitle: 'Manage delivery addresses',
@@ -575,7 +575,7 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
                 ),
                 _buildSettingsTile(
                   icon: Icons.favorite,
-                  iconBgColor: AppColors.primary.withOpacity(0.2),
+                  iconBgColor: AppColors.primary.withValues(alpha: 0.2),
                   iconColor: AppColors.primary,
                   title: 'Favorites',
                   subtitle: 'View your favorite meals & restaurants',
@@ -616,7 +616,7 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
               border: Border.all(color: Colors.grey[200]!),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),

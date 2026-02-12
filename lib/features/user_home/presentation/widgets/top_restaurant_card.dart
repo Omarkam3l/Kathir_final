@@ -20,7 +20,7 @@ class TopRestaurantCard extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 4),
           )
@@ -31,7 +31,7 @@ class TopRestaurantCard extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 20,
-            backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+            backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
             child: Text(
               restaurant.name.isNotEmpty ? restaurant.name[0] : 'R',
               style: TextStyle(

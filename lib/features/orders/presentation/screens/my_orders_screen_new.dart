@@ -211,7 +211,7 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -294,9 +294,9 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
     final restaurant = order['restaurants'] as Map<String, dynamic>?;
     final orderItems = order['order_items'] as List<dynamic>? ?? [];
     final status = order['status'] as String;
-    final orderId = order['id'] as String;
     final pickupCode = order['pickup_code'] as String?;
-
+    final orderId = order['id'] as String;
+        
     // Get first meal image
     String? mealImage;
     if (orderItems.isNotEmpty) {
@@ -313,7 +313,7 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -428,7 +428,7 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
     final createdAt = DateTime.parse(order['created_at'] as String);
     final pickupCode = order['pickup_code'] as String?;
     final orderId = order['id'] as String;
-
+        
     // Get first meal image
     String? mealImage;
     if (orderItems.isNotEmpty) {
@@ -445,7 +445,7 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -621,7 +621,7 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
         label = 'Preparing';
         break;
       case 'ready_for_pickup':
-        bgColor = AppColors.primary.withOpacity(0.2);
+        bgColor = AppColors.primary.withValues(alpha: 0.2);
         textColor = AppColors.primary;
         label = 'Ready for Pickup';
         break;
@@ -656,7 +656,7 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
   Widget _buildActionButton(Map<String, dynamic> order) {
     final status = order['status'] as String;
     final orderId = order['id'] as String;
-
+    
     if (status == 'ready_for_pickup') {
       return ElevatedButton.icon(
         onPressed: () {
@@ -750,9 +750,9 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
 
   Future<void> _showRatingDialog(
       BuildContext context, Map<String, dynamic> order) async {
-    final orderId = order['id'] as String;
     final restaurant = order['restaurants'] as Map<String, dynamic>?;
     final restaurantName = restaurant?['restaurant_name'] ?? 'Restaurant';
+    final orderId = order['id'] as String;
 
     // Check if already rated
     final existingRating = await _ratingService.getOrderRating(orderId);

@@ -181,7 +181,7 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
-          splashColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          splashColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
@@ -224,7 +224,7 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
                 themeProvider.toggleTheme();
               },
               borderRadius: BorderRadius.circular(12),
-              splashColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              splashColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
               child: Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

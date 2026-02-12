@@ -125,8 +125,8 @@ class _RestaurantLeaderboardScreenState
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: isDark
-            ? const Color(0xFF221910).withOpacity(0.95)
-            : const Color(0xFFF8F7F6).withOpacity(0.95),
+            ? const Color(0xFF221910).withValues(alpha: 0.95)
+            : const Color(0xFFF8F7F6).withValues(alpha: 0.95),
         border: Border(
           bottom: BorderSide(
             color: isDark ? const Color(0xFF3D3027) : const Color(0xFFE7E5E4),
@@ -246,7 +246,7 @@ class _RestaurantLeaderboardScreenState
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primaryGreen.withOpacity(0.2),
+                    color: AppColors.primaryGreen.withValues(alpha: 0.2),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -365,14 +365,14 @@ class _RestaurantLeaderboardScreenState
                 boxShadow: rank == 1
                     ? [
                         BoxShadow(
-                          color: AppColors.primaryGreen.withOpacity(0.3),
+                          color: AppColors.primaryGreen.withValues(alpha: 0.3),
                           blurRadius: 20,
                           spreadRadius: 2,
                         ),
                       ]
                     : [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -455,7 +455,7 @@ class _RestaurantLeaderboardScreenState
             margin: const EdgeInsets.only(top: 8),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.primaryGreen.withOpacity(0.1),
+              color: AppColors.primaryGreen.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Row(
@@ -492,7 +492,7 @@ class _RestaurantLeaderboardScreenState
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),
@@ -533,7 +533,7 @@ class _RestaurantLeaderboardScreenState
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isDark
-            ? const Color(0xFF221910).withOpacity(0.5)
+            ? const Color(0xFF221910).withValues(alpha: 0.5)
             : const Color(0xFFF8F7F6),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
@@ -621,7 +621,7 @@ class _RestaurantLeaderboardScreenState
 
   Widget _buildDefaultAvatar(String name) {
     return Container(
-      color: AppColors.primaryGreen.withOpacity(0.2),
+      color: AppColors.primaryGreen.withValues(alpha: 0.2),
       child: Center(
         child: Text(
           name.isNotEmpty ? name[0].toUpperCase() : '?',

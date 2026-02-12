@@ -46,7 +46,7 @@ class _NgoMealDetailScreenState extends State<NgoMealDetailScreen> {
                 leading: Container(
                   margin: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: ClipRRect(
@@ -81,9 +81,9 @@ class _NgoMealDetailScreenState extends State<NgoMealDetailScreen> {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.black.withOpacity(0.4),
+                              Colors.black.withValues(alpha: 0.4),
                               Colors.transparent,
-                              Colors.black.withOpacity(0.2),
+                              Colors.black.withValues(alpha: 0.2),
                             ],
                           ),
                         ),
@@ -236,7 +236,7 @@ class _NgoMealDetailScreenState extends State<NgoMealDetailScreen> {
                                   ),
                                 ),
                                 style: TextButton.styleFrom(
-                                  backgroundColor: primaryColor.withOpacity(0.1),
+                                  backgroundColor: primaryColor.withValues(alpha: 0.1),
                                   foregroundColor: primaryColor,
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                   shape: RoundedRectangleBorder(
@@ -260,8 +260,8 @@ class _NgoMealDetailScreenState extends State<NgoMealDetailScreen> {
                                 value: meal.pickupDeadline != null
                                     ? DateFormat('EEE, h:mm a').format(meal.pickupDeadline!)
                                     : DateFormat('EEE, h:mm a').format(meal.expiry),
-                                bgColor: isDark ? Colors.orange.withOpacity(0.1) : Colors.orange.shade50,
-                                borderColor: isDark ? Colors.orange.withOpacity(0.2) : Colors.orange.shade100,
+                                bgColor: isDark ? Colors.orange.withValues(alpha: 0.1) : Colors.orange.shade50,
+                                borderColor: isDark ? Colors.orange.withValues(alpha: 0.2) : Colors.orange.shade100,
                                 textColor: textColor,
                               ),
                             ),
@@ -272,8 +272,8 @@ class _NgoMealDetailScreenState extends State<NgoMealDetailScreen> {
                                 iconColor: Colors.green,
                                 title: 'IMPACT',
                                 value: 'Saves ${meal.co2Savings > 0 ? meal.co2Savings : "0.5"}kg CO2',
-                                bgColor: isDark ? Colors.green.withOpacity(0.1) : Colors.green.shade50,
-                                borderColor: isDark ? Colors.green.withOpacity(0.2) : Colors.green.shade100,
+                                bgColor: isDark ? Colors.green.withValues(alpha: 0.1) : Colors.green.shade50,
+                                borderColor: isDark ? Colors.green.withValues(alpha: 0.2) : Colors.green.shade100,
                                 textColor: textColor,
                               ),
                             ),
@@ -285,9 +285,9 @@ class _NgoMealDetailScreenState extends State<NgoMealDetailScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: isDark ? Colors.red.withOpacity(0.1) : Colors.red.shade50,
+                            color: isDark ? Colors.red.withValues(alpha: 0.1) : Colors.red.shade50,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: isDark ? Colors.red.withOpacity(0.2) : Colors.red.shade100),
+                            border: Border.all(color: isDark ? Colors.red.withValues(alpha: 0.2) : Colors.red.shade100),
                           ),
                           child: Row(
                             children: [
@@ -407,7 +407,7 @@ class _NgoMealDetailScreenState extends State<NgoMealDetailScreen> {
                     bottom: 16 + MediaQuery.of(context).padding.bottom,
                   ),
                   decoration: BoxDecoration(
-                    color: (isDark ? surfaceColor : Colors.white).withOpacity(0.9),
+                    color: (isDark ? surfaceColor : Colors.white).withValues(alpha: 0.9),
                     border: Border(top: BorderSide(color: isDark ? Colors.white10 : Colors.black12)),
                   ),
                   child: Row(
@@ -566,12 +566,12 @@ class _NgoMealDetailScreenState extends State<NgoMealDetailScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: isAllergen
-            ? (isDark ? Colors.orange.withOpacity(0.2) : Colors.orange.shade100)
-            : (isDark ? Colors.grey.withOpacity(0.2) : Colors.grey.shade200),
+            ? (isDark ? Colors.orange.withValues(alpha: 0.2) : Colors.orange.shade100)
+            : (isDark ? Colors.grey.withValues(alpha: 0.2) : Colors.grey.shade200),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isAllergen
-              ? (isDark ? Colors.orange.withOpacity(0.3) : Colors.orange.shade200)
+              ? (isDark ? Colors.orange.withValues(alpha: 0.3) : Colors.orange.shade200)
               : (isDark ? Colors.white10 : Colors.grey.shade300),
         ),
       ),

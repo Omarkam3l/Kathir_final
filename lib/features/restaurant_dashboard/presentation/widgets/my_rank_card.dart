@@ -26,7 +26,7 @@ class MyRankCard extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             AppColors.primaryGreen,
-            AppColors.primaryGreen.withOpacity(0.8),
+            AppColors.primaryGreen.withValues(alpha: 0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -34,13 +34,13 @@ class MyRankCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryGreen.withOpacity(0.3),
+            color: AppColors.primaryGreen.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
         ],
         border: Border.all(
-          color: Colors.white.withOpacity(0.1),
+          color: Colors.white.withValues(alpha: 0.1),
         ),
       ),
       child: Row(
@@ -54,7 +54,7 @@ class MyRankCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                   letterSpacing: 1,
                 ),
               ),
@@ -77,7 +77,7 @@ class MyRankCard extends StatelessWidget {
           Container(
             width: 1,
             height: 32,
-            color: Colors.white.withOpacity(0.2),
+            color: Colors.white.withValues(alpha: 0.2),
           ),
           
           const SizedBox(width: 16),
@@ -101,7 +101,7 @@ class MyRankCard extends StatelessWidget {
                   'You saved ${myRank!.score} meals!',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
               ],

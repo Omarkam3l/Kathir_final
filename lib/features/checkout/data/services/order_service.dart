@@ -285,7 +285,7 @@ class OrderService {
 
       return orderResponse;
     } catch (e) {
-      print('Error getting order: $e');
+      debugPrint('Error getting order: $e');
       rethrow;
     }
   }
@@ -319,7 +319,7 @@ class OrderService {
 
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
-      print('Error getting user orders: $e');
+      debugPrint('Error getting user orders: $e');
       return [];
     }
   }
@@ -332,7 +332,7 @@ class OrderService {
           .update({'status': status})
           .eq('id', orderId);
     } catch (e) {
-      print('Error updating order status: $e');
+      debugPrint('Error updating order status: $e');
       rethrow;
     }
   }
@@ -345,7 +345,7 @@ class OrderService {
           .update({'payment_status': paymentStatus})
           .eq('id', orderId);
     } catch (e) {
-      print('Error updating payment status: $e');
+      debugPrint('Error updating payment status: $e');
       rethrow;
     }
   }
@@ -370,7 +370,7 @@ class OrderService {
       // Update order status
       await updateOrderStatus(orderId, 'cancelled');
     } catch (e) {
-      print('Error cancelling order: $e');
+      debugPrint('Error cancelling order: $e');
       rethrow;
     }
   }

@@ -36,8 +36,8 @@ class OnboardingPage3 extends StatelessWidget {
                   icon: Icon(Icons.arrow_back, color: textColor, size: 24),
                   style: IconButton.styleFrom(
                     backgroundColor: isDark
-                        ? AppColors.white.withOpacity(0.1)
-                        : AppColors.black.withOpacity(0.05),
+                        ? AppColors.white.withValues(alpha: 0.1)
+                        : AppColors.black.withValues(alpha: 0.05),
                   ),
                 ),
                 const SizedBox(width: 40),
@@ -57,10 +57,10 @@ class OnboardingPage3 extends StatelessWidget {
                     height: 200,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: AppColors.primary.withValues(alpha: 0.2),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.2),
+                          color: AppColors.primary.withValues(alpha: 0.2),
                           blurRadius: 80,
                         ),
                       ],
@@ -81,17 +81,17 @@ class OnboardingPage3 extends StatelessWidget {
                                 AppColors.backgroundDark,
                               ]
                             : [
-                                AppColors.primary.withOpacity(0.12),
-                                AppColors.primarySoft.withOpacity(0.08),
+                                AppColors.primary.withValues(alpha: 0.12),
+                                AppColors.primarySoft.withValues(alpha: 0.08),
                               ],
                       ),
                       border: Border.all(
-                        color: AppColors.white.withOpacity(isDark ? 0.1 : 0.5),
+                        color: AppColors.white.withValues(alpha: isDark ? 0.1 : 0.5),
                         width: 1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.black.withOpacity(0.08),
+                          color: AppColors.black.withValues(alpha: 0.08),
                           blurRadius: 24,
                           offset: const Offset(0, 8),
                         ),
@@ -173,7 +173,7 @@ class OnboardingPage3 extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       elevation: 0,
-                      shadowColor: AppColors.primary.withOpacity(0.4),
+                      shadowColor: AppColors.primary.withValues(alpha: 0.4),
                     ),
                     child: Text(
                       'Sign Up',
@@ -194,7 +194,7 @@ class OnboardingPage3 extends StatelessWidget {
                       backgroundColor: AppColors.white,
                       side: BorderSide(
                         color: isDark
-                            ? AppColors.white.withOpacity(0.3)
+                            ? AppColors.white.withValues(alpha: 0.3)
                             : AppColors.dividerLight,
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -237,12 +237,12 @@ class _FloatingBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark
-              ? AppColors.white.withOpacity(0.05)
+              ? AppColors.white.withValues(alpha: 0.05)
               : AppColors.dividerLight,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withOpacity(0.08),
+            color: AppColors.black.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),

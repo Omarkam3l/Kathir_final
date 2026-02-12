@@ -56,7 +56,7 @@ class RestaurantDetailScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(30),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 24,
                         offset: const Offset(0, 16),
                       ),
@@ -120,7 +120,7 @@ class RestaurantDetailScreen extends StatelessWidget {
                                   horizontal: 14, vertical: 8),
                               decoration: BoxDecoration(
                                 color:
-                                    AppColors.primaryAccent.withOpacity(0.12),
+                                    AppColors.primaryAccent.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(18),
                               ),
                               child: Text(
@@ -142,7 +142,7 @@ class RestaurantDetailScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.black.withOpacity(0.05),
+                            color: AppColors.black.withValues(alpha: 0.05),
                             blurRadius: 16,
                             offset: const Offset(0, 10),
                           ),
@@ -180,7 +180,7 @@ class RestaurantDetailScreen extends StatelessWidget {
                         color: Theme.of(context)
                             .iconTheme
                             .color
-                            ?.withOpacity(0.7)),
+                            ?.withValues(alpha: 0.7)),
                   ],
                 ),
               ),
@@ -205,7 +205,7 @@ class RestaurantDetailScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.black.withOpacity(0.04),
+                            color: AppColors.black.withValues(alpha: 0.04),
                             blurRadius: 16,
                             offset: const Offset(0, 8),
                           ),
@@ -286,7 +286,7 @@ class RestaurantDetailScreen extends StatelessWidget {
                                 color: Theme.of(context)
                                     .colorScheme
                                     .primary
-                                    .withOpacity(0.12),
+                                    .withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(18),
                               ),
                               child: Text(
@@ -331,7 +331,7 @@ class RestaurantDetailScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: AppColors.black.withOpacity(0.08),
+                color: AppColors.black.withValues(alpha: 0.08),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),

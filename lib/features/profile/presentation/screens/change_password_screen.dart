@@ -369,8 +369,8 @@ class _ChangePasswordAppBar extends StatelessWidget {
     final buttonColor = isDarkMode ? const Color(0xFF1E1E1E) : AppColors.white;
     final iconColor = isDarkMode ? AppColors.white : AppColors.darkText;
     final shadowColor = isDarkMode
-        ? Colors.black.withOpacity(0.4)
-        : Colors.black.withOpacity(0.08);
+        ? Colors.black.withValues(alpha: 0.4)
+        : Colors.black.withValues(alpha: 0.08);
 
     return Transform.rotate(
       angle: 0.78,

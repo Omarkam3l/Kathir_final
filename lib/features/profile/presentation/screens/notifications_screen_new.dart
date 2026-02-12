@@ -747,7 +747,7 @@ class _NotificationsScreenNewState extends State<NotificationsScreenNew> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -762,8 +762,8 @@ class _NotificationsScreenNewState extends State<NotificationsScreenNew> {
               height: 48,
               decoration: BoxDecoration(
                 color: notification.isRead
-                    ? Colors.grey.withOpacity(0.1)
-                    : AppColors.primary.withOpacity(0.1),
+                    ? Colors.grey.withValues(alpha: 0.1)
+                    : AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -831,7 +831,7 @@ class _NotificationsScreenNewState extends State<NotificationsScreenNew> {
                 child: Container(
                   width: 60,
                   height: 60,
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   child: Image.network(
                     meal.imageUrl,
                     fit: BoxFit.cover,
