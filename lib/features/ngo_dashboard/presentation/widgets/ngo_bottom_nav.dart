@@ -12,7 +12,7 @@ import '../../../../core/utils/app_colors.dart';
 /// Navigation items:
 /// - Home: /ngo/home (center, elevated)
 /// - Orders: /ngo/orders (left)
-/// - Map: /ngo/map (left)
+/// - Meals: /ngo/meals (left) - NEW: Replaced Cart
 /// - Chats: /ngo/chats (right)
 /// - Profile: /ngo/profile (right)
 class NgoBottomNav extends StatelessWidget {
@@ -32,7 +32,7 @@ class NgoBottomNav extends StatelessWidget {
         context.go('/ngo/orders');
         break;
       case 2:
-        context.go('/ngo/map');
+        context.go('/ngo/meals');
         break;
       case 3:
         context.go('/ngo/chats');
@@ -85,13 +85,13 @@ class NgoBottomNav extends StatelessWidget {
                   ),
                 ),
                 
-                // Map
+                // Meals (Replaced Cart)
                 Flexible(
                   child: _buildNavItem(
                     context: context,
-                    icon: Icons.map_outlined,
-                    activeIcon: Icons.map,
-                    label: 'Map',
+                    icon: Icons.restaurant_menu_outlined,
+                    activeIcon: Icons.restaurant_menu,
+                    label: 'Meals',
                     index: 2,
                     isActive: currentIndex == 2,
                     color: inactiveColor,

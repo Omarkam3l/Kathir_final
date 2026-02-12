@@ -2,9 +2,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../../../user_home/domain/entities/meal.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../viewmodels/ngo_chat_list_viewmodel.dart';
+import '../viewmodels/ngo_cart_viewmodel.dart';
 import 'package:intl/intl.dart';
 
 class NgoMealDetailScreen extends StatefulWidget {
@@ -440,17 +442,26 @@ class _NgoMealDetailScreenState extends State<NgoMealDetailScreen> {
                         child: SizedBox(
                           height: 56,
                           child: ElevatedButton(
-                            onPressed: isClaiming ? null : () async {
+                            onPressed: isClaiming ? null : () {
                               setState(() => isClaiming = true);
                               
-                              // TODO: Implement claim logic via viewmodel
-                              await Future.delayed(const Duration(seconds: 1));
+                              // Add to cart
+                              final cart = context.read<NgoCartViewModel>();
+                              cart.addToCart(meal);
+                              
+                              setState(() => isClaiming = false);
                               
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('Successfully claimed: ${meal.title}'),
-                                    backgroundColor: Colors.green,
+                                    content: Text('✅ ${meal.title} added to cart'),
+                                    backgroundColor: AppColors.primaryGreen,
+                                    duration: const Duration(seconds: 2),
+                                    action: SnackBarAction(
+                                      label: 'View Cart',
+                                      textColor: Colors.white,
+                                      onPressed: () => context.push('/ngo/cart'),
+                                    ),
                                   ),
                                 );
                                 context.pop();
@@ -477,10 +488,10 @@ class _NgoMealDetailScreenState extends State<NgoMealDetailScreen> {
                                     ),
                                   )
                                 else
-                                  const Icon(Icons.volunteer_activism, size: 20),
+                                  const Icon(Icons.add_shopping_cart, size: 20),
                                 const SizedBox(width: 8),
                                 Text(
-                                  isClaiming ? 'Claiming...' : 'Claim Now',
+                                  isClaiming ? 'Adding...' : 'Add to Cart',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,

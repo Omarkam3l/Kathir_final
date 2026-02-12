@@ -76,7 +76,7 @@ class NgoProfileViewModel extends ChangeNotifier {
             .from('orders')
             .select('id')
             .eq('ngo_id', userId)
-            .inFilter('status', ['completed', 'paid']); // Accept both completed and paid
+            .inFilter('status', ['completed', 'delivered']); // Use correct enum values
         
         mealsClaimed = (completedRes as List).length;
         carbonSaved = mealsClaimed * 2.5; // Avg 2.5kg CO2 per meal

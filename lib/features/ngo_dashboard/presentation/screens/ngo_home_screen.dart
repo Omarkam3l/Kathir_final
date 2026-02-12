@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../authentication/presentation/blocs/auth_provider.dart';
 import '../viewmodels/ngo_home_viewmodel.dart';
+import '../viewmodels/ngo_cart_viewmodel.dart';
 import '../widgets/ngo_meal_card.dart';
 import '../widgets/ngo_urgent_card.dart';
 import '../widgets/ngo_stat_card.dart';
@@ -23,8 +24,16 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint('🏠 NGO Home Screen - initState called');
+    
+    // Use addPostFrameCallback to ensure Provider is ready
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<NgoHomeViewModel>().loadIfNeeded();
+      if (mounted) {
+        debugPrint('🔄 Post-frame callback - loading data...');
+        final viewModel = context.read<NgoHomeViewModel>();
+        debugPrint('📊 ViewModel state - isLoading: ${viewModel.isLoading}, meals: ${viewModel.meals.length}');
+        viewModel.loadIfNeeded();
+      }
     });
   }
 
@@ -44,6 +53,25 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
       body: SafeArea(
         child: Consumer<NgoHomeViewModel>(
           builder: (context, viewModel, _) {
+            // Add explicit error display
+            if (viewModel.error != null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text('Error: ${viewModel.error}'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => viewModel.loadData(forceRefresh: true),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
             return RefreshIndicator(
               onRefresh: () => viewModel.loadData(forceRefresh: true),
               child: CustomScrollView(
@@ -142,7 +170,7 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
                   children: [
                     _buildNotificationButton(isDark, viewModel),
                     const SizedBox(width: 12),
-                    _buildAvatarButton(isDark),
+                    _buildMapButton(isDark),
                   ],
                 ),
               ],
@@ -171,51 +199,104 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
   }
 
   Widget _buildNotificationButton(bool isDark, NgoHomeViewModel viewModel) {
-    return GestureDetector(
-      onTap: () => context.go('/ngo-notifications'),
-      child: Stack(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1A2E22) : Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
-            ),
-            child: const Icon(Icons.notifications_outlined, size: 20),
-          ),
-          if (viewModel.hasNotifications)
-            Positioned(
-              top: 8,
-              right: 10,
-              child: Container(
-                width: 8,
-                height: 8,
+    final cart = context.watch<NgoCartViewModel>();
+    
+    return Row(
+      children: [
+        // Notification button
+        GestureDetector(
+          onTap: () => context.go('/ngo-notifications'),
+          child: Stack(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.red,
+                  color: isDark ? const Color(0xFF1A2E22) : Colors.white,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF1A2E22) : Colors.white,
-                    width: 1.5,
+                  border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+                ),
+                child: const Icon(Icons.notifications_outlined, size: 20),
+              ),
+              if (viewModel.hasNotifications)
+                Positioned(
+                  top: 8,
+                  right: 10,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF1A2E22) : Colors.white,
+                        width: 1.5,
+                      ),
+                    ),
                   ),
                 ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Cart button with badge
+        GestureDetector(
+          onTap: () => context.go('/ngo/cart'),
+          child: Stack(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1A2E22) : Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+                ),
+                child: const Icon(Icons.shopping_cart_outlined, size: 20),
               ),
-            ),
-        ],
-      ),
+              if (cart.cartCount > 0)
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: AppColors.primaryGreen,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
+                    child: Text(
+                      '${cart.cartCount}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildAvatarButton(bool isDark) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: AppColors.primaryGreen.withOpacity(0.2),
-        border: Border.all(color: AppColors.primaryGreen, width: 2),
+  Widget _buildMapButton(bool isDark) {
+    return GestureDetector(
+      onTap: () => context.go('/ngo/map'),
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: isDark ? const Color(0xFF1A2E22) : Colors.white,
+          border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+        ),
+        child: const Icon(Icons.map, color: AppColors.primaryGreen, size: 20),
       ),
-      child: const Icon(Icons.handshake, color: AppColors.primaryGreen, size: 20),
     );
   }
 
