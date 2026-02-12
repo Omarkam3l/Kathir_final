@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import '../../../../core/utils/app_colors.dart';
 
 class RatingDialog extends StatefulWidget {
   final String orderId;
@@ -88,12 +89,13 @@ class _RatingDialogState extends State<RatingDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: AppColors.backgroundLight,  // ✅ Greenish white background
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Column(
         children: [
           const Icon(
             Icons.star_rounded,
-            color: Colors.white,
+            color: Colors.amber,
             size: 48,
           ),
           const SizedBox(height: 8),
@@ -153,8 +155,19 @@ class _RatingDialogState extends State<RatingDialog> {
               controller: _reviewController,
               decoration: InputDecoration(
                 hintText: 'Write a review (optional)',
+                filled: true,
+                fillColor: Colors.white,  // White input field on greenish background
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.inputBorderLight),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.inputBorderLight),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.primary, width: 2),
                 ),
                 contentPadding: const EdgeInsets.all(16),
               ),
@@ -168,13 +181,16 @@ class _RatingDialogState extends State<RatingDialog> {
       actions: [
         TextButton(
           onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.grey[700],
+          ),
           child: const Text('Cancel'),
         ),
         ElevatedButton(
           onPressed: _isSubmitting ? null : _submitRating,
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green,
-            foregroundColor: Colors.white,
+            backgroundColor: AppColors.primary,  // ✅ Use app's primary green
+            foregroundColor: Colors.black,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -186,7 +202,7 @@ class _RatingDialogState extends State<RatingDialog> {
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
                   ),
                 )
               : Text(widget.existingRating != null ? 'Update' : 'Submit'),
