@@ -82,18 +82,51 @@ class _MealDetailsScreenState extends State<MealDetailsScreen> {
         await _supabase.storage.from('meal-images').remove([path]);
       }
 
-      // Delete meal record
-      await _supabase.from('meals').delete().eq('id', widget.mealId);
+      // Delete meal using safe delete function
+      final result = await _supabase.rpc('safe_delete_meal', params: {
+        'p_meal_id': widget.mealId,
+      });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Meal deleted successfully'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-        // Return true to indicate deletion success
-        context.pop(true);
+        if (result['success'] == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Meal deleted successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          context.go('/restaurant-dashboard/meals');
+        } else {
+          // Can't delete - meal is in orders
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Cannot delete meal'),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 5),
+              action: SnackBarAction(
+                label: 'Mark Inactive',
+                textColor: Colors.white,
+                onPressed: () async {
+                  // Mark meal as inactive instead
+                  await _supabase
+                      .from('meals')
+                      .update({'status': 'inactive'})
+                      .eq('id', widget.mealId);
+                  
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Meal marked as inactive'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    context.go('/restaurant-dashboard/meals');
+                  }
+                },
+              ),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {

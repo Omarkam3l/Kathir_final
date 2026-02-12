@@ -103,14 +103,24 @@ class NgoHomeViewModel extends ChangeNotifier {
   }
 
   Future<void> loadData({bool forceRefresh = false}) async {
-    debugPrint('📊 loadData called - forceRefresh: $forceRefresh, hasListeners: $hasListeners');
+    print('🔍 ========== NGO HOME: loadData START ==========');
+    print('hasListeners: $hasListeners');
+    print('forceRefresh: $forceRefresh');
+    print('meals.length: ${meals.length}');
+    print('_isDataStale: $_isDataStale');
     
-    // Skip if data is fresh and not forcing refresh
-    if (!forceRefresh && meals.isNotEmpty && !_isDataStale) {
-      debugPrint('✓ Data is fresh, skipping load');
+    if (!hasListeners) {
+      print('❌ NGO: No listeners, returning');
       return;
     }
     
+    // Skip if data is fresh and not forcing refresh
+    if (!forceRefresh && meals.isNotEmpty && !_isDataStale) {
+      print('ℹ️ NGO: Data is fresh, skipping load');
+      return;
+    }
+    
+    print('✅ NGO: Starting data load...');
     isLoading = true;
     error = null;
     
@@ -118,56 +128,52 @@ class NgoHomeViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      debugPrint('🔄 Starting data fetch...');
+      print('📊 NGO: Calling Future.wait for stats and meals...');
       await Future.wait([
         _loadStats(),
         _loadMeals(),
       ]);
       _lastFetchTime = DateTime.now();
-      debugPrint('✅ Data fetch complete - ${meals.length} meals loaded');
-    } catch (e) {
+      print('✅ NGO: Data load complete');
+    } catch (e, stackTrace) {
+      print('❌ NGO: Error in loadData: $e');
+      print('Stack trace: $stackTrace');
       error = e.toString();
       debugPrint('❌ Data fetch failed: $e');
     } finally {
       isLoading = false;
-      debugPrint('🔔 Notifying listeners - meals: ${meals.length}, error: $error');
-      notifyListeners();
+      if (hasListeners) {
+        print('✅ NGO: Notifying listeners');
+        notifyListeners();
+      }
     }
+    
+    print('🎉 ========== NGO HOME: loadData END ==========');
   }
 
   Future<void> _loadStats() async {
+    print('📊 NGO: _loadStats START');
     final userId = _supabase.auth.currentUser?.id;
+    print('User ID: $userId');
+    
     if (userId == null) {
-      debugPrint('⚠️ No authenticated user for stats loading');
+      print('❌ NGO: User ID is null in _loadStats');
       return;
     }
 
     try {
-      // Check if NGO record exists
-      final ngoCheck = await _supabase
-          .from('ngos')
-          .select('profile_id')
-          .eq('profile_id', userId)
-          .maybeSingle();
-
-      if (ngoCheck == null) {
-        debugPrint('⚠️ NGO record not found for user $userId');
-        // Set default values
-        activeOrders = 0;
-        mealsClaimed = 0;
-        carbonSaved = 0;
-        return;
-      }
-
-      // Get active orders (using correct enum values from database)
+      print('🔍 NGO: Fetching active orders...');
+      // Get active orders (removed 'paid' and 'processing' - not valid statuses)
       final ordersRes = await _supabase
           .from('orders')
           .select('id, status')
           .eq('ngo_id', userId)
-          .inFilter('status', ['pending', 'confirmed', 'preparing', 'ready_for_pickup']);
+          .inFilter('status', ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'out_for_delivery']);
       
-      activeOrders = (ordersRes as List?)?.length ?? 0;
+      activeOrders = (ordersRes as List).length;
+      print('✅ NGO: Active orders: $activeOrders');
 
+      print('🔍 NGO: Fetching completed orders...');
       // Get completed orders for stats
       final completedRes = await _supabase
           .from('orders')
@@ -175,25 +181,27 @@ class NgoHomeViewModel extends ChangeNotifier {
           .eq('ngo_id', userId)
           .eq('status', 'completed');
       
-      mealsClaimed = (completedRes as List?)?.length ?? 0;
+      mealsClaimed = (completedRes as List).length;
+      print('✅ NGO: Meals claimed: $mealsClaimed');
 
       // Calculate carbon savings (simplified)
       carbonSaved = mealsClaimed * 2.5; // Avg 2.5kg CO2 per meal
-
-      debugPrint('✅ Stats loaded: Orders=$activeOrders, Claimed=$mealsClaimed, Carbon=${carbonSaved}kg');
-    } catch (e) {
-      debugPrint('❌ Error loading stats: $e');
-      // Set default values on error
-      activeOrders = 0;
-      mealsClaimed = 0;
-      carbonSaved = 0;
+      print('✅ NGO: Carbon saved: $carbonSaved kg');
+      print('✅ NGO: _loadStats COMPLETE');
+    } catch (e, stackTrace) {
+      print('❌ NGO: Error loading stats: $e');
+      print('Stack trace: $stackTrace');
     }
   }
 
   Future<void> _loadMeals() async {
     try {
-      // OPTIMIZED: Fetch only essential columns with proper error handling
-      final res = await _supabase
+      print('🔍 ========== NGO: _loadMeals START ==========');
+      
+      // OPTIMIZED: Fetch meals and restaurants separately to avoid RLS recursion
+      // Step 1: Get meals
+      print('📊 Step 1: Fetching meals from database...');
+      final mealsRes = await _supabase
           .from('meals')
           .select('''
             id,
@@ -205,17 +213,7 @@ class NgoHomeViewModel extends ChangeNotifier {
             expiry_date,
             location,
             category,
-            restaurant_id,
-            description,
-            unit,
-            fulfillment_method,
-            status,
-            is_donation_available,
-            restaurants!inner(
-              profile_id,
-              restaurant_name,
-              rating
-            )
+            restaurant_id
           ''')
           .eq('is_donation_available', true)
           .eq('status', 'active')
@@ -224,57 +222,102 @@ class NgoHomeViewModel extends ChangeNotifier {
           .order('expiry_date', ascending: true)
           .limit(50); // Add pagination limit
 
-      meals = (res as List).map((json) {
-        try {
-          // Transform restaurant data to match expected format
-          final restaurantData = json['restaurants'];
-          if (restaurantData == null) {
-            debugPrint('Warning: Missing restaurant data for meal ${json['id']}');
-            return null;
-          }
+      print('✅ Step 1: Got ${(mealsRes as List).length} meals from database');
 
-          json['restaurant'] = {
-            'id': restaurantData['profile_id']?.toString() ?? '',
-            'name': restaurantData['restaurant_name'] ?? 'Unknown Restaurant',
-            'rating': (restaurantData['rating'] as num?)?.toDouble() ?? 0.0,
-            'logo_url': '',
-            'verified': true,
-            'reviews_count': 0,
-          };
+      if ((mealsRes as List).isEmpty) {
+        meals = [];
+        expiringMeals = [];
+        print('ℹ️ NGO: No meals available (empty result)');
+        print('🎉 ========== NGO: _loadMeals END (no meals) ==========');
+        return;
+      }
 
-          // Map database fields to model fields with proper null handling
-          json['donation_price'] = json['discounted_price'] ?? 0.0;
-          json['quantity'] = json['quantity_available'] ?? 0;
-          json['expiry'] = json['expiry_date'];
-          json['description'] = json['description'] ?? '';
-          json['unit'] = json['unit'] ?? 'portions';
-          json['fulfillment_method'] = json['fulfillment_method'] ?? 'pickup';
-          json['is_donation_available'] = json['is_donation_available'] ?? true;
-          json['status'] = json['status'] ?? 'active';
-          json['original_price'] = json['original_price'] ?? json['discounted_price'] ?? 0.0;
-          json['pickup_deadline'] = null;
-          json['pickup_time'] = null;
-          json['ingredients'] = [];
-          json['allergens'] = [];
-          json['co2_savings'] = 0.0;
+      // Step 2: Get unique restaurant IDs
+      print('📊 Step 2: Extracting restaurant IDs...');
+      final restaurantIds = (mealsRes as List)
+          .map((m) => m['restaurant_id'] as String?)
+          .where((id) => id != null)
+          .toSet()
+          .toList();
 
-          return MealModel.fromJson(json);
-        } catch (e) {
-          debugPrint('Error parsing meal ${json['id']}: $e');
-          return null;
+      print('✅ Step 2: Found ${restaurantIds.length} unique restaurants');
+      print('Restaurant IDs: $restaurantIds');
+
+      // Step 3: Fetch restaurants separately
+      print('📊 Step 3: Fetching restaurants from database...');
+      final restaurantsRes = await _supabase
+          .from('restaurants')
+          .select('profile_id, restaurant_name, rating')
+          .inFilter('profile_id', restaurantIds);
+
+      print('✅ Step 3: Got ${(restaurantsRes as List).length} restaurants from database');
+
+      // Step 4: Create restaurant lookup map
+      print('📊 Step 4: Creating restaurant lookup map...');
+      final restaurantMap = <String, Map<String, dynamic>>{};
+      for (final r in (restaurantsRes as List)) {
+        restaurantMap[r['profile_id']] = r;
+        print('  - ${r['profile_id']}: ${r['restaurant_name']}');
+      }
+      print('✅ Step 4: Restaurant map created with ${restaurantMap.length} entries');
+
+      // Step 5: Transform meals with restaurant data
+      print('📊 Step 5: Transforming meals with restaurant data...');
+      meals = (mealsRes as List).map((json) {
+        final restaurantId = json['restaurant_id'] as String?;
+        final restaurantData = restaurantId != null 
+            ? restaurantMap[restaurantId] 
+            : null;
+
+        if (restaurantData == null) {
+          print('⚠️ Warning: No restaurant data for meal ${json['id']} (restaurant_id: $restaurantId)');
         }
-      }).whereType<Meal>().toList(); // Filter out null values
+
+        // Add restaurant data
+        json['restaurant'] = {
+          'id': restaurantId ?? '',
+          'name': restaurantData?['restaurant_name'] ?? 'Unknown Restaurant',
+          'rating': restaurantData?['rating'] ?? 0.0,
+          'logo_url': '',
+          'verified': true,
+          'reviews_count': 0,
+        };
+
+        // Map database fields to model fields
+        json['donation_price'] = json['discounted_price'];
+        json['quantity'] = json['quantity_available'];
+        json['expiry'] = json['expiry_date'];
+        json['description'] = '';
+        json['unit'] = 'portions';
+        json['fulfillment_method'] = 'pickup';
+        json['is_donation_available'] = true;
+        json['status'] = 'active';
+        json['original_price'] = json['discounted_price'];
+        json['pickup_deadline'] = null;
+        json['pickup_time'] = null;
+        json['ingredients'] = [];
+        json['allergens'] = [];
+        json['co2_savings'] = 0.0;
+
+        return MealModel.fromJson(json);
+      }).toList();
+
+      print('✅ Step 5: Transformed ${meals.length} meals successfully');
 
       // Separate expiring soon (within 2 hours)
+      print('📊 Step 6: Filtering expiring meals...');
       final twoHoursFromNow = DateTime.now().add(const Duration(hours: 2));
       expiringMeals = meals.where((m) => m.expiry.isBefore(twoHoursFromNow)).toList();
-
-      debugPrint('✅ Loaded ${meals.length} meals, ${expiringMeals.length} expiring soon');
-    } catch (e) {
-      debugPrint('❌ Error loading meals: $e');
-      error = 'Failed to load meals: ${e.toString()}';
-      meals = [];
-      expiringMeals = [];
+      
+      print('✅ Step 6: Found ${expiringMeals.length} expiring meals');
+      print('🎉 ========== NGO: _loadMeals END (success) ==========');
+    } catch (e, stackTrace) {
+      print('❌ ========== NGO: _loadMeals ERROR ==========');
+      print('Error type: ${e.runtimeType}');
+      print('Error message: $e');
+      print('Stack trace: $stackTrace');
+      print('===========================================');
+      error = e.toString();
     }
   }
 

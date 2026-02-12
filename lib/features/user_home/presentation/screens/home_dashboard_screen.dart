@@ -108,16 +108,16 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
               SliverToBoxAdapter(
+                child: TopRatedPartnersSection(restaurants: vm.restaurants),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              SliverToBoxAdapter(
                 child: AvailableMealsGridSection(
                   meals: _filteredMeals,
                   onSeeAll: () {
                     context.go('/meals/all', extra: vm.meals);
                   },
                 ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-              SliverToBoxAdapter(
-                child: TopRatedPartnersSection(restaurants: vm.restaurants),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],

@@ -32,94 +32,144 @@ class FavoritesViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Get favorite meal IDs
-      final favoritesRes = await _supabase
-          .from('favorites')
-          .select('meal_id')
-          .eq('user_id', currentUserId!);
-
-      favoriteMealIds = (favoritesRes as List)
-          .map((f) => f['meal_id'] as String)
-          .toSet();
-
-      if (favoriteMealIds.isNotEmpty) {
-        // Get meal details with restaurant info
-        final mealsRes = await _supabase
-            .from('meals')
-            .select('''
-              *,
-              restaurants:restaurant_id (
-                restaurant_name,
-                rating,
-                address_text,
-                profile_id
-              )
-            ''')
-            .inFilter('id', favoriteMealIds.toList())
-            .eq('status', 'active')
-            .gt('quantity_available', 0)
-            .gt('expiry_date', DateTime.now().toIso8601String());
-
-        favoriteMeals = (mealsRes as List).map((json) {
-          final restaurantData = json['restaurants'];
-          return MealOffer(
-            id: json['id'],
-            title: json['title'] ?? 'Delicious Meal',
-            location: json['location'] ?? 'Cairo, Egypt',
-            imageUrl: json['image_url'] ?? '',
-            originalPrice: (json['original_price'] as num?)?.toDouble() ?? 0.0,
-            donationPrice: (json['discounted_price'] as num?)?.toDouble() ?? 0.0,
-            quantity: json['quantity_available'] ?? 0,
-            expiry: DateTime.parse(json['expiry_date']),
-            restaurant: Restaurant(
-              id: restaurantData?['profile_id'] ?? '',
-              name: restaurantData?['restaurant_name'] ?? 'Unknown Restaurant',
-              rating: (restaurantData?['rating'] as num?)?.toDouble() ?? 0.0,
-            ),
-          );
-        }).toList();
-      }
-
-      // Get favorite restaurant IDs from the new table
-      final favoriteRestaurantsRes = await _supabase
-          .from('favorite_restaurants')
-          .select('restaurant_id')
-          .eq('user_id', currentUserId!);
-
-      favoriteRestaurantIds = (favoriteRestaurantsRes as List)
-          .map((f) => f['restaurant_id'] as String)
-          .toSet();
-
-      if (favoriteRestaurantIds.isNotEmpty) {
-        // Get restaurant details with profile avatar
-        final restaurantsRes = await _supabase
-            .from('restaurants')
-            .select('''
-              profile_id,
-              restaurant_name,
-              rating,
-              profiles!inner(avatar_url)
-            ''')
-            .inFilter('profile_id', favoriteRestaurantIds.toList());
-
-        favoriteRestaurants = (restaurantsRes as List).map((json) {
-          final profileData = json['profiles'];
-          return Restaurant(
-            id: json['profile_id'],
-            name: json['restaurant_name'] ?? 'Unknown',
-            rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
-            logoUrl: profileData?['avatar_url'],
-          );
-        }).toList();
-      } else {
-        favoriteRestaurants = [];
-      }
+      // Parallel loading for better performance
+      final results = await Future.wait([
+        _loadFavoriteMeals(),
+        _loadFavoriteRestaurants(),
+      ]);
+      
+      // Results are already set in the individual methods
     } catch (e) {
       debugPrint('Error loading favorites: $e');
       error = e.toString();
     } finally {
       isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _loadFavoriteMeals() async {
+    try {
+      // Step 1: Get favorite meal IDs (limit to 50 most recent)
+      final favoritesRes = await _supabase
+          .from('favorites')
+          .select('meal_id, created_at')
+          .eq('user_id', currentUserId!)
+          .order('created_at', ascending: false)
+          .limit(50);
+
+      final mealIds = (favoritesRes as List)
+          .map((f) => f['meal_id'] as String)
+          .toList();
+
+      if (mealIds.isEmpty) {
+        favoriteMeals = [];
+        favoriteMealIds = {};
+        return;
+      }
+
+      // Step 2: Get meal details with restaurant info for those IDs
+      final mealsRes = await _supabase
+          .from('meals')
+          .select('''
+            id,
+            title,
+            location,
+            image_url,
+            original_price,
+            discounted_price,
+            quantity_available,
+            expiry_date,
+            restaurants:restaurant_id (
+              restaurant_name,
+              rating,
+              profile_id
+            )
+          ''')
+          .inFilter('id', mealIds)
+          .eq('status', 'active')
+          .gt('quantity_available', 0)
+          .gt('expiry_date', DateTime.now().toIso8601String());
+
+      favoriteMealIds = <String>{};
+      favoriteMeals = (mealsRes as List).map((mealData) {
+        final restaurantData = mealData['restaurants'];
+        final mealId = mealData['id'] as String;
+        
+        favoriteMealIds.add(mealId);
+        
+        return MealOffer(
+          id: mealId,
+          title: mealData['title'] ?? 'Delicious Meal',
+          location: mealData['location'] ?? 'Cairo, Egypt',
+          imageUrl: mealData['image_url'] ?? '',
+          originalPrice: (mealData['original_price'] as num?)?.toDouble() ?? 0.0,
+          donationPrice: (mealData['discounted_price'] as num?)?.toDouble() ?? 0.0,
+          quantity: mealData['quantity_available'] ?? 0,
+          expiry: DateTime.parse(mealData['expiry_date']),
+          restaurant: Restaurant(
+            id: restaurantData?['profile_id'] ?? '',
+            name: restaurantData?['restaurant_name'] ?? 'Unknown Restaurant',
+            rating: (restaurantData?['rating'] as num?)?.toDouble() ?? 0.0,
+          ),
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('Error loading favorite meals: $e');
+      favoriteMeals = [];
+      favoriteMealIds = {};
+    }
+  }
+
+  Future<void> _loadFavoriteRestaurants() async {
+    try {
+      // Step 1: Get favorite restaurant IDs (limit to 50 most recent)
+      final favoritesRes = await _supabase
+          .from('favorite_restaurants')
+          .select('restaurant_id, created_at')
+          .eq('user_id', currentUserId!)
+          .order('created_at', ascending: false)
+          .limit(50);
+
+      final restaurantIds = (favoritesRes as List)
+          .map((f) => f['restaurant_id'] as String)
+          .toList();
+
+      if (restaurantIds.isEmpty) {
+        favoriteRestaurants = [];
+        favoriteRestaurantIds = {};
+        return;
+      }
+
+      // Step 2: Get restaurant details with profile for those IDs
+      final restaurantsRes = await _supabase
+          .from('restaurants')
+          .select('''
+            profile_id,
+            restaurant_name,
+            rating,
+            profiles!inner(avatar_url)
+          ''')
+          .inFilter('profile_id', restaurantIds);
+
+      favoriteRestaurantIds = <String>{};
+      favoriteRestaurants = (restaurantsRes as List).map((restaurantData) {
+        final profileData = restaurantData['profiles'];
+        final restaurantId = restaurantData['profile_id'] as String;
+        
+        favoriteRestaurantIds.add(restaurantId);
+        
+        return Restaurant(
+          id: restaurantId,
+          name: restaurantData['restaurant_name'] ?? 'Unknown',
+          rating: (restaurantData['rating'] as num?)?.toDouble() ?? 0.0,
+          logoUrl: profileData?['avatar_url'],
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('Error loading favorite restaurants: $e');
+      favoriteRestaurants = [];
+      favoriteRestaurantIds = {};
     }
   }
 

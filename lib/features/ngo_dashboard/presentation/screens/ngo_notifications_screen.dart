@@ -350,7 +350,7 @@ class _NgoNotificationsScreenState extends State<NgoNotificationsScreen> {
               if (context.canPop()) {
                 context.pop();
               } else {
-                context.go('/ngo-home');
+                context.go('/ngo/home');
               }
             },
             icon: const Icon(Icons.arrow_back_ios, size: 20),

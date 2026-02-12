@@ -190,7 +190,10 @@ class _CartScreenState extends State<CartScreen> {
             ],
           ),
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              final foodie = context.read<FoodieState>();
+              foodie.clearCart();
+            },
             child: Text(
               'Clear All',
               style: GoogleFonts.plusJakartaSans(
@@ -532,7 +535,7 @@ class _DistributionMethodSelector extends StatelessWidget {
           value: DeliveryMethod.pickup,
           groupValue: current,
           title: 'Self Pickup',
-          subtitle: 'Pick up from Green Leaf Bistro (0.8 mi)',
+          subtitle: 'Pick up from restaurant',
           tag: 'Free',
           tagColor: AppColors.primaryGreen,
           borderColor: current == DeliveryMethod.pickup
@@ -722,8 +725,6 @@ class _BillDetailsCard extends StatelessWidget {
                   : 'EGP ${foodie.deliveryFee.toStringAsFixed(2)}',
               foodie.deliveryFee == 0 ? accentColor : textColor,
               isValueStyled: foodie.deliveryFee == 0),
-          const SizedBox(height: 8),
-          _row('Taxes & Charges', '0.00', textColor), // Mocked for now
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Divider(color: isDark ? Colors.white10 : Colors.grey[200]),

@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../data/services/rating_service.dart';
+import '../widgets/rating_dialog.dart';
 
 class MyOrdersScreenNew extends StatefulWidget {
   static const routeName = '/my-orders';
@@ -16,6 +18,7 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _supabase = Supabase.instance.client;
+  final _ratingService = RatingService();
   List<Map<String, dynamic>> _activeOrders = [];
   List<Map<String, dynamic>> _pastOrders = [];
   bool _isLoading = true;
@@ -557,9 +560,7 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
                 children: [
                   if (status == 'completed' || status == 'delivered') ...[
                     OutlinedButton(
-                      onPressed: () {
-                        // TODO: Implement rating
-                      },
+                      onPressed: () => _showRatingDialog(context, order),
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: Colors.grey[300]!),
                         shape: RoundedRectangleBorder(
@@ -744,6 +745,40 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
       return '${diff.inDays}d ago';
     } else {
       return '${date.month}/${date.day}';
+    }
+  }
+
+  Future<void> _showRatingDialog(
+      BuildContext context, Map<String, dynamic> order) async {
+    final orderId = order['id'] as String;
+    final restaurant = order['restaurants'] as Map<String, dynamic>?;
+    final restaurantName = restaurant?['restaurant_name'] ?? 'Restaurant';
+
+    // Check if already rated
+    final existingRating = await _ratingService.getOrderRating(orderId);
+
+    if (!mounted) return;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => RatingDialog(
+        orderId: orderId,
+        restaurantName: restaurantName,
+        existingRating: existingRating?['rating'] as int?,
+        existingReview: existingRating?['review_text'] as String?,
+        onSubmit: (rating, review) async {
+          await _ratingService.submitRating(
+            orderId: orderId,
+            rating: rating,
+            reviewText: review,
+          );
+        },
+      ),
+    );
+
+    // Reload orders if rating was submitted
+    if (result == true) {
+      _loadOrders();
     }
   }
 }

@@ -31,6 +31,7 @@ class SupabaseHomeRemoteDataSource implements HomeRemoteDataSource {
           profile_id,
           restaurant_name,
           rating,
+          rating_count,
           profiles!inner(avatar_url)
         ''')
         .order('rating', ascending: false)
@@ -45,7 +46,7 @@ class SupabaseHomeRemoteDataSource implements HomeRemoteDataSource {
         'rating': e['rating'] ?? 0.0,
         'logo_url': profileData?['avatar_url'],
         'verified': true,
-        'reviews_count': 0,
+        'reviews_count': e['rating_count'] ?? 0,  // ✅ Now fetches real count from database
       });
     }).toList();
   }

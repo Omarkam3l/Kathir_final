@@ -334,52 +334,6 @@ class _AuthScreenState extends State<AuthScreen> {
                         border: border,
                         validator: (v) => (v ?? '').isEmpty ? 'Required' : null,
                       ),
-                      if (!isLogin) ...[
-                        const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: GestureDetector(
-                            onTap: () async {
-                              final messenger = ScaffoldMessenger.of(context);
-                              final email = _emailController.text.trim();
-                              if (email.isEmpty) {
-                                messenger.showSnackBar(const SnackBar(
-                                    content: Text('Enter your email first',
-                                        style:
-                                            TextStyle(color: AppColors.white)),
-                                    backgroundColor: AppColors.error));
-                                return;
-                              }
-                              try {
-                                await s.Supabase.instance.client.auth.resend(
-                                  type: s.OtpType.signup,
-                                  email: email,
-                                  emailRedirectTo: kIsWeb
-                                      ? Uri.base.toString()
-                                      : 'io.supabase.flutter://login-callback/',
-                                );
-                                messenger.showSnackBar(const SnackBar(
-                                    content: Text('Verification email sent',
-                                        style:
-                                            TextStyle(color: AppColors.white)),
-                                    backgroundColor: AppColors.primary));
-                              } catch (e) {
-                                messenger.showSnackBar(SnackBar(
-                                    content: Text(
-                                        'Resend failed: ${e.toString()}',
-                                        style: const TextStyle(
-                                            color: AppColors.white)),
-                                    backgroundColor: AppColors.error));
-                              }
-                            },
-                            child: Text('Resend verification email',
-                                style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.primary)),
-                          ),
-                        ),
-                      ],
                       if (isLogin) ...[
                         const SizedBox(height: 8),
                         Align(
