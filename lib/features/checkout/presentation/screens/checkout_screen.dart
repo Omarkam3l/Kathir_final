@@ -406,13 +406,52 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       ],
                                     )
                                   : _deliveryAddress != null
-                                      ? _buildSummaryRow(
-                                          Icon(Icons.location_on,
-                                              size: 16, color: subTextColor),
-                                          'Delivery to',
-                                          _deliveryAddress!,
-                                          textColor,
-                                          subTextColor)
+                                      ? Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            _buildSummaryRow(
+                                              Icon(Icons.location_on,
+                                                  size: 16, color: subTextColor),
+                                              'Delivery to',
+                                              _deliveryAddress!,
+                                              textColor,
+                                              subTextColor),
+                                            const SizedBox(height: 8),
+                                            // Change address button
+                                            InkWell(
+                                              onTap: () {
+                                                Navigator.of(context).push(
+                                                  MaterialPageRoute(
+                                                    builder: (context) => const AddressesScreen(),
+                                                  ),
+                                                ).then((_) => _loadDefaultAddress());
+                                              },
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                                decoration: BoxDecoration(
+                                                  color: primaryColor.withOpacity(0.1),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  border: Border.all(color: primaryColor.withOpacity(0.3)),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(Icons.edit_location, size: 16, color: primaryColor),
+                                                    const SizedBox(width: 6),
+                                                    Text(
+                                                      'Change Address',
+                                                      style: GoogleFonts.plusJakartaSans(
+                                                        fontSize: 13,
+                                                        color: primaryColor,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        )
                                       : InkWell(
                                           onTap: () {
                                             // Navigate to addresses screen

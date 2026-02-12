@@ -24,7 +24,8 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<NgoHomeViewModel>().loadIfNeeded();
+      print('🔍 NGO HOME SCREEN: initState - calling loadData');
+      context.read<NgoHomeViewModel>().loadData(forceRefresh: true);
     });
   }
 
@@ -172,7 +173,7 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
 
   Widget _buildNotificationButton(bool isDark, NgoHomeViewModel viewModel) {
     return GestureDetector(
-      onTap: () => context.go('/ngo-notifications'),
+      onTap: () => context.go('/ngo/notifications'),
       child: Stack(
         children: [
           Container(

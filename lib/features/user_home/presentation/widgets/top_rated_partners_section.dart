@@ -241,7 +241,7 @@ class _PartnerChip extends StatelessWidget {
                                 const Icon(Icons.star, size: 16, color: Colors.amber),
                                 const SizedBox(width: 4),
                                 Text(
-                                  '${restaurant.rating.toStringAsFixed(1)} • Available meals',
+                                  '${restaurant.rating.toStringAsFixed(1)} (${restaurant.reviewsCount} reviews)',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 14,
                                     color: Colors.grey[600],

@@ -107,6 +107,19 @@ class _RecentMealCardState extends State<RecentMealCard> {
     }
   }
 
+  String _getPrice() {
+    // Try discounted_price first, then fall back to original_price
+    final discountedPrice = widget.meal['discounted_price'];
+    final originalPrice = widget.meal['original_price'];
+    
+    if (discountedPrice != null && discountedPrice != 0) {
+      return (discountedPrice as num).toStringAsFixed(2);
+    } else if (originalPrice != null) {
+      return (originalPrice as num).toStringAsFixed(2);
+    }
+    return '0.00';
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -196,7 +209,7 @@ class _RecentMealCardState extends State<RecentMealCard> {
                       Text(
                         isFree 
                             ? 'FREE' 
-                            : 'EGP ${(widget.meal['discounted_price'] as num?)?.toStringAsFixed(2) ?? '0.00'}',
+                            : 'EGP ${_getPrice()}',
                         style: TextStyle(
                           color: isFree ? AppColors.primaryGreen : AppColors.primaryGreen,
                           fontWeight: FontWeight.bold,

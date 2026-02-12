@@ -65,7 +65,7 @@ class _RestaurantHomeScreenState extends State<RestaurantHomeScreen> {
       // Query 1: Get meals with minimal columns (was fetching all columns)
       final mealsRes = await _supabase
           .from('meals')
-          .select('id, title, image_url, quantity_available, status, expiry_date, created_at')
+          .select('id, title, image_url, quantity_available, status, expiry_date, created_at, original_price, discounted_price')
           .eq('restaurant_id', _restaurantId ?? userId)
           .order('created_at', ascending: false);
 

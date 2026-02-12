@@ -97,7 +97,7 @@ async function sendEmail(email: EmailQueueItem, supabase: any) {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Kathir <orders@kathir.app>',
+        from: 'Kathir <onboarding@resend.dev>',  // Resend's free testing domain
         to: email.recipient_email,
         subject: subject,
         html: html,

@@ -284,7 +284,7 @@ class MealDetailScreen extends StatelessWidget {
                         const Icon(Icons.star, color: Colors.amber, size: 14),
                         const SizedBox(width: 4),
                         Text(
-                          '${product.restaurant.rating} (120 reviews)',
+                          '${product.restaurant.rating.toStringAsFixed(1)} (${product.restaurant.reviewsCount} reviews)',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             color: Colors.grey[500],

@@ -17,7 +17,7 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
   bool _isLoading = true;
   String? _restaurantId;
   List<Map<String, dynamic>> _orders = [];
-  String _selectedFilter = 'all'; // all, active, pending, preparing, ready_for_pickup, completed
+  String _selectedFilter = 'all';
 
   @override
   void initState() {
@@ -29,47 +29,146 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
     setState(() => _isLoading = true);
     
     try {
+      debugPrint('🔍 ========== RESTAURANT ORDERS OPTIMIZED LOAD ==========');
+      
       final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
+      if (userId == null) {
+        debugPrint('❌ User ID is null');
+        return;
+      }
 
       _restaurantId = userId;
+      debugPrint('✅ Restaurant ID: $_restaurantId');
 
-      // Get orders based on filter
-      var query = _supabase
+      // Step 1: Get orders and show immediately
+      debugPrint('📊 Step 1: Fetching orders...');
+      var ordersQuery = _supabase
           .from('orders')
-          .select('''
-            *,
-            order_items(
-              id,
-              quantity,
-              unit_price,
-              meals!meal_id(
-                title,
-                image_url
-              )
-            ),
-            profiles!user_id (
-              full_name
-            )
-          ''')
+          .select('id, order_number, status, total_amount, created_at, user_id')
           .eq('restaurant_id', _restaurantId!);
 
-      // Apply filter
       if (_selectedFilter != 'all') {
         if (_selectedFilter == 'active') {
-          query = query.inFilter('status', ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'out_for_delivery']);
+          ordersQuery = ordersQuery.inFilter('status', 
+            ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'out_for_delivery']);
         } else {
-          query = query.eq('status', _selectedFilter);
+          ordersQuery = ordersQuery.eq('status', _selectedFilter);
         }
       }
 
-      final ordersRes = await query.order('created_at', ascending: false);
+      final ordersRes = await ordersQuery.order('created_at', ascending: false);
+      final ordersList = List<Map<String, dynamic>>.from(ordersRes);
+      
+      debugPrint('✅ Step 1: Got ${ordersList.length} orders');
 
-      _orders = List<Map<String, dynamic>>.from(ordersRes);
+      // Show orders immediately (without details yet)
+      if (mounted) {
+        setState(() {
+          _orders = ordersList;
+          _isLoading = false; // Stop loading indicator, show orders
+        });
+      }
 
-      if (mounted) setState(() => _isLoading = false);
-    } catch (e) {
-      debugPrint('Error loading orders: $e');
+      if (ordersList.isEmpty) {
+        return;
+      }
+
+      // Continue loading details in background
+      final orderIds = ordersList.map((o) => o['id'] as String).toList();
+      final userIds = ordersList
+          .map((o) => o['user_id'] as String?)
+          .where((id) => id != null)
+          .toSet()
+          .toList();
+
+      // Step 2: Get order items
+      debugPrint('📊 Step 2: Fetching order items...');
+      final orderItemsRes = await _supabase
+          .from('order_items')
+          .select('id, order_id, quantity, unit_price, meal_id')
+          .inFilter('order_id', orderIds);
+
+      final orderItemsList = List<Map<String, dynamic>>.from(orderItemsRes);
+      debugPrint('✅ Step 2: Got ${orderItemsList.length} order items');
+
+      // Step 3: Get meals
+      final mealIds = orderItemsList
+          .map((item) => item['meal_id'] as String?)
+          .where((id) => id != null)
+          .toSet()
+          .toList();
+
+      debugPrint('📊 Step 3: Fetching meals...');
+      final mealsRes = await _supabase
+          .from('meals')
+          .select('id, title, image_url')
+          .inFilter('id', mealIds);
+
+      final mealsList = List<Map<String, dynamic>>.from(mealsRes);
+      debugPrint('✅ Step 3: Got ${mealsList.length} meals');
+
+      // Step 4: Get profiles
+      debugPrint('📊 Step 4: Fetching profiles...');
+      final profilesRes = await _supabase
+          .from('profiles')
+          .select('id, full_name')
+          .inFilter('id', userIds);
+
+      final profilesList = List<Map<String, dynamic>>.from(profilesRes);
+      debugPrint('✅ Step 4: Got ${profilesList.length} profiles');
+
+      // Step 5: Combine data and update UI
+      final mealsMap = <String, Map<String, dynamic>>{};
+      for (final meal in mealsList) {
+        mealsMap[meal['id']] = meal;
+      }
+
+      final profilesMap = <String, Map<String, dynamic>>{};
+      for (final profile in profilesList) {
+        profilesMap[profile['id']] = profile;
+      }
+
+      final orderItemsMap = <String, List<Map<String, dynamic>>>{};
+      for (final item in orderItemsList) {
+        final orderId = item['order_id'] as String;
+        if (!orderItemsMap.containsKey(orderId)) {
+          orderItemsMap[orderId] = [];
+        }
+        
+        final mealId = item['meal_id'] as String?;
+        if (mealId != null && mealsMap.containsKey(mealId)) {
+          item['meals'] = mealsMap[mealId];
+        }
+        
+        orderItemsMap[orderId]!.add(item);
+      }
+
+      final enrichedOrders = ordersList.map((order) {
+        final orderId = order['id'] as String;
+        final userId = order['user_id'] as String?;
+
+        order['order_items'] = orderItemsMap[orderId] ?? [];
+
+        if (userId != null && profilesMap.containsKey(userId)) {
+          order['profiles'] = profilesMap[userId];
+        }
+
+        return order;
+      }).toList();
+
+      debugPrint('✅ Combined all data. Final orders: ${enrichedOrders.length}');
+      debugPrint('🎉 ========== RESTAURANT ORDERS LOAD COMPLETE ==========');
+
+      // Update with full details
+      if (mounted) {
+        setState(() {
+          _orders = enrichedOrders;
+        });
+      }
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error: $e');
+      debugPrint('Stack trace: $stackTrace');
+      
       if (mounted) setState(() => _isLoading = false);
     }
   }

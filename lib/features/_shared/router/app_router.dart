@@ -356,7 +356,7 @@ class AppRouter {
         ),
       ),
       GoRoute(
-        path: '/ngo-notifications',
+        path: '/ngo/notifications',
         builder: (context, state) => const NgoNotificationsScreen(),
       ),
       GoRoute(
