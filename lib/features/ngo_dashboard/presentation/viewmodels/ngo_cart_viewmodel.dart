@@ -60,7 +60,7 @@ class NgoCartViewModel extends ChangeNotifier {
           .from('cart_items')
           .select('''
             id,
-            profile_id,
+            user_id,
             meal_id,
             quantity,
             created_at,
@@ -93,7 +93,7 @@ class NgoCartViewModel extends ChangeNotifier {
               )
             )
           ''')
-          .eq('profile_id', userId)
+          .eq('user_id', userId)
           .order('created_at', ascending: false);
 
       _cartItems = (response as List).map((json) {
@@ -155,7 +155,7 @@ class NgoCartViewModel extends ChangeNotifier {
       final existing = await _supabase
           .from('cart_items')
           .select('id, quantity')
-          .eq('profile_id', userId)
+          .eq('user_id', userId)
           .eq('meal_id', meal.id)
           .maybeSingle();
 
@@ -178,7 +178,7 @@ class NgoCartViewModel extends ChangeNotifier {
       } else {
         // Insert new item
         await _supabase.from('cart_items').insert({
-          'profile_id': userId,
+          'user_id': userId,
           'meal_id': meal.id,
           'quantity': quantity,
           'created_at': DateTime.now().toIso8601String(),
@@ -209,7 +209,7 @@ class NgoCartViewModel extends ChangeNotifier {
       await _supabase
           .from('cart_items')
           .delete()
-          .eq('profile_id', userId)
+          .eq('user_id', userId)
           .eq('meal_id', mealId);
 
       debugPrint('✅ Removed from cart');
@@ -242,7 +242,7 @@ class NgoCartViewModel extends ChangeNotifier {
             'quantity': newQuantity,
             'updated_at': DateTime.now().toIso8601String(),
           })
-          .eq('profile_id', userId)
+          .eq('user_id', userId)
           .eq('meal_id', mealId);
 
       debugPrint('✅ Updated quantity');
@@ -286,7 +286,7 @@ class NgoCartViewModel extends ChangeNotifier {
       await _supabase
           .from('cart_items')
           .delete()
-          .eq('profile_id', userId);
+          .eq('user_id', userId);
 
       debugPrint('✅ Cart cleared');
       
