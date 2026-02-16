@@ -4,7 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../data/services/rating_service.dart';
+import '../../data/services/order_issue_service.dart';
 import '../widgets/rating_dialog.dart';
+import '../widgets/report_issue_dialog.dart';
+import '../../../loyalty/presentation/screens/loyalty_screen.dart';
 
 class MyOrdersScreenNew extends StatefulWidget {
   static const routeName = '/my-orders';
@@ -19,6 +22,7 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
   late TabController _tabController;
   final _supabase = Supabase.instance.client;
   final _ratingService = RatingService();
+  final _orderIssueService = OrderIssueService();
   List<Map<String, dynamic>> _activeOrders = [];
   List<Map<String, dynamic>> _pastOrders = [];
   bool _isLoading = true;
@@ -26,7 +30,7 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _loadOrders();
     _setupRealtimeSubscription();
   }
@@ -147,6 +151,7 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
                       children: [
                         _buildActiveOrders(),
                         _buildPastOrders(),
+                        const LoyaltyScreen(),
                       ],
                     ),
             ),
@@ -232,6 +237,7 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
           tabs: const [
             Tab(text: 'Active'),
             Tab(text: 'Past'),
+            Tab(text: 'Rewards'),
           ],
         ),
       ),
@@ -576,19 +582,18 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
                     ),
                     const SizedBox(width: 8),
                   ],
-                  ElevatedButton(
-                    onPressed: () {
-                      // TODO: Implement reorder
-                    },
+                  ElevatedButton.icon(
+                    onPressed: () => _showReportIssueDialog(context, order),
+                    icon: const Icon(Icons.report_problem, size: 18),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.black,
+                      backgroundColor: Colors.red[50],
+                      foregroundColor: Colors.red[700],
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: Text(
-                      'Reorder',
+                    label: Text(
+                      'Report Issue',
                       style: GoogleFonts.plusJakartaSans(
                         fontWeight: FontWeight.bold,
                       ),
@@ -779,6 +784,65 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
     // Reload orders if rating was submitted
     if (result == true) {
       _loadOrders();
+    }
+  }
+
+  Future<void> _showReportIssueDialog(
+      BuildContext context, Map<String, dynamic> order) async {
+    final orderId = order['id'] as String;
+    final restaurant = order['restaurants'] as Map<String, dynamic>?;
+    final restaurantName = restaurant?['restaurant_name'] ?? 'Restaurant';
+
+    // Check if issue already reported
+    final hasIssue = await _orderIssueService.hasReportedIssue(orderId);
+
+    if (!mounted) return;
+
+    if (hasIssue) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You have already reported an issue for this order'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => ReportIssueDialog(
+        orderId: orderId,
+        restaurantName: restaurantName,
+      ),
+    );
+
+    // Show confirmation if issue was reported
+    if (result == true && mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green[600], size: 28),
+              const SizedBox(width: 12),
+              const Text('Issue Reported'),
+            ],
+          ),
+          content: Text(
+            'Your issue has been reported to the restaurant. They will review it and get back to you soon.',
+            style: GoogleFonts.plusJakartaSans(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
     }
   }
 }

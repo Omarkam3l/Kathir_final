@@ -85,7 +85,7 @@ class SupabaseHomeRemoteDataSource implements HomeRemoteDataSource {
     ''').eq('status', 'active')
       .gt('quantity_available', 0)
       .gt('expiry_date', DateTime.now().toIso8601String())
-      .order('created_at', ascending: false)
+      .order('updated_at', ascending: false)  // Sort by updated_at to show republished meals first
       .limit(20); // Pagination: fetch first 20 meals
     
     final data = (res as List).cast<Map<String, dynamic>>();
