@@ -1,24 +1,15 @@
 // =====================================================
-// SEND ORDER EMAILS - Supabase Edge Function
+// SEND ORDER EMAILS - Supabase Edge Function (Zoho SMTP)
 // =====================================================
-// This Edge Function processes the email queue and sends
-// order-related emails using Resend API.
-//
-// Triggered by:
-// - Cron job (every minute)
-// - Manual invocation
-//
-// Email Types:
-// 1. invoice - Order confirmation/invoice to user
-// 2. new_order - New order notification to restaurant
-// 3. ngo_pickup - Pickup notification to NGO
-// 4. ngo_confirmation - Order confirmation to NGO
-// =====================================================
+// Clean, simple email sending with proper logging
+// Based on the original working implementation
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts'
 
-const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!
+const ZOHO_EMAIL = Deno.env.get('ZOHO_EMAIL')!
+const ZOHO_PASSWORD = Deno.env.get('ZOHO_PASSWORD')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
@@ -34,24 +25,39 @@ interface EmailQueueItem {
 
 serve(async (req) => {
   console.log('========================================')
-  console.log('🚀 EMAIL FUNCTION INVOKED')
+  console.log('🚀 EMAIL FUNCTION INVOKED (Zoho SMTP)')
   console.log('Timestamp:', new Date().toISOString())
   console.log('========================================')
   
   try {
     // Check environment variables
     console.log('📋 Checking environment variables...')
-    console.log('RESEND_API_KEY exists:', !!RESEND_API_KEY)
+    console.log('ZOHO_EMAIL exists:', !!ZOHO_EMAIL)
+    console.log('ZOHO_PASSWORD exists:', !!ZOHO_PASSWORD)
     console.log('SUPABASE_URL exists:', !!SUPABASE_URL)
     console.log('SUPABASE_SERVICE_ROLE_KEY exists:', !!SUPABASE_SERVICE_ROLE_KEY)
     
-    if (!RESEND_API_KEY) {
-      console.error('❌ RESEND_API_KEY is missing!')
-      return new Response(JSON.stringify({ error: 'RESEND_API_KEY not configured' }), {
+    if (!ZOHO_EMAIL || !ZOHO_PASSWORD) {
+      console.error('❌ Zoho credentials missing!')
+      return new Response(JSON.stringify({ error: 'Zoho credentials not configured' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
       })
     }
+
+    // Initialize SMTP client
+    console.log('🔌 Initializing Zoho SMTP client...')
+    const smtpClient = new SMTPClient({
+      connection: {
+        hostname: 'smtp.zoho.com',
+        port: 465,
+        tls: true,
+        auth: {
+          username: ZOHO_EMAIL,
+          password: ZOHO_PASSWORD,
+        },
+      },
+    })
 
     // Initialize Supabase client
     console.log('🔌 Initializing Supabase client...')
@@ -92,21 +98,22 @@ serve(async (req) => {
       console.log('  - Attempts:', email.attempts)
     })
 
-    // Process each email with rate limiting (500ms delay between emails)
-    console.log('\n🔄 Processing emails with rate limiting...')
+    // Process each email sequentially with small delay
+    console.log('\n🔄 Processing emails...')
     const results = []
     for (let i = 0; i < emails.length; i++) {
       try {
-        await sendEmail(emails[i], supabase)
+        await sendEmail(emails[i], supabase, smtpClient)
         results.push({ status: 'fulfilled' })
       } catch (error) {
+        console.error(`Failed to send email:`, error)
         results.push({ status: 'rejected', reason: error })
       }
       
-      // Add 500ms delay between emails to respect Resend rate limit (2 req/sec)
+      // Small delay between emails (200ms)
       if (i < emails.length - 1) {
-        console.log('   ⏳ Waiting 500ms before next email...')
-        await new Promise(resolve => setTimeout(resolve, 500))
+        console.log('   ⏳ Waiting 200ms before next email...')
+        await new Promise(resolve => setTimeout(resolve, 200))
       }
     }
 
@@ -142,7 +149,7 @@ serve(async (req) => {
   }
 })
 
-async function sendEmail(email: EmailQueueItem, supabase: any) {
+async function sendEmail(email: EmailQueueItem, supabase: any, smtpClient: SMTPClient) {
   console.log(`\n📤 Sending email to ${email.recipient_email}...`)
   console.log(`   Type: ${email.email_type}`)
   console.log(`   Order ID: ${email.order_id}`)
@@ -152,34 +159,20 @@ async function sendEmail(email: EmailQueueItem, supabase: any) {
     const { subject, html } = generateEmailContent(email)
     console.log(`   ✅ Subject: ${subject}`)
 
-    const emailPayload = {
-      from: 'Kathir <orders@kathir-app.site>',  // Updated sender email
+    console.log('   📮 Sending via Zoho SMTP...')
+    console.log('   From:', ZOHO_EMAIL)
+    console.log('   To:', email.recipient_email)
+    
+    // Send email via Zoho SMTP
+    await smtpClient.send({
+      from: `Kathir Orders<${ZOHO_EMAIL}>`,
       to: email.recipient_email,
       subject: subject,
+      content: html,
       html: html,
-    }
-    
-    console.log('   📮 Sending to Resend API...')
-    console.log('   From:', emailPayload.from)
-    console.log('   To:', emailPayload.to)
-    
-    // Send email via Resend
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify(emailPayload),
     })
 
-    const responseData = await response.json()
-    console.log('   📬 Resend API response status:', response.status)
-    console.log('   📬 Resend API response:', JSON.stringify(responseData, null, 2))
-
-    if (!response.ok) {
-      throw new Error(`Resend API error (${response.status}): ${JSON.stringify(responseData)}`)
-    }
+    console.log('   📬 Email sent successfully via Zoho')
 
     // Mark as sent
     console.log('   💾 Marking email as sent in database...')
@@ -237,18 +230,23 @@ function generateEmailContent(email: EmailQueueItem): {
 }
 
 function generateInvoiceEmail(data: any) {
-  const itemsHtml = data.items
+  // ✅ FIXED: Proper handling of items array with fallback
+  const items = (data.items || [])
     .map(
       (item: any) => `
     <tr>
-      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${item.meal_title}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.quantity}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">EGP ${item.unit_price.toFixed(2)}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: 600;">EGP ${item.subtotal.toFixed(2)}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${item.meal_title || 'Unknown Item'}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.quantity || 0}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">EGP ${Number(item.unit_price || 0).toFixed(2)}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: 600;">EGP ${Number(item.subtotal || 0).toFixed(2)}</td>
     </tr>
   `
     )
     .join('')
+
+  const deliveryInfo = data.delivery_type === 'delivery'
+    ? `<p style="margin: 5px 0;"><strong>Address:</strong> ${data.delivery_address || 'N/A'}</p>`
+    : `<p style="margin: 5px 0;"><strong>Delivery Method:</strong> ${data.delivery_type === 'pickup' ? 'Self Pickup' : 'Donated to NGO'}</p>`
 
   return {
     subject: `Order Confirmation - ${data.restaurant_name}`,
@@ -277,8 +275,7 @@ function generateInvoiceEmail(data: any) {
         <h2 style="font-size: 18px; margin: 0 0 15px 0; color: #10b981;">Order Details</h2>
         <p style="margin: 5px 0;"><strong>Order ID:</strong> ${data.order_number.substring(0, 8)}</p>
         <p style="margin: 5px 0;"><strong>Date:</strong> ${new Date(data.created_at).toLocaleDateString()}</p>
-        <p style="margin: 5px 0;"><strong>Delivery Method:</strong> ${data.delivery_type === 'delivery' ? 'Home Delivery' : data.delivery_type === 'pickup' ? 'Self Pickup' : 'Donated to NGO'}</p>
-        ${data.delivery_type === 'delivery' ? `<p style="margin: 5px 0;"><strong>Address:</strong> ${data.delivery_address}</p>` : ''}
+        ${deliveryInfo}
       </div>
 
       <!-- Items Table -->
@@ -292,22 +289,17 @@ function generateInvoiceEmail(data: any) {
           </tr>
         </thead>
         <tbody>
-          ${itemsHtml}
+          ${items}
         </tbody>
         <tfoot>
           <tr>
             <td colspan="3" style="padding: 12px; text-align: right; font-weight: 700; font-size: 18px; color: #10b981;">Total:</td>
-            <td style="padding: 12px; text-align: right; font-weight: 700; font-size: 18px; color: #10b981;">EGP ${data.total_amount.toFixed(2)}</td>
+            <td style="padding: 12px; text-align: right; font-weight: 700; font-size: 18px; color: #10b981;">EGP ${Number(data.total_amount).toFixed(2)}</td>
           </tr>
         </tfoot>
       </table>
 
-      <!-- CTA Button -->
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="https://kathir.app/my-orders" style="display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">Track Your Order</a>
-      </div>
-
-      <p style="font-size: 14px; color: #6b7280; margin: 30px 0 0 0;">If you have any questions, please contact us at orders@kathir-app.site</p>
+      <p style="font-size: 14px; color: #6b7280; margin: 30px 0 0 0;">If you have any questions, please contact us at ${ZOHO_EMAIL}</p>
     </div>
 
     <!-- Footer -->
@@ -322,16 +314,21 @@ function generateInvoiceEmail(data: any) {
 }
 
 function generateNewOrderEmail(data: any) {
-  const itemsHtml = data.items
+  // ✅ FIXED: Proper handling of items array with fallback
+  const items = (data.items || [])
     .map(
       (item: any) => `
     <tr>
-      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${item.meal_title}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: 600; font-size: 18px; color: #10b981;">${item.quantity}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${item.meal_title || 'Unknown Item'}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: 600; font-size: 18px; color: #10b981;">${item.quantity || 0}</td>
     </tr>
   `
     )
     .join('')
+
+  const deliveryInfo = data.delivery_type === 'delivery'
+    ? `<p style="margin: 5px 0;"><strong>Delivery Address:</strong> ${data.delivery_address || 'N/A'}</p>`
+    : `<p style="margin: 5px 0;"><strong>Delivery Method:</strong> ${data.delivery_type === 'pickup' ? 'Self Pickup' : 'Donated to NGO'}</p>`
 
   return {
     subject: `🔔 New Order Received - ${data.buyer_name}`,
@@ -360,8 +357,8 @@ function generateNewOrderEmail(data: any) {
         <h2 style="font-size: 18px; margin: 0 0 15px 0; color: #ef4444;">Order Information</h2>
         <p style="margin: 5px 0;"><strong>Order ID:</strong> ${data.order_number.substring(0, 8)}</p>
         <p style="margin: 5px 0;"><strong>Customer:</strong> ${data.buyer_name}</p>
-        <p style="margin: 5px 0;"><strong>Delivery Method:</strong> ${data.delivery_type === 'delivery' ? 'Home Delivery' : data.delivery_type === 'pickup' ? 'Self Pickup' : 'Donated to NGO'}</p>
-        <p style="margin: 5px 0;"><strong>Total Amount:</strong> EGP ${data.total_amount.toFixed(2)}</p>
+        ${deliveryInfo}
+        <p style="margin: 5px 0;"><strong>Total Amount:</strong> EGP ${Number(data.total_amount).toFixed(2)}</p>
       </div>
 
       <!-- Items to Prepare -->
@@ -374,14 +371,9 @@ function generateNewOrderEmail(data: any) {
           </tr>
         </thead>
         <tbody>
-          ${itemsHtml}
+          ${items}
         </tbody>
       </table>
-
-      <!-- CTA Button -->
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="https://kathir.app/restaurant-dashboard/orders" style="display: inline-block; background-color: #ef4444; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">View Order Details</a>
-      </div>
 
       <p style="font-size: 14px; color: #6b7280; margin: 30px 0 0 0;">Please prepare this order as soon as possible. Update the order status in your dashboard.</p>
     </div>
@@ -398,10 +390,11 @@ function generateNewOrderEmail(data: any) {
 }
 
 function generateNgoPickupEmail(data: any) {
-  const itemsHtml = data.items
+  // ✅ FIXED: Proper handling of items array with fallback
+  const items = (data.items || [])
     .map(
       (item: any) => `
-    <li style="margin: 8px 0; font-size: 16px;">${item.quantity}x ${item.meal_title}</li>
+    <li style="margin: 8px 0; font-size: 16px;">${item.quantity || 0}x ${item.meal_title || 'Unknown Item'}</li>
   `
     )
     .join('')
@@ -439,13 +432,8 @@ function generateNgoPickupEmail(data: any) {
       <!-- Meals to Pickup -->
       <h3 style="font-size: 16px; margin: 0 0 15px 0; color: #374151;">Meals to Pickup:</h3>
       <ul style="list-style: none; padding: 0; margin: 0 0 30px 0;">
-        ${itemsHtml}
+        ${items}
       </ul>
-
-      <!-- CTA Button -->
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="https://kathir.app/ngo/home" style="display: inline-block; background-color: #8b5cf6; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">View in Dashboard</a>
-      </div>
 
       <p style="font-size: 14px; color: #6b7280; margin: 30px 0 0 0;">Please coordinate with the restaurant to arrange pickup. Thank you for your service to the community!</p>
     </div>
@@ -462,12 +450,13 @@ function generateNgoPickupEmail(data: any) {
 }
 
 function generateNgoConfirmationEmail(data: any) {
-  const itemsHtml = data.items
+  // ✅ FIXED: Proper handling of items array with fallback
+  const items = (data.items || [])
     .map(
       (item: any) => `
     <tr>
-      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${item.meal_title}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: 600;">${item.quantity}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${item.meal_title || 'Unknown Item'}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: 600;">${item.quantity || 0}</td>
     </tr>
   `
     )
@@ -500,7 +489,7 @@ function generateNgoConfirmationEmail(data: any) {
         <h2 style="font-size: 18px; margin: 0 0 15px 0; color: #10b981;">Order Information</h2>
         <p style="margin: 5px 0;"><strong>Order ID:</strong> ${data.order_number.substring(0, 8)}</p>
         <p style="margin: 5px 0;"><strong>Restaurant:</strong> ${data.restaurant_name}</p>
-        <p style="margin: 5px 0;"><strong>Total Amount:</strong> EGP ${data.total_amount.toFixed(2)}</p>
+        <p style="margin: 5px 0;"><strong>Total Amount:</strong> EGP ${Number(data.total_amount).toFixed(2)}</p>
       </div>
 
       <!-- Items -->
@@ -513,14 +502,9 @@ function generateNgoConfirmationEmail(data: any) {
           </tr>
         </thead>
         <tbody>
-          ${itemsHtml}
+          ${items}
         </tbody>
       </table>
-
-      <!-- CTA Button -->
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="https://kathir.app/ngo/home" style="display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">View in Dashboard</a>
-      </div>
 
       <p style="font-size: 14px; color: #6b7280; margin: 30px 0 0 0;">The restaurant will prepare your order. You can track the status in your dashboard.</p>
     </div>

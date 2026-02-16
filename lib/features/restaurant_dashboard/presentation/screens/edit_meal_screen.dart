@@ -108,6 +108,39 @@ class _EditMealScreenState extends State<EditMealScreen> {
   Future<void> _saveMeal() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Validate dates
+    if (_expiryDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select an expiry date'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    if (_pickupDeadline == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a pickup deadline'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    // IMPORTANT: Pickup deadline must be BEFORE or equal to expiry date
+    if (_pickupDeadline!.isAfter(_expiryDate!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pickup deadline must be before or equal to expiry date'),
+          backgroundColor: AppColors.error,
+          duration: Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
     try {
       String? imageUrl = _imageUrl;
@@ -127,6 +160,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
         'expiry_date': _expiryDate?.toIso8601String(),
         'pickup_deadline': _pickupDeadline?.toIso8601String(),
         'image_url': imageUrl,
+        'status': 'active',  // Set to active when republishing
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', widget.mealId);
 
@@ -459,11 +493,17 @@ class _EditMealScreenState extends State<EditMealScreen> {
   ) {
     return InkWell(
       onTap: () async {
+        // For expired meals, use today as initial date instead of the old expiry date
+        final now = DateTime.now();
+        final initialDate = (value != null && value.isAfter(now)) 
+            ? value 
+            : now.add(const Duration(days: 1));
+        
         final date = await showDatePicker(
           context: context,
-          initialDate: value ?? DateTime.now().add(const Duration(days: 1)),
-          firstDate: DateTime.now(),
-          lastDate: DateTime.now().add(const Duration(days: 365)),
+          initialDate: initialDate,
+          firstDate: now,
+          lastDate: now.add(const Duration(days: 365)),
         );
         if (date != null && mounted) {
           final time = await showTimePicker(
