@@ -434,7 +434,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                                 child: Row(
                                                   mainAxisSize: MainAxisSize.min,
                                                   children: [
-                                                    Icon(Icons.edit_location, size: 16, color: primaryColor),
+                                                    const Icon(Icons.edit_location, size: 16, color: primaryColor),
                                                     const SizedBox(width: 6),
                                                     Text(
                                                       'Change Address',

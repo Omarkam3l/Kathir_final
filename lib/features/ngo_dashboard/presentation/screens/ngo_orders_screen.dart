@@ -279,7 +279,7 @@ class _NgoOrdersScreenState extends State<NgoOrdersScreen> {
               ),
             ],
             const SizedBox(height: 12),
-            Row(
+            const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
@@ -300,8 +300,8 @@ class _NgoOrdersScreenState extends State<NgoOrdersScreen> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    const Icon(
+                    SizedBox(width: 4),
+                    Icon(
                       Icons.arrow_forward_ios,
                       size: 12,
                       color: AppColors.primaryGreen,

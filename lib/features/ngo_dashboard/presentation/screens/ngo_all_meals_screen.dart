@@ -263,7 +263,7 @@ class _NgoAllMealsScreenState extends State<NgoAllMealsScreen> {
             color: textMain,
           ),
         ),
-        Row(
+        const Row(
           children: [
             Text(
               'Sort by: Distance',
@@ -273,7 +273,7 @@ class _NgoAllMealsScreenState extends State<NgoAllMealsScreen> {
                 color: AppColors.primaryGreen,
               ),
             ),
-            const Icon(
+            Icon(
               Icons.expand_more,
               size: 16,
               color: AppColors.primaryGreen,

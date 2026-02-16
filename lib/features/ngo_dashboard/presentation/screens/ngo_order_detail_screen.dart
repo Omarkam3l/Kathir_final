@@ -352,7 +352,7 @@ class _NgoOrderDetailScreenState extends State<NgoOrderDetailScreen> {
                       ],
                     ),
                   ),
-                  Text(
+                  const Text(
                     'Free',
                     style: TextStyle(
                       fontSize: 14,
@@ -484,7 +484,7 @@ class _NgoOrderDetailScreenState extends State<NgoOrderDetailScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.location_on,
                 size: 20,
                 color: AppColors.primaryGreen,
@@ -555,7 +555,7 @@ class _NgoOrderDetailScreenState extends State<NgoOrderDetailScreen> {
                   color: isDark ? Colors.white : Colors.black,
                 ),
               ),
-              Text(
+              const Text(
                 'Free (Donation)',
                 style: TextStyle(
                   fontSize: 18,

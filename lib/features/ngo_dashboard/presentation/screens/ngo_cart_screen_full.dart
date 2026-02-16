@@ -261,7 +261,7 @@ class _NgoCartScreenFullState extends State<NgoCartScreenFull> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(
+                const Text(
                   'Free (Donation)',
                   style: TextStyle(
                     fontSize: 14,
