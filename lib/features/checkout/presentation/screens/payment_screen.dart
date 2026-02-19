@@ -102,7 +102,7 @@ class PaymentScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isDarkMode ? 0.4 : 0.08),
+                color: Colors.black.withValues(alpha: isDarkMode ? 0.4 : 0.08),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -148,7 +148,7 @@ class _OptionCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.04),
+              color: Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.04),
               blurRadius: 16,
               offset: const Offset(0, 8),
             ),
@@ -169,7 +169,7 @@ class _OptionCard extends StatelessWidget {
             Icon(
               Icons.arrow_forward_ios,
               size: 16,
-              color: textColor.withOpacity(0.6),
+              color: textColor.withValues(alpha: 0.6),
             ),
           ],
         ),

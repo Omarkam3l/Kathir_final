@@ -21,7 +21,7 @@ class OrderTabButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: isSelected
-                ? Theme.of(context).colorScheme.primary.withOpacity(0.12)
+                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)
                 : Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
           ),

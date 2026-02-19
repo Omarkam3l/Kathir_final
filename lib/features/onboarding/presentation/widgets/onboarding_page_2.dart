@@ -39,8 +39,8 @@ class OnboardingPage2 extends StatelessWidget {
                   icon: Icon(Icons.arrow_back, color: textColor, size: 24),
                   style: IconButton.styleFrom(
                     backgroundColor: isDark
-                        ? AppColors.white.withOpacity(0.1)
-                        : AppColors.black.withOpacity(0.05),
+                        ? AppColors.white.withValues(alpha: 0.1)
+                        : AppColors.black.withValues(alpha: 0.05),
                   ),
                 ),
                 TextButton(
@@ -71,7 +71,7 @@ class OnboardingPage2 extends StatelessWidget {
                       'lib/resources/assets/images/8040836.jpg',
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Container(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         child: const Icon(
                           Icons.restaurant,
                           size: 80,
@@ -92,7 +92,7 @@ class OnboardingPage2 extends StatelessWidget {
                             end: Alignment.bottomCenter,
                             colors: [
                               AppColors.transparent,
-                              AppColors.backgroundDark.withOpacity(0.8),
+                              AppColors.backgroundDark.withValues(alpha: 0.8),
                             ],
                           ),
                         ),
@@ -106,14 +106,14 @@ class OnboardingPage2 extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: AppColors.white.withOpacity(0.1),
+                          color: AppColors.white.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: AppColors.white.withOpacity(0.2),
+                            color: AppColors.white.withValues(alpha: 0.2),
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.black.withOpacity(0.2),
+                              color: AppColors.black.withValues(alpha: 0.2),
                               blurRadius: 16,
                               offset: const Offset(0, 4),
                             ),
@@ -129,7 +129,7 @@ class OnboardingPage2 extends StatelessWidget {
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.4),
+                                    color: AppColors.primary.withValues(alpha: 0.4),
                                     blurRadius: 8,
                                   ),
                                 ],
@@ -159,7 +159,7 @@ class OnboardingPage2 extends StatelessWidget {
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w500,
-                                    color: AppColors.white.withOpacity(0.8),
+                                    color: AppColors.white.withValues(alpha: 0.8),
                                   ),
                                 ),
                               ],
@@ -234,7 +234,7 @@ class OnboardingPage2 extends StatelessWidget {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primary.withOpacity(0.3),
+                                color: AppColors.primary.withValues(alpha: 0.3),
                                 blurRadius: 12,
                               ),
                             ],

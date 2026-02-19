@@ -186,7 +186,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                 color: Theme.of(context).scaffoldBackgroundColor,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -218,7 +218,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.20),
+                                    color: Colors.black.withValues(alpha: 0.20),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
@@ -248,7 +248,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: AppColors.primaryAccent.withOpacity(0.1),
+                              color: AppColors.primaryAccent.withValues(alpha: 0.1),
                             ),
                             child: const Center(
                               child: Icon(
@@ -358,7 +358,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                               boxShadow: [
                                 BoxShadow(
                                   color:
-                                      AppColors.primaryAccent.withOpacity(0.3),
+                                      AppColors.primaryAccent.withValues(alpha: 0.3),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
@@ -470,13 +470,13 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: AppColors.primaryAccent.withOpacity(0.1),
+              color: AppColors.primaryAccent.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.search_off,
               size: 60,
-              color: AppColors.primaryAccent.withOpacity(0.5),
+              color: AppColors.primaryAccent.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 24),
@@ -630,19 +630,19 @@ class _ProfessionalMealCardState extends State<_ProfessionalMealCard>
                 boxShadow: _hovering
                     ? [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
                       ]
                     : [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withValues(alpha: 0.04),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.02),
+                          color: Colors.black.withValues(alpha: 0.02),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -714,7 +714,7 @@ class _ProfessionalMealCardState extends State<_ProfessionalMealCard>
                               boxShadow: [
                                 BoxShadow(
                                   color:
-                                      AppColors.primaryAccent.withOpacity(0.3),
+                                      AppColors.primaryAccent.withValues(alpha: 0.3),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
@@ -744,7 +744,7 @@ class _ProfessionalMealCardState extends State<_ProfessionalMealCard>
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.orange.withOpacity(0.95),
+                                color: Colors.orange.withValues(alpha: 0.95),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(

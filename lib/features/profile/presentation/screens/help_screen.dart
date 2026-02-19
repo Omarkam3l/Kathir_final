@@ -96,7 +96,7 @@ class HelpScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -136,7 +136,7 @@ class _HelpCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(22),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 18,
               offset: const Offset(0, 8),
             ),
@@ -145,7 +145,7 @@ class _HelpCard extends StatelessWidget {
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
               radius: 28,
               child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 28),
             ),

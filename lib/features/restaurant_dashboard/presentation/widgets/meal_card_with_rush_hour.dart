@@ -30,7 +30,7 @@ class MealCardWithRushHour extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: meal.rushHourActiveNow
-                ? AppColors.primaryGreen.withOpacity(0.3)
+                ? AppColors.primaryGreen.withValues(alpha: 0.3)
                 : (isDark
                     ? const Color(0xFF4A3F33)
                     : const Color(0xFFE7E5E4)),
@@ -38,7 +38,7 @@ class MealCardWithRushHour extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),

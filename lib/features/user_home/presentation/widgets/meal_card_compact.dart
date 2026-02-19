@@ -229,12 +229,12 @@ class _MealCardCompactState extends State<MealCardCompact>
           border: Border.all(color: Colors.white, width: 2),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 6,
               offset: const Offset(0, 4),
             )
           ],
-          color: AppColors.primaryAccent.withOpacity(0.12),
+          color: AppColors.primaryAccent.withValues(alpha: 0.12),
         ),
         child: Center(
           child: Text(
@@ -374,7 +374,7 @@ class _MealCardCompactState extends State<MealCardCompact>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
       ),
       child: Row(

@@ -135,8 +135,8 @@ class _CouponsAppBar extends StatelessWidget {
     final buttonColor = isDarkMode ? const Color(0xFF1E1E1E) : AppColors.white;
     final iconColor = isDarkMode ? AppColors.white : AppColors.darkText;
     final shadowColor = isDarkMode
-        ? Colors.black.withOpacity(0.4)
-        : Colors.black.withOpacity(0.08);
+        ? Colors.black.withValues(alpha: 0.4)
+        : Colors.black.withValues(alpha: 0.08);
 
     return Transform.rotate(
       angle: 0.78,
@@ -176,8 +176,8 @@ class _EmptyCouponsState extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final shadowColor = isDarkMode
-        ? Colors.black.withOpacity(0.2)
-        : Colors.black.withOpacity(0.05);
+        ? Colors.black.withValues(alpha: 0.2)
+        : Colors.black.withValues(alpha: 0.05);
 
     return Center(
       child: Padding(
@@ -278,7 +278,7 @@ class _CouponsList extends StatelessWidget {
               borderRadius: BorderRadius.circular(22),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.05),
+                  color: Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.05),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),

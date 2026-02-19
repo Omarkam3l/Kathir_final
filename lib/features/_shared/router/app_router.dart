@@ -2,17 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kathir_final/features/admin_dashboard/presentation/screens/admin_dashboard_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_home_screen.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_all_meals_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_map_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_profile_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_meal_detail_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_chat_list_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_chat_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_notifications_screen.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_cart_screen_full.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_checkout_screen.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_order_summary_screen.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_orders_screen.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_order_detail_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/viewmodels/ngo_home_viewmodel.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/viewmodels/ngo_map_viewmodel.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/viewmodels/ngo_profile_viewmodel.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/viewmodels/ngo_chat_list_viewmodel.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/viewmodels/ngo_chat_viewmodel.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/viewmodels/ngo_cart_viewmodel.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_dashboard_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/meals_list_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_orders_screen.dart';
@@ -325,9 +332,22 @@ class AppRouter {
       ),
       GoRoute(
         path: '/ngo/home',
-        builder: (context, state) => ChangeNotifierProvider(
-          create: (_) => NgoHomeViewModel(),
+        builder: (context, state) => MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => NgoHomeViewModel()),
+            ChangeNotifierProvider(create: (_) => NgoCartViewModel()),
+          ],
           child: const NgoHomeScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/ngo/meals',
+        builder: (context, state) => MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => NgoHomeViewModel()),
+            ChangeNotifierProvider(create: (_) => NgoCartViewModel()),
+          ],
+          child: const NgoAllMealsScreen(),
         ),
       ),
       GoRoute(
@@ -346,17 +366,47 @@ class AppRouter {
       ),
       GoRoute(
         path: '/ngo/orders',
-        builder: (context, state) => const Scaffold(
-          body: Center(
-            child: Text(
-              'NGO Orders - Coming Soon',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
+        builder: (context, state) => const NgoOrdersScreen(),
+      ),
+      GoRoute(
+        path: '/ngo/order/:id',
+        builder: (context, state) {
+          final orderId = state.pathParameters['id'] ?? '';
+          return NgoOrderDetailScreen(orderId: orderId);
+        },
+      ),
+      GoRoute(
+        path: '/ngo/cart',
+        builder: (context, state) => ChangeNotifierProvider(
+          create: (_) => NgoCartViewModel(),
+          child: const NgoCartScreenFull(),
         ),
       ),
       GoRoute(
-        path: '/ngo/notifications',
+        path: '/ngo/checkout',
+        builder: (context, state) {
+          final cart = state.extra as NgoCartViewModel?;
+          if (cart != null) {
+            return NgoCheckoutScreen(cart: cart);
+          }
+          // Fallback: create new instance and load
+          return ChangeNotifierProvider(
+            create: (_) => NgoCartViewModel()..loadCart(),
+            child: Consumer<NgoCartViewModel>(
+              builder: (context, cart, _) => NgoCheckoutScreen(cart: cart),
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/ngo/order-summary',
+        builder: (context, state) {
+          final orderId = state.extra as String?;
+          return NgoOrderSummaryScreen(orderId: orderId ?? '');
+        },
+      ),
+      GoRoute(
+        path: '/ngo-notifications',
         builder: (context, state) => const NgoNotificationsScreen(),
       ),
       GoRoute(
@@ -390,7 +440,10 @@ class AppRouter {
         builder: (context, state) {
           final extra = state.extra;
           if (extra is Meal) {
-            return NgoMealDetailScreen(meal: extra);
+            return ChangeNotifierProvider(
+              create: (_) => NgoCartViewModel(),
+              child: NgoMealDetailScreen(meal: extra),
+            );
           }
           // Fallback if no meal data provided
           return const Scaffold(

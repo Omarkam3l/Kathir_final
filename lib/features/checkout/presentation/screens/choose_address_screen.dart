@@ -115,7 +115,7 @@ class _ChooseAddressScreenState extends State<ChooseAddressScreen> {
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.1),
+                    color: Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.1),
                     blurRadius: 16,
                     offset: const Offset(0, -4),
                   ),
@@ -168,7 +168,7 @@ class _ChooseAddressScreenState extends State<ChooseAddressScreen> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isDarkMode ? 0.4 : 0.08),
+                color: Colors.black.withValues(alpha: isDarkMode ? 0.4 : 0.08),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -216,7 +216,7 @@ class _AddressCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.04),
+              color: Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.04),
               blurRadius: 16,
               offset: const Offset(0, 8),
             ),
@@ -241,7 +241,7 @@ class _AddressCard extends StatelessWidget {
                     address.type,
                     style: TextStyle(
                       fontSize: 14,
-                      color: textColor.withOpacity(0.7),
+                      color: textColor.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -249,7 +249,7 @@ class _AddressCard extends StatelessWidget {
                     address.phone,
                     style: TextStyle(
                       fontSize: 14,
-                      color: textColor.withOpacity(0.7),
+                      color: textColor.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -257,7 +257,7 @@ class _AddressCard extends StatelessWidget {
                     address.address,
                     style: TextStyle(
                       fontSize: 14,
-                      color: textColor.withOpacity(0.7),
+                      color: textColor.withValues(alpha: 0.7),
                     ),
                   ),
                 ],

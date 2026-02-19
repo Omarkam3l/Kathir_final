@@ -66,7 +66,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                           horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.primary.withOpacity(0.15)
+                            ? AppColors.primary.withValues(alpha: 0.15)
                             : (isDark
                                 ? AppColors.surfaceDark
                                 : AppColors.surfaceLight),

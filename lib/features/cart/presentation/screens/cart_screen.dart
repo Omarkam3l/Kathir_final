@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../profile/presentation/providers/foodie_state.dart';
 import '../../../../core/utils/app_colors.dart';
-import '../../../checkout/presentation/screens/checkout_screen.dart'; // Make sure this path will be valid
 
 class CartScreen extends StatefulWidget {
   static const routeName = '/cart';
@@ -30,8 +29,7 @@ class _CartScreenState extends State<CartScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Theme Colors (Standard App Colors)
-    final bgColor = Theme.of(context).scaffoldBackgroundColor;
-    final surfaceColor = Theme.of(context).cardColor;
+        final surfaceColor = Theme.of(context).cardColor;
     final textColor =
         Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
     const accentColor = AppColors.primary; // RED
@@ -161,11 +159,11 @@ class _CartScreenState extends State<CartScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.backgroundLight.withOpacity(0.95),
+        color: AppColors.backgroundLight.withValues(alpha: 0.95),
         border: Border(
             bottom: BorderSide(
                 color: isDark
-                    ? Colors.white.withOpacity(0.05)
+                    ? Colors.white.withValues(alpha: 0.05)
                     : Colors.transparent)),
       ),
       child: Row(
@@ -246,7 +244,7 @@ class _CartItemCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -288,7 +286,7 @@ class _CartItemCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: accentColor.withOpacity(0.1),
+                        color: accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -417,7 +415,7 @@ class _CartItemCard extends StatelessWidget {
               ? null
               : [
                   BoxShadow(
-                      color: Colors.black.withOpacity(0.05), blurRadius: 2)
+                      color: Colors.black.withValues(alpha: 0.05), blurRadius: 2)
                 ],
         ),
         child: Center(
@@ -468,7 +466,7 @@ class _CouponsSection extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -601,7 +599,7 @@ class _DistributionMethodSelector extends StatelessWidget {
           border: Border.all(color: borderColor, width: isSelected ? 2 : 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -654,7 +652,7 @@ class _DistributionMethodSelector extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: tagColor.withOpacity(0.1),
+                color: tagColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(tag,
@@ -694,7 +692,7 @@ class _BillDetailsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -790,7 +788,7 @@ class _StickyCheckoutBar extends StatelessWidget {
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, -4),
               ),
@@ -808,7 +806,7 @@ class _StickyCheckoutBar extends StatelessWidget {
               backgroundColor: accentColor,
               foregroundColor: Colors.white,
               elevation: 4,
-              shadowColor: accentColor.withOpacity(0.25),
+              shadowColor: accentColor.withValues(alpha: 0.25),
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16)),
@@ -829,7 +827,7 @@ class _StickyCheckoutBar extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(

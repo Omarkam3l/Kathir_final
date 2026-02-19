@@ -68,7 +68,7 @@ class _RestaurantChatScreenState extends State<RestaurantChatScreen> {
           children: [
             CircleAvatar(
               radius: 18,
-              backgroundColor: AppColors.primaryGreen.withOpacity(0.2),
+              backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.2),
               child: const Icon(
                 Icons.volunteer_activism,
                 size: 20,
@@ -223,7 +223,7 @@ class _RestaurantChatScreenState extends State<RestaurantChatScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 5,
               offset: const Offset(0, 2),
             ),

@@ -10,13 +10,13 @@ class RatingDialog extends StatefulWidget {
   final Function(int rating, String? review) onSubmit;
 
   const RatingDialog({
-    Key? key,
+    super.key,
     required this.orderId,
     required this.restaurantName,
     this.existingRating,
     this.existingReview,
     required this.onSubmit,
-  }) : super(key: key);
+  });
 
   @override
   State<RatingDialog> createState() => _RatingDialogState();
@@ -139,7 +139,7 @@ class _RatingDialogState extends State<RatingDialog> {
                 setState(() => _rating = rating);
               },
               glow: true,
-              glowColor: Colors.amber.withOpacity(0.3),
+              glowColor: Colors.amber.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 8),
             Text(
@@ -159,15 +159,15 @@ class _RatingDialogState extends State<RatingDialog> {
                 fillColor: Colors.white,  // White input field on greenish background
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.inputBorderLight),
+                  borderSide: const BorderSide(color: AppColors.inputBorderLight),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.inputBorderLight),
+                  borderSide: const BorderSide(color: AppColors.inputBorderLight),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  borderSide: const BorderSide(color: AppColors.primary, width: 2),
                 ),
                 contentPadding: const EdgeInsets.all(16),
               ),

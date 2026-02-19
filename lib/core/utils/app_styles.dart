@@ -56,12 +56,12 @@ class AppStyles {
   // Card Shadows
   static List<BoxShadow> get defaultCardShadow => [
         BoxShadow(
-          color: Colors.black.withOpacity(0.04),
+          color: Colors.black.withValues(alpha: 0.04),
           blurRadius: 8,
           offset: const Offset(0, 2),
         ),
         BoxShadow(
-          color: Colors.black.withOpacity(0.02),
+          color: Colors.black.withValues(alpha: 0.02),
           blurRadius: 4,
           offset: const Offset(0, 1),
         ),
@@ -69,12 +69,12 @@ class AppStyles {
 
   static List<BoxShadow> get hoverCardShadow => [
         BoxShadow(
-          color: Colors.black.withOpacity(0.08),
+          color: Colors.black.withValues(alpha: 0.08),
           blurRadius: 20,
           offset: const Offset(0, 8),
         ),
         BoxShadow(
-          color: Colors.black.withOpacity(0.04),
+          color: Colors.black.withValues(alpha: 0.04),
           blurRadius: 12,
           offset: const Offset(0, 4),
         ),

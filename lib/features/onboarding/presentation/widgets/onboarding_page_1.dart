@@ -34,8 +34,8 @@ class OnboardingPage1 extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? AppColors.black.withOpacity(0.3)
-                      : AppColors.white.withOpacity(0.8),
+                      ? AppColors.black.withValues(alpha: 0.3)
+                      : AppColors.white.withValues(alpha: 0.8),
                   borderRadius: BorderRadius.circular(9999),
                   border: Border.all(
                     color:
@@ -43,7 +43,7 @@ class OnboardingPage1 extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.black.withOpacity(0.06),
+                      color: AppColors.black.withValues(alpha: 0.06),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -85,10 +85,10 @@ class OnboardingPage1 extends StatelessWidget {
                       height: 160,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.primary.withOpacity(0.2),
+                        color: AppColors.primary.withValues(alpha: 0.2),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.15),
+                            color: AppColors.primary.withValues(alpha: 0.15),
                             blurRadius: 60,
                           ),
                         ],
@@ -103,10 +103,10 @@ class OnboardingPage1 extends StatelessWidget {
                       height: 160,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             blurRadius: 60,
                           ),
                         ],
@@ -123,7 +123,7 @@ class OnboardingPage1 extends StatelessWidget {
                           'lib/resources/assets/images/8040836.jpg',
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             child: const Icon(
                               Icons.volunteer_activism,
                               size: 80,
@@ -144,7 +144,7 @@ class OnboardingPage1 extends StatelessWidget {
                                 end: Alignment.bottomCenter,
                                 colors: [
                                   AppColors.transparent,
-                                  bgColor.withOpacity(0.9),
+                                  bgColor.withValues(alpha: 0.9),
                                 ],
                               ),
                             ),
@@ -158,12 +158,12 @@ class OnboardingPage1 extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: AppColors.white.withOpacity(0.95),
+                              color: AppColors.white.withValues(alpha: 0.95),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(color: AppColors.dividerLight),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.black.withOpacity(0.08),
+                                  color: AppColors.black.withValues(alpha: 0.08),
                                   blurRadius: 16,
                                   offset: const Offset(0, 4),
                                 ),
@@ -200,7 +200,7 @@ class OnboardingPage1 extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary.withOpacity(0.2),
+                                    color: AppColors.primary.withValues(alpha: 0.2),
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(
@@ -281,7 +281,7 @@ class OnboardingPage1 extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       elevation: 0,
-                      shadowColor: AppColors.primary.withOpacity(0.5),
+                      shadowColor: AppColors.primary.withValues(alpha: 0.5),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -317,7 +317,7 @@ class OnboardingPage1 extends StatelessWidget {
                             color: textColor,
                             fontWeight: FontWeight.w600,
                             decoration: TextDecoration.underline,
-                            decorationColor: AppColors.primary.withOpacity(0.3),
+                            decorationColor: AppColors.primary.withValues(alpha: 0.3),
                             decorationThickness: 2,
                           ),
                         ),
@@ -351,7 +351,7 @@ class OnboardingPage1 extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(color: AppColors.white, width: 2),
-          color: AppColors.primary.withOpacity(0.3),
+          color: AppColors.primary.withValues(alpha: 0.3),
         ),
         child: const Icon(Icons.person, size: 18, color: AppColors.primary),
       ),

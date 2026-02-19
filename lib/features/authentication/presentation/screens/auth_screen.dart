@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:kathir_final/core/utils/user_role.dart';
 import 'package:kathir_final/features/authentication/presentation/screens/verification_screen.dart';
@@ -433,7 +432,7 @@ class _AuthScreenState extends State<AuthScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: AppColors.black.withOpacity(0.15),
+              color: AppColors.black.withValues(alpha: 0.15),
               blurRadius: 12,
               offset: const Offset(0, 4))
         ],
@@ -447,7 +446,7 @@ class _AuthScreenState extends State<AuthScreen> {
               'lib/resources/assets/images/8040836.jpg',
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
-                  color: AppColors.primary.withOpacity(0.2),
+                  color: AppColors.primary.withValues(alpha: 0.2),
                   child: const Icon(Icons.eco,
                       size: 64, color: AppColors.primary)),
             ),
@@ -460,7 +459,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   end: Alignment.bottomCenter,
                   colors: [
                     AppColors.transparent,
-                    AppColors.black.withOpacity(0.6)
+                    AppColors.black.withValues(alpha: 0.6)
                   ]),
             ),
           ),
@@ -478,7 +477,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         color: AppColors.white)),
                 Text('Connecting food to people.',
                     style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14, color: AppColors.white.withOpacity(0.9))),
+                        fontSize: 14, color: AppColors.white.withValues(alpha: 0.9))),
               ],
             ),
           ),
@@ -531,7 +530,7 @@ class _AuthScreenState extends State<AuthScreen> {
       decoration: BoxDecoration(
         color: isDark
             ? AppColors.surfaceDark
-            : AppColors.primary.withOpacity(0.08),
+            : AppColors.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -550,7 +549,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   boxShadow: sel
                       ? [
                           BoxShadow(
-                              color: AppColors.primary.withOpacity(0.3),
+                              color: AppColors.primary.withValues(alpha: 0.3),
                               blurRadius: 6)
                         ]
                       : null,
@@ -679,7 +678,7 @@ class _PrimaryButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.white,
-          disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
+          disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.6),
           disabledForegroundColor: AppColors.white,
           elevation: 0,
           shape:

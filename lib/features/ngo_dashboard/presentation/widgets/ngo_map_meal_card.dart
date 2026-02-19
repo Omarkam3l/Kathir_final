@@ -34,13 +34,13 @@ class NgoMapMealCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isSelected
-                  ? AppColors.primaryGreen.withOpacity(0.5)
+                  ? AppColors.primaryGreen.withValues(alpha: 0.5)
                   : (isDark ? Colors.grey[800]! : Colors.grey[200]!),
               width: isSelected ? 2 : 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isSelected ? 0.12 : 0.08),
+                color: Colors.black.withValues(alpha: isSelected ? 0.12 : 0.08),
                 blurRadius: isSelected ? 30 : 10,
                 offset: const Offset(0, 8),
               ),
@@ -86,7 +86,7 @@ class NgoMapMealCard extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Row(
@@ -136,7 +136,7 @@ class NgoMapMealCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryGreen.withOpacity(0.1),
+                    color: AppColors.primaryGreen.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -237,9 +237,9 @@ class NgoMapMealCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -251,7 +251,7 @@ class NgoMapMealCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.bold,
-              color: color.withOpacity(0.8),
+              color: color.withValues(alpha: 0.8),
             ),
           ),
         ],

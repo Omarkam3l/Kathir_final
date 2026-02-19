@@ -21,7 +21,7 @@ class _NgoNotificationsScreenState extends State<NgoNotificationsScreen> {
   // Subscribe tab state
   List<String> _subscribedCategories = [];
   bool _isCategoriesLoading = false;
-  
+    
   // Notifications tab state
   bool _isNotificationsLoading = true;
   List<NotificationItem> _notifications = [];
@@ -424,7 +424,7 @@ class _NgoNotificationsScreenState extends State<NgoNotificationsScreen> {
                     boxShadow: _selectedTab == 0
                         ? [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -464,7 +464,7 @@ class _NgoNotificationsScreenState extends State<NgoNotificationsScreen> {
                     boxShadow: _selectedTab == 1
                         ? [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -596,7 +596,7 @@ class _NgoNotificationsScreenState extends State<NgoNotificationsScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -614,8 +614,8 @@ class _NgoNotificationsScreenState extends State<NgoNotificationsScreen> {
                   height: 40,
                   decoration: BoxDecoration(
                     color: isEnabled 
-                        ? AppColors.primary.withOpacity(0.2)
-                        : Colors.grey.withOpacity(0.1),
+                        ? AppColors.primary.withValues(alpha: 0.2)
+                        : Colors.grey.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -1143,7 +1143,7 @@ class _NgoNotificationsScreenState extends State<NgoNotificationsScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -1158,8 +1158,8 @@ class _NgoNotificationsScreenState extends State<NgoNotificationsScreen> {
               height: 48,
               decoration: BoxDecoration(
                 color: notification.isRead
-                    ? Colors.grey.withOpacity(0.1)
-                    : AppColors.primary.withOpacity(0.1),
+                    ? Colors.grey.withValues(alpha: 0.1)
+                    : AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -1227,7 +1227,7 @@ class _NgoNotificationsScreenState extends State<NgoNotificationsScreen> {
                 child: Container(
                   width: 60,
                   height: 60,
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   child: Image.network(
                     meal.imageUrl,
                     fit: BoxFit.cover,

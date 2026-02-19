@@ -237,14 +237,14 @@ class _RestaurantOrderDetailScreenState extends State<RestaurantOrderDetailScree
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            _getStatusColor(status).withOpacity(0.1),
-            _getStatusColor(status).withOpacity(0.05),
+            _getStatusColor(status).withValues(alpha: 0.1),
+            _getStatusColor(status).withValues(alpha: 0.05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _getStatusColor(status).withOpacity(0.3)),
+        border: Border.all(color: _getStatusColor(status).withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -252,7 +252,7 @@ class _RestaurantOrderDetailScreenState extends State<RestaurantOrderDetailScree
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: _getStatusColor(status).withOpacity(0.2),
+              color: _getStatusColor(status).withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -298,7 +298,7 @@ class _RestaurantOrderDetailScreenState extends State<RestaurantOrderDetailScree
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -351,7 +351,7 @@ class _RestaurantOrderDetailScreenState extends State<RestaurantOrderDetailScree
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -446,7 +446,7 @@ class _RestaurantOrderDetailScreenState extends State<RestaurantOrderDetailScree
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -562,9 +562,9 @@ class _RestaurantOrderDetailScreenState extends State<RestaurantOrderDetailScree
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.primaryGreen.withOpacity(0.1),
+        color: AppColors.primaryGreen.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primaryGreen.withOpacity(0.3)),
+        border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [

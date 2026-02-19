@@ -20,24 +20,27 @@ class NgoMealCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isReserved = meal.status == 'reserved';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A2E22) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
-      ),
-      child: Opacity(
-        opacity: isReserved ? 0.6 : 1.0,
-        child: Row(
-          children: [
-            _buildImage(isReserved),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildContent(context, isReserved),
-            ),
-          ],
+    return GestureDetector(
+      onTap: () => context.push('/ngo/meal/${meal.id}', extra: meal),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1A2E22) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+        ),
+        child: Opacity(
+          opacity: isReserved ? 0.6 : 1.0,
+          child: Row(
+            children: [
+              _buildImage(isReserved),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildContent(context, isReserved),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -154,23 +157,22 @@ class NgoMealCard extends StatelessWidget {
               ],
             ),
             if (!isReserved)
-              ElevatedButton(
-                onPressed: onViewDetails ?? () {
-                  // Navigate to full detail screen
-                  context.push('/ngo/meal/${meal.id}', extra: meal);
+              GestureDetector(
+                onTap: () {
+                  onClaim();
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isDark ? Colors.white : Colors.black,
-                  foregroundColor: isDark ? Colors.black : Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  minimumSize: Size.zero,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white : Colors.black,
+                    shape: BoxShape.circle,
                   ),
-                ),
-                child: const Text(
-                  'View Details',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                  child: Icon(
+                    Icons.add,
+                    color: isDark ? Colors.black : Colors.white,
+                    size: 18,
+                  ),
                 ),
               ),
           ],

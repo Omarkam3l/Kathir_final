@@ -123,7 +123,7 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
                     boxShadow: _selectedTab == 0
                         ? [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -163,7 +163,7 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
                     boxShadow: _selectedTab == 1
                         ? [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -345,7 +345,7 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -466,7 +466,7 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
             child: Container(
               width: 128,
               height: 128,
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               child: restaurant.logoUrl != null && restaurant.logoUrl!.isNotEmpty
                   ? Image.network(
                       restaurant.logoUrl!,
@@ -483,7 +483,7 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
 
   Widget _buildPlaceholderImage() {
     return Container(
-      color: AppColors.primary.withOpacity(0.2),
+      color: AppColors.primary.withValues(alpha: 0.2),
       child: const Center(
         child: Icon(
           Icons.restaurant,
@@ -513,7 +513,7 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -629,7 +629,7 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
             child: Container(
               width: 128,
               height: 128,
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               child: meal.imageUrl.isNotEmpty
                   ? Image.network(
                       meal.imageUrl,
@@ -764,7 +764,7 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -782,8 +782,8 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
                   height: 40,
                   decoration: BoxDecoration(
                     color: isEnabled 
-                        ? AppColors.primary.withOpacity(0.2)
-                        : Colors.grey.withOpacity(0.1),
+                        ? AppColors.primary.withValues(alpha: 0.2)
+                        : Colors.grey.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -838,7 +838,7 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
     Color borderColor,
     FavoritesViewModel vm,
   ) {
-    final addBg = isDark ? const Color(0xFF374151).withOpacity(0.5) : const Color(0xFFF9FAFB);
+    final addBg = isDark ? const Color(0xFF374151).withValues(alpha: 0.5) : const Color(0xFFF9FAFB);
     final dashedBorder = isDark ? const Color(0xFF4B5563) : const Color(0xFFD1D5DB);
 
     return GestureDetector(
@@ -887,7 +887,7 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
               'Track more types',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
-                color: textSub.withOpacity(0.7),
+                color: textSub.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -983,7 +983,7 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
                                   width: 48,
                                   height: 48,
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary.withOpacity(0.1),
+                                    color: AppColors.primary.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(

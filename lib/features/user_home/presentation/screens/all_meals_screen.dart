@@ -47,7 +47,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
               right: 16,
             ),
             decoration: BoxDecoration(
-              color: surfaceColor.withOpacity(0.8),
+              color: surfaceColor.withValues(alpha: 0.8),
               border: Border(bottom: BorderSide(color: borderColor)),
             ),
             child: Row(
@@ -114,7 +114,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                     border: Border.all(color: borderColor),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -125,7 +125,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                       hintText: 'Search for meals, restaurants...',
                       hintStyle: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
-                        color: textSub.withOpacity(0.5),
+                        color: textSub.withValues(alpha: 0.5),
                       ),
                       prefixIcon: Icon(Icons.search, color: textSub),
                       suffixIcon: IconButton(
@@ -182,7 +182,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: AppColors.primaryGreen.withOpacity(0.3),
+                                      color: AppColors.primaryGreen.withValues(alpha: 0.3),
                                       blurRadius: 4,
                                       offset: const Offset(0, 2),
                                     ),
@@ -297,7 +297,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -323,7 +323,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                     errorBuilder: (_, __, ___) => Container(
                       width: double.infinity,
                       height: 176,
-                      color: AppColors.primaryGreen.withOpacity(0.1),
+                      color: AppColors.primaryGreen.withValues(alpha: 0.1),
                       child: const Icon(
                         Icons.restaurant,
                         size: 48,
@@ -342,7 +342,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -385,7 +385,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                             color: (meal.quantity <= 3
                                     ? Colors.red
                                     : AppColors.primaryGreen)
-                                .withOpacity(0.3),
+                                .withValues(alpha: 0.3),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -441,7 +441,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                       ' • ',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10,
-                        color: textSub.withOpacity(0.5),
+                        color: textSub.withValues(alpha: 0.5),
                       ),
                     ),
                     Text(
@@ -511,7 +511,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primaryGreen.withOpacity(0.3),
+                              color: AppColors.primaryGreen.withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),

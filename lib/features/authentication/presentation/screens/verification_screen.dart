@@ -100,7 +100,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       decoration: BoxDecoration(
                         color: isDark
                             ? AppColors.surfaceDark
-                            : AppColors.primary.withOpacity(0.12),
+                            : AppColors.primary.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.lock_reset,
@@ -280,7 +280,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.white,
                         disabledBackgroundColor:
-                            AppColors.primary.withOpacity(0.6),
+                            AppColors.primary.withValues(alpha: 0.6),
                         disabledForegroundColor: AppColors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(

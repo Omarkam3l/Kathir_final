@@ -121,9 +121,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Theme Colors
-    final bgColor = Theme.of(context).scaffoldBackgroundColor;
-    final surfaceColor = Theme.of(context).cardColor;
-    final textColor =
+            final textColor =
         Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black;
     final subTextColor =
         Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
@@ -137,7 +135,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
-        backgroundColor: Colors.white.withOpacity(0.8),
+        backgroundColor: Colors.white.withValues(alpha: 0.8),
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: textColor),
@@ -152,7 +150,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             border: Border(top: BorderSide(color: borderColor)),
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 20,
                   offset: const Offset(0, -5))
             ],
@@ -305,7 +303,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                         elevation: 4,
-                        shadowColor: AppColors.primaryGreen.withOpacity(0.4),
+                        shadowColor: AppColors.primaryGreen.withValues(alpha: 0.4),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -361,7 +359,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
@@ -429,14 +427,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                               child: Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                                 decoration: BoxDecoration(
-                                                  color: primaryColor.withOpacity(0.1),
+                                                  color: primaryColor.withValues(alpha: 0.1),
                                                   borderRadius: BorderRadius.circular(8),
-                                                  border: Border.all(color: primaryColor.withOpacity(0.3)),
+                                                  border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
                                                 ),
                                                 child: Row(
                                                   mainAxisSize: MainAxisSize.min,
                                                   children: [
-                                                    Icon(Icons.edit_location, size: 16, color: primaryColor),
+                                                    const Icon(Icons.edit_location, size: 16, color: primaryColor),
                                                     const SizedBox(width: 6),
                                                     Text(
                                                       'Change Address',
@@ -548,7 +546,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                                     backgroundImage: ngo['avatar_url'] != null
                                                         ? NetworkImage(ngo['avatar_url'])
                                                         : null,
-                                                    backgroundColor: primaryColor.withOpacity(0.1),
+                                                    backgroundColor: primaryColor.withValues(alpha: 0.1),
                                                     child: ngo['avatar_url'] == null
                                                         ? Text(
                                                             (ngo['full_name'] as String).isNotEmpty
@@ -662,7 +660,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
@@ -714,7 +712,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                          color: primaryColor.withOpacity(0.1),
+                          color: primaryColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20)),
                       child: const Row(
                         children: [
@@ -781,7 +779,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: primaryColor.withOpacity(0.1),
+              color: primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               image: DecorationImage(
                   image: NetworkImage(item.meal.imageUrl), fit: BoxFit.cover),
@@ -909,7 +907,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               width: isSelected ? 2 : 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -980,27 +978,5 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     return false;
-  }
-
-  Widget _diamondButton({required IconData icon, required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Icon(icon, size: 20),
-      ),
-    );
   }
 }

@@ -33,7 +33,7 @@ class FavoritesViewModel extends ChangeNotifier {
 
     try {
       // Parallel loading for better performance
-      final results = await Future.wait([
+      await Future.wait([
         _loadFavoriteMeals(),
         _loadFavoriteRestaurants(),
       ]);

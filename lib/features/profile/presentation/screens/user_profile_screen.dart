@@ -273,7 +273,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primaryAccent.withOpacity(0.3),
+                    color: AppColors.primaryAccent.withValues(alpha: 0.3),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -285,10 +285,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                color: Theme.of(context).cardColor.withOpacity(0.2),
+                color: Theme.of(context).cardColor.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: Colors.white.withOpacity(0.3),
+                        color: Colors.white.withValues(alpha: 0.3),
                         width: 3,
                       ),
                     ),
@@ -320,7 +320,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         Text(
                           user.email,
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 14,
                           ),
                         ),
@@ -331,13 +331,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               Icon(
                                 Icons.phone,
                                 size: 14,
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                               ),
                               const SizedBox(width: 6),
                               Text(
                                 user.phone!,
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withValues(alpha: 0.9),
                                   fontSize: 14,
                                 ),
                               ),
@@ -599,7 +599,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -613,7 +613,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryAccent.withOpacity(0.1),
+                  color: AppColors.primaryAccent.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: AppColors.primaryAccent, size: 20),
@@ -693,7 +693,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primaryAccent.withOpacity(0.1),
+              color: AppColors.primaryAccent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(
@@ -745,7 +745,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryAccent.withOpacity(0.3),
+            color: AppColors.primaryAccent.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -758,7 +758,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             right: 16,
             child: Icon(
               Icons.credit_card,
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withValues(alpha: 0.3),
               size: 32,
             ),
           ),
@@ -775,14 +775,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       width: 40,
                       height: 25,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
                     Text(
                       expiry,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -805,7 +805,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     Text(
                       name.toUpperCase(),
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),

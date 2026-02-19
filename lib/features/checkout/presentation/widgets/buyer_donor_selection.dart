@@ -58,7 +58,7 @@ class BuyerDonorSelection extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryAccent.withOpacity(0.3),
+            color: AppColors.primaryAccent.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           )
@@ -76,7 +76,7 @@ class BuyerDonorSelection extends StatelessWidget {
             width: 1,
             height: 50,
             margin: const EdgeInsets.symmetric(vertical: 10),
-            color: Colors.white.withOpacity(0.3),
+            color: Colors.white.withValues(alpha: 0.3),
           ),
           Expanded(
             child: _buildModeButton(

@@ -112,7 +112,7 @@ class HomeHeaderWidget extends StatelessWidget {
                   border: Border.all(color: border),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.black.withOpacity(0.06),
+                      color: AppColors.black.withValues(alpha: 0.06),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),

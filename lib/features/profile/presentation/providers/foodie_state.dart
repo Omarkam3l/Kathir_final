@@ -12,13 +12,13 @@ class CartItem {
     try {
       final price = meal.donationPrice;
       if (price.isNaN || price.isInfinite || price < 0) {
-        print('Warning: Invalid price for meal ${meal.id}: $price');
+        debugPrint('Warning: Invalid price for meal ${meal.id}: $price');
         return 0.0;
       }
       final total = price * qty;
       return total.isNaN || total.isInfinite ? 0.0 : total;
     } catch (e) {
-      print('Error calculating line total: $e');
+      debugPrint('Error calculating line total: $e');
       return 0.0;
     }
   }
@@ -84,14 +84,14 @@ class FoodieState extends ChangeNotifier {
       final total = _cart.fold<double>(0.0, (sum, item) {
         final lineTotal = item.lineTotal;
         if (lineTotal.isNaN || lineTotal.isInfinite) {
-          print('Warning: Invalid line total for meal ${item.meal.id}');
+          debugPrint('Warning: Invalid line total for meal ${item.meal.id}');
           return sum;
         }
         return sum + lineTotal;
       });
       return total.isNaN || total.isInfinite ? 0.0 : total;
     } catch (e) {
-      print('Error calculating subtotal: $e');
+      debugPrint('Error calculating subtotal: $e');
       return 0.0;
     }
   }
@@ -117,7 +117,7 @@ class FoodieState extends ChangeNotifier {
       final sum = subtotal + deliveryFee + platformFee;
       return sum.isNaN || sum.isInfinite ? 0.0 : sum;
     } catch (e) {
-      print('Error calculating total: $e');
+      debugPrint('Error calculating total: $e');
       return 0.0;
     }
   }

@@ -221,7 +221,7 @@ class _RestaurantSurplusSettingsScreenState
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.primaryGreen.withOpacity(0.1),
+                color: AppColors.primaryGreen.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -266,7 +266,7 @@ class _RestaurantSurplusSettingsScreenState
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -303,8 +303,8 @@ class _RestaurantSurplusSettingsScreenState
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: _isActive
-                      ? AppColors.primaryGreen.withOpacity(0.1)
-                      : Colors.grey.withOpacity(0.1),
+                      ? AppColors.primaryGreen.withValues(alpha: 0.1)
+                      : Colors.grey.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -399,7 +399,7 @@ class _RestaurantSurplusSettingsScreenState
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: isDark
-                  ? const Color(0xFF221910).withOpacity(0.5)
+                  ? const Color(0xFF221910).withValues(alpha: 0.5)
                   : const Color(0xFFF8F7F6),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
@@ -456,7 +456,7 @@ class _RestaurantSurplusSettingsScreenState
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -504,10 +504,10 @@ class _RestaurantSurplusSettingsScreenState
             data: SliderThemeData(
               activeTrackColor: AppColors.primaryGreen,
               inactiveTrackColor: isDark
-                  ? Colors.white.withOpacity(0.1)
-                  : Colors.grey.withOpacity(0.2),
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.grey.withValues(alpha: 0.2),
               thumbColor: AppColors.primaryGreen,
-              overlayColor: AppColors.primaryGreen.withOpacity(0.2),
+              overlayColor: AppColors.primaryGreen.withValues(alpha: 0.2),
               trackHeight: 8,
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 16),
             ),
@@ -588,7 +588,7 @@ class _RestaurantSurplusSettingsScreenState
         gradient: LinearGradient(
           colors: [
             AppColors.primaryGreen,
-            AppColors.primaryGreen.withOpacity(0.8),
+            AppColors.primaryGreen.withValues(alpha: 0.8),
           ],
         ),
         borderRadius: BorderRadius.circular(12),
@@ -598,7 +598,7 @@ class _RestaurantSurplusSettingsScreenState
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: const Icon(

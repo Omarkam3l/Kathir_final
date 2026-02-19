@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../user_home/domain/entities/meal_offer.dart';
 import '../../../user_home/domain/entities/restaurant.dart';
@@ -59,7 +60,7 @@ class CartService {
         if (originalPrice == null || discountedPrice == null || 
             originalPrice.isNaN || discountedPrice.isNaN ||
             originalPrice < 0 || discountedPrice < 0) {
-          print('Skipping meal ${mealData['id']} - invalid prices: original=$originalPrice, discounted=$discountedPrice');
+          debugPrint('Skipping meal ${mealData['id']} - invalid prices: original=$originalPrice, discounted=$discountedPrice');
           // Remove invalid item from cart
           await _supabase
               .from('cart_items')
@@ -73,7 +74,7 @@ class CartService {
         try {
           expiryDate = DateTime.parse(mealData['expiry_date']);
         } catch (e) {
-          print('Invalid expiry date for meal ${mealData['id']}: ${mealData['expiry_date']}');
+          debugPrint('Invalid expiry date for meal ${mealData['id']}: ${mealData['expiry_date']}');
           expiryDate = DateTime.now().add(const Duration(days: 1));
         }
 
@@ -104,7 +105,7 @@ class CartService {
 
       return cartItems;
     } catch (e) {
-      print('Error loading cart: $e');
+      debugPrint('Error loading cart: $e');
       return [];
     }
   }
@@ -122,7 +123,7 @@ class CartService {
         onConflict: 'user_id,meal_id', // Update if exists
       );
     } catch (e) {
-      print('Error adding to cart: $e');
+      debugPrint('Error adding to cart: $e');
       rethrow;
     }
   }
@@ -141,7 +142,7 @@ class CartService {
           .eq('user_id', userId)
           .eq('meal_id', mealId);
     } catch (e) {
-      print('Error updating cart quantity: $e');
+      debugPrint('Error updating cart quantity: $e');
       rethrow;
     }
   }
@@ -155,7 +156,7 @@ class CartService {
           .eq('user_id', userId)
           .eq('meal_id', mealId);
     } catch (e) {
-      print('Error removing from cart: $e');
+      debugPrint('Error removing from cart: $e');
       rethrow;
     }
   }
@@ -168,7 +169,7 @@ class CartService {
           .delete()
           .eq('user_id', userId);
     } catch (e) {
-      print('Error clearing cart: $e');
+      debugPrint('Error clearing cart: $e');
       rethrow;
     }
   }
@@ -187,7 +188,7 @@ class CartService {
       }
       return total;
     } catch (e) {
-      print('Error getting cart count: $e');
+      debugPrint('Error getting cart count: $e');
       return 0;
     }
   }

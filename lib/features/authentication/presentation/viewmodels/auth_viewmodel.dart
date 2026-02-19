@@ -89,7 +89,7 @@ class AuthViewModel extends ChangeNotifier {
       'role': role.toString(),
       'email': email,
       'hasOrgName': organizationName != null,
-      'hasPhone': phone != null,
+      'hasPhone': phone.isNotEmpty,
     });
     
     final res = await signUp(
@@ -104,8 +104,13 @@ class AuthViewModel extends ChangeNotifier {
     final ok = res.fold((l) {
       failure = l;
       AuthLogger.errorLog('signup.viewmodel.failed',
-          ctx: {'role': role.toString(), 'email': email},
-          error: l.message);
+          ctx: {
+            'role': role.toString(), 
+            'email': email,
+            'errorMessage': l.message,
+            'errorCause': l.cause?.toString() ?? 'no cause',
+          },
+          error: l.cause ?? l.message);
       return false;
     }, (r) {
       user = r;

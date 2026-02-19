@@ -82,7 +82,7 @@ class _FlashDealCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: AppColors.black.withOpacity(0.12),
+                color: AppColors.black.withValues(alpha: 0.12),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -97,7 +97,7 @@ class _FlashDealCard extends StatelessWidget {
                   offer.imageUrl,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Container(
-                    color: AppColors.primary.withOpacity(0.15),
+                    color: AppColors.primary.withValues(alpha: 0.15),
                     child: const Icon(
                       Icons.restaurant,
                       size: 48,
@@ -114,8 +114,8 @@ class _FlashDealCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      AppColors.black.withOpacity(0.2),
-                      AppColors.black.withOpacity(0.8),
+                      AppColors.black.withValues(alpha: 0.2),
+                      AppColors.black.withValues(alpha: 0.8),
                     ],
                   ),
                 ),
@@ -169,14 +169,14 @@ class _FlashDealCard extends StatelessWidget {
                               ? Icons.schedule
                               : Icons.store,
                           size: 14,
-                          color: AppColors.white.withOpacity(0.9),
+                          color: AppColors.white.withValues(alpha: 0.9),
                         ),
                         const SizedBox(width: 4),
                         Text(
                           subtitle,
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            color: AppColors.white.withOpacity(0.9),
+                            color: AppColors.white.withValues(alpha: 0.9),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

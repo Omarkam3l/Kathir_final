@@ -61,7 +61,7 @@ class NotificationsScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withValues(alpha: 0.04),
                           blurRadius: 16,
                           offset: const Offset(0, 8),
                         ),
@@ -130,7 +130,7 @@ class NotificationsScreen extends StatelessWidget {
                                               vertical: 12),
                                           backgroundColor: AppColors
                                               .secondaryAccent
-                                              .withOpacity(0.08),
+                                              .withValues(alpha: 0.08),
                                           shape: RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.circular(14)),
@@ -172,7 +172,7 @@ class NotificationsScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),

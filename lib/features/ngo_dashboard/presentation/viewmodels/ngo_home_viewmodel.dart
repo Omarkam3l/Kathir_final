@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../user_home/data/models/meal_model.dart';
 import '../../../user_home/domain/entities/meal.dart';
+import 'ngo_cart_viewmodel.dart';
 
 class NgoHomeViewModel extends ChangeNotifier {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   // State
-  bool isLoading = true;
+  bool isLoading = false; // Start as false, will be set to true when loading
   String? error;
+  
+  // Constructor with logging
+  NgoHomeViewModel() {
+    debugPrint('🏗️ NgoHomeViewModel created');
+    debugPrint('📊 Initial state - isLoading: $isLoading, meals: ${meals.length}');
+  }
   
   // Filters
   String selectedFilter = 'all';
@@ -38,16 +47,26 @@ class NgoHomeViewModel extends ChangeNotifier {
 
   /// Smart load: only fetch if data is missing or stale
   Future<void> loadIfNeeded() async {
+    // Always load on first call
+    if (_lastFetchTime == null) {
+      debugPrint('🔄 First load - fetching data...');
+      await loadData();
+      return;
+    }
+    
     // Skip if data exists and is fresh
     if (meals.isNotEmpty && !_isDataStale) {
+      debugPrint('✓ Using cached data (${meals.length} meals)');
       return;
     }
     
     // Skip if already loading (in-flight guard)
     if (isLoading) {
+      debugPrint('⏳ Already loading, skipping...');
       return;
     }
     
+    debugPrint('🔄 Data stale or empty - fetching...');
     await loadData();
   }
 
@@ -84,63 +103,66 @@ class NgoHomeViewModel extends ChangeNotifier {
   }
 
   Future<void> loadData({bool forceRefresh = false}) async {
-    print('🔍 ========== NGO HOME: loadData START ==========');
-    print('hasListeners: $hasListeners');
-    print('forceRefresh: $forceRefresh');
-    print('meals.length: ${meals.length}');
-    print('_isDataStale: $_isDataStale');
+    debugPrint('🔍 ========== NGO HOME: loadData START ==========');
+    debugPrint('hasListeners: $hasListeners');
+    debugPrint('forceRefresh: $forceRefresh');
+    debugPrint('meals.length: ${meals.length}');
+    debugPrint('_isDataStale: $_isDataStale');
     
     if (!hasListeners) {
-      print('❌ NGO: No listeners, returning');
+      debugPrint('❌ NGO: No listeners, returning');
       return;
     }
     
     // Skip if data is fresh and not forcing refresh
     if (!forceRefresh && meals.isNotEmpty && !_isDataStale) {
-      print('ℹ️ NGO: Data is fresh, skipping load');
+      debugPrint('ℹ️ NGO: Data is fresh, skipping load');
       return;
     }
     
-    print('✅ NGO: Starting data load...');
+    debugPrint('✅ NGO: Starting data load...');
     isLoading = true;
     error = null;
+    
+    // CRITICAL: Notify immediately to show loading state
     notifyListeners();
 
     try {
-      print('📊 NGO: Calling Future.wait for stats and meals...');
+      debugPrint('📊 NGO: Calling Future.wait for stats and meals...');
       await Future.wait([
         _loadStats(),
         _loadMeals(),
       ]);
       _lastFetchTime = DateTime.now();
-      print('✅ NGO: Data load complete');
+      debugPrint('✅ NGO: Data load complete');
     } catch (e, stackTrace) {
-      print('❌ NGO: Error in loadData: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('❌ NGO: Error in loadData: $e');
+      debugPrint('Stack trace: $stackTrace');
       error = e.toString();
+      debugPrint('❌ Data fetch failed: $e');
     } finally {
       isLoading = false;
       if (hasListeners) {
-        print('✅ NGO: Notifying listeners');
+        debugPrint('✅ NGO: Notifying listeners');
         notifyListeners();
       }
     }
     
-    print('🎉 ========== NGO HOME: loadData END ==========');
+    debugPrint('🎉 ========== NGO HOME: loadData END ==========');
   }
 
   Future<void> _loadStats() async {
-    print('📊 NGO: _loadStats START');
+    debugPrint('📊 NGO: _loadStats START');
     final userId = _supabase.auth.currentUser?.id;
-    print('User ID: $userId');
+    debugPrint('User ID: $userId');
     
     if (userId == null) {
-      print('❌ NGO: User ID is null in _loadStats');
+      debugPrint('❌ NGO: User ID is null in _loadStats');
       return;
     }
 
     try {
-      print('🔍 NGO: Fetching active orders...');
+      debugPrint('🔍 NGO: Fetching active orders...');
       // Get active orders (removed 'paid' and 'processing' - not valid statuses)
       final ordersRes = await _supabase
           .from('orders')
@@ -149,9 +171,9 @@ class NgoHomeViewModel extends ChangeNotifier {
           .inFilter('status', ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'out_for_delivery']);
       
       activeOrders = (ordersRes as List).length;
-      print('✅ NGO: Active orders: $activeOrders');
+      debugPrint('✅ NGO: Active orders: $activeOrders');
 
-      print('🔍 NGO: Fetching completed orders...');
+      debugPrint('🔍 NGO: Fetching completed orders...');
       // Get completed orders for stats
       final completedRes = await _supabase
           .from('orders')
@@ -160,25 +182,25 @@ class NgoHomeViewModel extends ChangeNotifier {
           .eq('status', 'completed');
       
       mealsClaimed = (completedRes as List).length;
-      print('✅ NGO: Meals claimed: $mealsClaimed');
+      debugPrint('✅ NGO: Meals claimed: $mealsClaimed');
 
       // Calculate carbon savings (simplified)
       carbonSaved = mealsClaimed * 2.5; // Avg 2.5kg CO2 per meal
-      print('✅ NGO: Carbon saved: $carbonSaved kg');
-      print('✅ NGO: _loadStats COMPLETE');
+      debugPrint('✅ NGO: Carbon saved: $carbonSaved kg');
+      debugPrint('✅ NGO: _loadStats COMPLETE');
     } catch (e, stackTrace) {
-      print('❌ NGO: Error loading stats: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('❌ NGO: Error loading stats: $e');
+      debugPrint('Stack trace: $stackTrace');
     }
   }
 
   Future<void> _loadMeals() async {
     try {
-      print('🔍 ========== NGO: _loadMeals START ==========');
+      debugPrint('🔍 ========== NGO: _loadMeals START ==========');
       
       // OPTIMIZED: Fetch meals and restaurants separately to avoid RLS recursion
       // Step 1: Get meals
-      print('📊 Step 1: Fetching meals from database...');
+      debugPrint('📊 Step 1: Fetching meals from database...');
       final mealsRes = await _supabase
           .from('meals')
           .select('''
@@ -186,6 +208,7 @@ class NgoHomeViewModel extends ChangeNotifier {
             title,
             image_url,
             discounted_price,
+            original_price,
             quantity_available,
             expiry_date,
             location,
@@ -196,49 +219,50 @@ class NgoHomeViewModel extends ChangeNotifier {
           .eq('status', 'active')
           .gt('quantity_available', 0)
           .gt('expiry_date', DateTime.now().toIso8601String())
-          .order('expiry_date', ascending: true);
+          .order('expiry_date', ascending: true)
+          .limit(50); // Add pagination limit
 
-      print('✅ Step 1: Got ${(mealsRes as List).length} meals from database');
+      debugPrint('✅ Step 1: Got ${(mealsRes as List).length} meals from database');
 
       if ((mealsRes as List).isEmpty) {
         meals = [];
         expiringMeals = [];
-        print('ℹ️ NGO: No meals available (empty result)');
-        print('🎉 ========== NGO: _loadMeals END (no meals) ==========');
+        debugPrint('ℹ️ NGO: No meals available (empty result)');
+        debugPrint('🎉 ========== NGO: _loadMeals END (no meals) ==========');
         return;
       }
 
       // Step 2: Get unique restaurant IDs
-      print('📊 Step 2: Extracting restaurant IDs...');
+      debugPrint('📊 Step 2: Extracting restaurant IDs...');
       final restaurantIds = (mealsRes as List)
           .map((m) => m['restaurant_id'] as String?)
           .where((id) => id != null)
           .toSet()
           .toList();
 
-      print('✅ Step 2: Found ${restaurantIds.length} unique restaurants');
-      print('Restaurant IDs: $restaurantIds');
+      debugPrint('✅ Step 2: Found ${restaurantIds.length} unique restaurants');
+      debugPrint('Restaurant IDs: $restaurantIds');
 
       // Step 3: Fetch restaurants separately
-      print('📊 Step 3: Fetching restaurants from database...');
+      debugPrint('📊 Step 3: Fetching restaurants from database...');
       final restaurantsRes = await _supabase
           .from('restaurants')
           .select('profile_id, restaurant_name, rating')
           .inFilter('profile_id', restaurantIds);
 
-      print('✅ Step 3: Got ${(restaurantsRes as List).length} restaurants from database');
+      debugPrint('✅ Step 3: Got ${(restaurantsRes as List).length} restaurants from database');
 
       // Step 4: Create restaurant lookup map
-      print('📊 Step 4: Creating restaurant lookup map...');
+      debugPrint('📊 Step 4: Creating restaurant lookup map...');
       final restaurantMap = <String, Map<String, dynamic>>{};
       for (final r in (restaurantsRes as List)) {
         restaurantMap[r['profile_id']] = r;
-        print('  - ${r['profile_id']}: ${r['restaurant_name']}');
+        debugPrint('  - ${r['profile_id']}: ${r['restaurant_name']}');
       }
-      print('✅ Step 4: Restaurant map created with ${restaurantMap.length} entries');
+      debugPrint('✅ Step 4: Restaurant map created with ${restaurantMap.length} entries');
 
       // Step 5: Transform meals with restaurant data
-      print('📊 Step 5: Transforming meals with restaurant data...');
+      debugPrint('📊 Step 5: Transforming meals with restaurant data...');
       meals = (mealsRes as List).map((json) {
         final restaurantId = json['restaurant_id'] as String?;
         final restaurantData = restaurantId != null 
@@ -246,7 +270,7 @@ class NgoHomeViewModel extends ChangeNotifier {
             : null;
 
         if (restaurantData == null) {
-          print('⚠️ Warning: No restaurant data for meal ${json['id']} (restaurant_id: $restaurantId)');
+          debugPrint('⚠️ Warning: No restaurant data for meal ${json['id']} (restaurant_id: $restaurantId)');
         }
 
         // Add restaurant data
@@ -278,21 +302,21 @@ class NgoHomeViewModel extends ChangeNotifier {
         return MealModel.fromJson(json);
       }).toList();
 
-      print('✅ Step 5: Transformed ${meals.length} meals successfully');
+      debugPrint('✅ Step 5: Transformed ${meals.length} meals successfully');
 
       // Separate expiring soon (within 2 hours)
-      print('📊 Step 6: Filtering expiring meals...');
+      debugPrint('📊 Step 6: Filtering expiring meals...');
       final twoHoursFromNow = DateTime.now().add(const Duration(hours: 2));
       expiringMeals = meals.where((m) => m.expiry.isBefore(twoHoursFromNow)).toList();
       
-      print('✅ Step 6: Found ${expiringMeals.length} expiring meals');
-      print('🎉 ========== NGO: _loadMeals END (success) ==========');
+      debugPrint('✅ Step 6: Found ${expiringMeals.length} expiring meals');
+      debugPrint('🎉 ========== NGO: _loadMeals END (success) ==========');
     } catch (e, stackTrace) {
-      print('❌ ========== NGO: _loadMeals ERROR ==========');
-      print('Error type: ${e.runtimeType}');
-      print('Error message: $e');
-      print('Stack trace: $stackTrace');
-      print('===========================================');
+      debugPrint('❌ ========== NGO: _loadMeals ERROR ==========');
+      debugPrint('Error type: ${e.runtimeType}');
+      debugPrint('Error message: $e');
+      debugPrint('Stack trace: $stackTrace');
+      debugPrint('===========================================');
       error = e.toString();
     }
   }
@@ -333,40 +357,62 @@ class NgoHomeViewModel extends ChangeNotifier {
         throw Exception('User not authenticated');
       }
 
-      // Create order
-      await _supabase.from('orders').insert({
-        'user_id': userId,
-        'ngo_id': userId,
-        'restaurant_id': meal.restaurant.id,
-        'meal_id': meal.id,
-        'status': 'pending',
-        'delivery_type': 'donation',
-        'subtotal': meal.donationPrice,
-        'total_amount': meal.donationPrice,
-      });
+      // Verify NGO record exists
+      final ngoCheck = await _supabase
+          .from('ngos')
+          .select('profile_id')
+          .eq('profile_id', userId)
+          .maybeSingle();
 
-      // Update meal status
-      await _supabase
+      if (ngoCheck == null) {
+        throw Exception('NGO profile not found. Please complete your profile setup.');
+      }
+
+      // Check if meal is still available
+      final mealCheck = await _supabase
           .from('meals')
-          .update({'status': 'reserved'})
-          .eq('id', meal.id);
+          .select('id, quantity_available, status')
+          .eq('id', meal.id)
+          .maybeSingle();
+
+      if (mealCheck == null) {
+        throw Exception('Meal not found');
+      }
+
+      if (mealCheck['status'] != 'active') {
+        throw Exception('This meal is no longer available');
+      }
+
+      if (((mealCheck['quantity_available'] as int?) ?? 0) <= 0) {
+        throw Exception('This meal is out of stock');
+      }
+
+      // Add to cart instead of creating order immediately
+      final cartViewModel = context.read<NgoCartViewModel>();
+      await cartViewModel.addToCart(meal);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Successfully claimed: ${meal.title}'),
+            content: Text('✅ Added to cart: ${meal.title}'),
             backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+            action: SnackBarAction(
+              label: 'View Cart',
+              textColor: Colors.white,
+              onPressed: () => context.go('/ngo/cart'),
+            ),
           ),
         );
       }
-
-      await loadData();
     } catch (e) {
+      debugPrint('❌ Error adding to cart: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error claiming meal: $e'),
+            content: Text('Error: ${e.toString().replaceAll('Exception: ', '')}'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
           ),
         );
       }

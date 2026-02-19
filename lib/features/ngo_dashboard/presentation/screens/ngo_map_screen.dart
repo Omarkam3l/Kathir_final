@@ -101,8 +101,8 @@ class _NgoMapScreenState extends State<NgoMapScreen> {
             boxShadow: [
               BoxShadow(
                 color: isSelected
-                    ? AppColors.primaryGreen.withOpacity(0.4)
-                    : Colors.black.withOpacity(0.2),
+                    ? AppColors.primaryGreen.withValues(alpha: 0.4)
+                    : Colors.black.withValues(alpha: 0.2),
                 blurRadius: isSelected ? 15 : 8,
                 offset: const Offset(0, 4),
               ),
@@ -140,7 +140,7 @@ class _NgoMapScreenState extends State<NgoMapScreen> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: (isDark ? const Color(0xFF102216) : const Color(0xFFF6F8F6))
-              .withOpacity(0.9),
+              .withValues(alpha: 0.9),
           border: Border(
             bottom: BorderSide(
               color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
@@ -207,7 +207,7 @@ class _NgoMapScreenState extends State<NgoMapScreen> {
                   height: 40,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.primaryGreen.withOpacity(0.2),
+                    color: AppColors.primaryGreen.withValues(alpha: 0.2),
                     border: Border.all(color: AppColors.primaryGreen, width: 2),
                   ),
                   child: const Icon(

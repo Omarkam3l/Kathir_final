@@ -93,7 +93,7 @@ class _PartnerChip extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.black.withOpacity(0.06),
+                  color: AppColors.black.withValues(alpha: 0.06),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -109,7 +109,7 @@ class _PartnerChip extends StatelessWidget {
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => CircleAvatar(
                         radius: 32,
-                        backgroundColor: AppColors.primary.withOpacity(0.12),
+                        backgroundColor: AppColors.primary.withValues(alpha: 0.12),
                         child: Text(
                           restaurant.name.isNotEmpty
                               ? restaurant.name[0].toUpperCase()
@@ -125,7 +125,7 @@ class _PartnerChip extends StatelessWidget {
                   )
                 : CircleAvatar(
                     radius: 32,
-                    backgroundColor: AppColors.primary.withOpacity(0.12),
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.12),
                     child: Text(
                       restaurant.name.isNotEmpty
                           ? restaurant.name[0].toUpperCase()
@@ -158,7 +158,7 @@ class _PartnerChip extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.black.withOpacity(0.05),
+                  color: AppColors.black.withValues(alpha: 0.05),
                   blurRadius: 4,
                 ),
               ],

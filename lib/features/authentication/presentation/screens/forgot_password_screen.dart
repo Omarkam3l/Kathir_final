@@ -145,7 +145,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.white,
                         disabledBackgroundColor:
-                            AppColors.primary.withOpacity(0.6),
+                            AppColors.primary.withValues(alpha: 0.6),
                         disabledForegroundColor: AppColors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
