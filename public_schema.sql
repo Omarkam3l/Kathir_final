@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict aJz7PJwFRxTNzhgJl7sv6iZOnikmqodQ7XgEWpnRbYjRhZIhuzZxHCkomf57p2e
+\restrict ntn6h8dTTI7vnJDI6o1WJMqijqg9Zfr7gxicuaCcy2JxK4Z6znsHyZzXHFD7Fqn
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.1
@@ -276,6 +276,81 @@ $$;
 ALTER FUNCTION public.auto_generate_order_codes() OWNER TO postgres;
 
 --
+-- Name: award_order_points(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.award_order_points() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  v_points int;
+  v_user_role text;
+  v_is_donation boolean;
+BEGIN
+  -- Only award points when order is completed
+  IF NEW.status = 'completed' AND (OLD.status IS NULL OR OLD.status != 'completed') THEN
+    
+    -- Check if user is a regular user (not restaurant/NGO)
+    SELECT role INTO v_user_role FROM profiles WHERE id = NEW.user_id;
+    
+    IF v_user_role = 'user' THEN
+      -- Calculate points: 1 point per EGP spent
+      v_points := FLOOR(NEW.total_amount);
+      
+      -- Bonus points for donations
+      v_is_donation := (NEW.delivery_type = 'donation' AND NEW.ngo_id IS NOT NULL);
+      IF v_is_donation THEN
+        v_points := v_points * 2; -- Double points for donations
+      END IF;
+      
+      -- Award points
+      INSERT INTO loyalty_transactions (
+        user_id,
+        points,
+        transaction_type,
+        source,
+        order_id,
+        description
+      ) VALUES (
+        NEW.user_id,
+        v_points,
+        'earned',
+        CASE WHEN v_is_donation THEN 'donation' ELSE 'order' END,
+        NEW.id,
+        CASE 
+          WHEN v_is_donation THEN 'Earned ' || v_points || ' points from donation (2x bonus!)'
+          ELSE 'Earned ' || v_points || ' points from order'
+        END
+      );
+      
+      -- Update loyalty profile
+      UPDATE user_loyalty
+      SET 
+        total_points = total_points + v_points,
+        available_points = available_points + v_points,
+        lifetime_points = lifetime_points + v_points,
+        total_orders = total_orders + 1,
+        total_donations = total_donations + CASE WHEN v_is_donation THEN 1 ELSE 0 END,
+        updated_at = NOW()
+      WHERE user_id = NEW.user_id;
+      
+      -- Check and award badges
+      PERFORM check_and_award_badges(NEW.user_id);
+      
+      -- Check and update tier
+      PERFORM update_user_tier(NEW.user_id);
+    END IF;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.award_order_points() OWNER TO postgres;
+
+--
 -- Name: calculate_effective_price(uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -314,6 +389,141 @@ ALTER FUNCTION public.calculate_effective_price(p_meal_id uuid) OWNER TO postgre
 COMMENT ON FUNCTION public.calculate_effective_price(p_meal_id uuid) IS 'Calculates the effective price for a meal considering rush hour discounts.
 Use this in checkout/order processing to ensure correct pricing.';
 
+
+--
+-- Name: can_rate_order(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.can_rate_order(p_order_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  v_user_id uuid;
+  v_order_status text;
+  v_existing_rating integer;
+BEGIN
+  v_user_id := auth.uid();
+  
+  IF v_user_id IS NULL THEN
+    RETURN jsonb_build_object(
+      'can_rate', false,
+      'reason', 'Not authenticated'
+    );
+  END IF;
+  
+  -- Check order status and ownership
+  SELECT o.status::text
+  INTO v_order_status
+  FROM orders o
+  WHERE o.id = p_order_id
+    AND o.user_id = v_user_id;
+  
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object(
+      'can_rate', false,
+      'reason', 'Order not found'
+    );
+  END IF;
+  
+  IF v_order_status NOT IN ('delivered', 'completed') THEN
+    RETURN jsonb_build_object(
+      'can_rate', false,
+      'reason', 'Order not yet completed'
+    );
+  END IF;
+  
+  -- Check if already rated
+  SELECT rating
+  INTO v_existing_rating
+  FROM restaurant_ratings
+  WHERE order_id = p_order_id;
+  
+  IF FOUND THEN
+    RETURN jsonb_build_object(
+      'can_rate', true,
+      'already_rated', true,
+      'existing_rating', v_existing_rating,
+      'reason', 'Can update existing rating'
+    );
+  END IF;
+  
+  RETURN jsonb_build_object(
+    'can_rate', true,
+    'already_rated', false,
+    'reason', 'Can submit new rating'
+  );
+END;
+$$;
+
+
+ALTER FUNCTION public.can_rate_order(p_order_id uuid) OWNER TO postgres;
+
+--
+-- Name: FUNCTION can_rate_order(p_order_id uuid); Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON FUNCTION public.can_rate_order(p_order_id uuid) IS 'Check if the authenticated user can rate a specific order';
+
+
+--
+-- Name: check_and_award_badges(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.check_and_award_badges(p_user_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  v_total_orders int;
+  v_total_donations int;
+  v_lifetime_points int;
+BEGIN
+  -- Get user stats
+  SELECT total_orders, total_donations, lifetime_points
+  INTO v_total_orders, v_total_donations, v_lifetime_points
+  FROM user_loyalty
+  WHERE user_id = p_user_id;
+  
+  -- First Order Badge
+  IF v_total_orders >= 1 THEN
+    INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, icon)
+    VALUES (p_user_id, 'first_order', 'First Order', 'Completed your first order', '🎉')
+    ON CONFLICT (user_id, badge_type) DO NOTHING;
+  END IF;
+  
+  -- Food Rescuer Badge (5+ orders)
+  IF v_total_orders >= 5 THEN
+    INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, icon)
+    VALUES (p_user_id, 'food_rescuer', 'Food Rescuer', 'Rescued food 5+ times', '🦸')
+    ON CONFLICT (user_id, badge_type) DO NOTHING;
+  END IF;
+  
+  -- NGO Supporter Badge (3+ donations)
+  IF v_total_donations >= 3 THEN
+    INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, icon)
+    VALUES (p_user_id, 'ngo_supporter', 'NGO Supporter', 'Donated to NGOs 3+ times', '❤️')
+    ON CONFLICT (user_id, badge_type) DO NOTHING;
+  END IF;
+  
+  -- Loyal Customer Badge (10+ orders)
+  IF v_total_orders >= 10 THEN
+    INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, icon)
+    VALUES (p_user_id, 'loyal_customer', 'Loyal Customer', 'Completed 10+ orders', '⭐')
+    ON CONFLICT (user_id, badge_type) DO NOTHING;
+  END IF;
+  
+  -- Eco Warrior Badge (500+ points)
+  IF v_lifetime_points >= 500 THEN
+    INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, icon)
+    VALUES (p_user_id, 'eco_warrior', 'Eco Warrior', 'Earned 500+ lifetime points', '🌱')
+    ON CONFLICT (user_id, badge_type) DO NOTHING;
+  END IF;
+END;
+$$;
+
+
+ALTER FUNCTION public.check_and_award_badges(p_user_id uuid) OWNER TO postgres;
 
 --
 -- Name: complete_pickup(uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
@@ -919,7 +1129,7 @@ BEGIN
     eq.attempts
   FROM email_queue eq
   WHERE eq.status = 'pending'
-    AND eq.attempts < 3  -- Max 3 attempts
+    AND eq.attempts < 3
   ORDER BY eq.created_at ASC
   LIMIT p_limit;
 END;
@@ -927,13 +1137,6 @@ $$;
 
 
 ALTER FUNCTION public.get_pending_emails(p_limit integer) OWNER TO postgres;
-
---
--- Name: FUNCTION get_pending_emails(p_limit integer); Type: COMMENT; Schema: public; Owner: postgres
---
-
-COMMENT ON FUNCTION public.get_pending_emails(p_limit integer) IS 'Returns pending emails to be processed by Edge Function.';
-
 
 --
 -- Name: get_restaurant_leaderboard(text); Type: FUNCTION; Schema: public; Owner: postgres
@@ -1010,6 +1213,43 @@ Safe for public access - only exposes approved restaurant data.';
 
 
 --
+-- Name: get_restaurant_ratings(uuid, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_restaurant_ratings(p_restaurant_id uuid, p_limit integer DEFAULT 50, p_offset integer DEFAULT 0) RETURNS TABLE(id uuid, rating integer, review_text text, user_name text, user_avatar text, created_at timestamp with time zone, order_id uuid)
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    rr.id,
+    rr.rating,
+    rr.review_text,
+    p.full_name as user_name,
+    p.avatar_url as user_avatar,
+    rr.created_at,
+    rr.order_id
+  FROM restaurant_ratings rr
+  JOIN profiles p ON rr.user_id = p.id
+  WHERE rr.restaurant_id = p_restaurant_id
+  ORDER BY rr.created_at DESC
+  LIMIT p_limit
+  OFFSET p_offset;
+END;
+$$;
+
+
+ALTER FUNCTION public.get_restaurant_ratings(p_restaurant_id uuid, p_limit integer, p_offset integer) OWNER TO postgres;
+
+--
+-- Name: FUNCTION get_restaurant_ratings(p_restaurant_id uuid, p_limit integer, p_offset integer); Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON FUNCTION public.get_restaurant_ratings(p_restaurant_id uuid, p_limit integer, p_offset integer) IS 'Get all ratings for a restaurant with user details';
+
+
+--
 -- Name: handle_address_deletion(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1040,147 +1280,96 @@ CREATE FUNCTION public.handle_new_user() RETURNS trigger
     SET search_path TO 'public'
     AS $$
 DECLARE
-  user_role text;
-  user_full_name text;
-  user_phone text;
-  org_name text;
-  final_org_name text;
-  profile_created boolean := false;
+  v_role text;
+  v_full_name text;
+  v_is_verified boolean;
+  v_approval_status text;
 BEGIN
-  -- Extract metadata from auth.users
-  user_role := COALESCE(NEW.raw_user_meta_data->>'role', 'user');
-  user_full_name := COALESCE(NULLIF(TRIM(NEW.raw_user_meta_data->>'full_name'), ''), 'User');
-  user_phone := NEW.raw_user_meta_data->>'phone_number';
-  org_name := NEW.raw_user_meta_data->>'organization_name';
+  -- Get role from metadata
+  v_role := COALESCE(NEW.raw_user_meta_data->>'role', 'user');
+  v_full_name := COALESCE(NEW.raw_user_meta_data->>'full_name', 'User');
 
-  -- Log trigger execution
-  RAISE NOTICE 'handle_new_user triggered for user % with role %', NEW.id, user_role;
+  -- Set is_verified based on role
+  -- Regular users are verified after email confirmation
+  -- Restaurant/NGO users need admin approval
+  v_is_verified := CASE 
+    WHEN v_role IN ('restaurant', 'ngo') THEN false
+    ELSE true
+  END;
 
-  -- Determine final organization name (never NULL or empty)
-  IF user_role IN ('restaurant', 'ngo') THEN
-    final_org_name := COALESCE(
-      NULLIF(TRIM(org_name), ''),
-      NULLIF(TRIM(user_full_name), ''),
-      CASE 
-        WHEN user_role = 'restaurant' THEN 'Restaurant ' || SUBSTRING(NEW.id::text, 1, 8)
-        ELSE 'Organization ' || SUBSTRING(NEW.id::text, 1, 8)
-      END
-    );
-  END IF;
+  -- Set approval status based on role
+  v_approval_status := CASE 
+    WHEN v_role IN ('restaurant', 'ngo') THEN 'pending'
+    ELSE 'approved'
+  END;
 
-  -- CRITICAL: Create profile record (must succeed)
-  BEGIN
-    INSERT INTO public.profiles (
-      id, 
-      email, 
-      role, 
-      full_name, 
-      phone_number, 
-      is_verified,
-      approval_status,
+  -- Create profile with correct is_verified value
+  INSERT INTO public.profiles (
+    id,
+    role,
+    email,
+    full_name,
+    is_verified,
+    approval_status,
+    created_at,
+    updated_at
+  )
+  VALUES (
+    NEW.id,
+    v_role,
+    NEW.email,
+    v_full_name,
+    v_is_verified,
+    v_approval_status,
+    NOW(),
+    NOW()
+  );
+
+  -- Create NGO record if role is ngo
+  IF v_role = 'ngo' THEN
+    INSERT INTO public.ngos (
+      profile_id,
+      organization_name,
+      legal_docs_urls,
       created_at,
       updated_at
     )
     VALUES (
       NEW.id,
-      NEW.email,
-      user_role,
-      user_full_name,
-      user_phone,
-      CASE 
-        WHEN user_role = 'user' THEN true 
-        ELSE false 
-      END,
-      CASE 
-        WHEN user_role IN ('restaurant', 'ngo') THEN 'pending'
-        WHEN user_role = 'admin' THEN 'approved'
-        ELSE 'approved'
-      END,
+      v_full_name,
+      ARRAY[]::text[],
       NOW(),
       NOW()
+    );
+    
+    RAISE NOTICE '✅ Created NGO record for user %', NEW.id;
+  END IF;
+
+  -- Create restaurant record if role is restaurant
+  IF v_role = 'restaurant' THEN
+    INSERT INTO public.restaurants (
+      profile_id,
+      restaurant_name,
+      legal_docs_urls,
+      rating,
+      min_order_price,
+      rush_hour_active
     )
-    ON CONFLICT (id) DO UPDATE SET
-      email = EXCLUDED.email,
-      role = EXCLUDED.role,
-      full_name = EXCLUDED.full_name,
-      phone_number = EXCLUDED.phone_number,
-      updated_at = NOW();
+    VALUES (
+      NEW.id,
+      v_full_name,
+      ARRAY[]::text[],
+      0,
+      0,
+      false
+    );
     
-    profile_created := true;
-    RAISE NOTICE 'Profile created successfully for user %', NEW.id;
-    
-  EXCEPTION WHEN OTHERS THEN
-    -- Profile creation is CRITICAL - must not fail
-    RAISE WARNING 'CRITICAL: Failed to create profile for user %: % (SQLSTATE: %)', 
-      NEW.id, SQLERRM, SQLSTATE;
-    -- Re-raise to fail the signup
-    RAISE;
-  END;
-
-  -- NON-CRITICAL: Create restaurant record (wrapped in exception)
-  IF user_role = 'restaurant' AND profile_created THEN
-    BEGIN
-      INSERT INTO public.restaurants (
-        profile_id,
-        restaurant_name,
-        legal_docs_urls,
-        rating,
-        min_order_price,
-        rush_hour_active
-      )
-      VALUES (
-        NEW.id,
-        final_org_name,
-        ARRAY[]::text[],
-        0,
-        0,
-        false
-      )
-      ON CONFLICT (profile_id) DO UPDATE SET
-        restaurant_name = COALESCE(EXCLUDED.restaurant_name, public.restaurants.restaurant_name),
-        updated_at = NOW();
-      
-      RAISE NOTICE 'Restaurant record created for user %', NEW.id;
-      
-    EXCEPTION WHEN OTHERS THEN
-      -- Log warning but don't fail signup
-      RAISE WARNING 'Failed to create restaurant record for user %: % (SQLSTATE: %)', 
-        NEW.id, SQLERRM, SQLSTATE;
-      -- Don't re-raise - allow signup to continue
-    END;
+    RAISE NOTICE '✅ Created restaurant record for user %', NEW.id;
   END IF;
 
-  -- NON-CRITICAL: Create NGO record (wrapped in exception)
-  IF user_role = 'ngo' AND profile_created THEN
-    BEGIN
-      INSERT INTO public.ngos (
-        profile_id,
-        organization_name,
-        legal_docs_urls,
-        created_at,
-        updated_at
-      )
-      VALUES (
-        NEW.id,
-        final_org_name,
-        ARRAY[]::text[],
-        NOW(),
-        NOW()
-      )
-      ON CONFLICT (profile_id) DO UPDATE SET
-        organization_name = COALESCE(EXCLUDED.organization_name, public.ngos.organization_name),
-        updated_at = NOW();
-      
-      RAISE NOTICE 'NGO record created for user %', NEW.id;
-      
-    EXCEPTION WHEN OTHERS THEN
-      -- Log warning but don't fail signup
-      RAISE WARNING 'Failed to create NGO record for user %: % (SQLSTATE: %)', 
-        NEW.id, SQLERRM, SQLSTATE;
-      -- Don't re-raise - allow signup to continue
-    END;
-  END IF;
-
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING '⚠️ Error in handle_new_user: % (SQLSTATE: %)', SQLERRM, SQLSTATE;
   RETURN NEW;
 END;
 $$;
@@ -1192,7 +1381,7 @@ ALTER FUNCTION public.handle_new_user() OWNER TO postgres;
 -- Name: FUNCTION handle_new_user(); Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON FUNCTION public.handle_new_user() IS 'Trigger function to auto-create profile and role-specific records on user signup. Profile creation is critical and will fail signup if it fails. Role table creation is non-critical and will only log warnings. Fixed to properly handle NGO table columns.';
+COMMENT ON FUNCTION public.handle_new_user() IS 'Trigger function to create profile and role-specific records (NGO/restaurant) when a new user signs up. Sets is_verified=false for restaurant/ngo roles.';
 
 
 --
@@ -1221,6 +1410,29 @@ ALTER FUNCTION public.increment_meal_quantity(meal_id uuid, qty integer) OWNER T
 
 COMMENT ON FUNCTION public.increment_meal_quantity(meal_id uuid, qty integer) IS 'Safely increments meal quantity when order is cancelled';
 
+
+--
+-- Name: initialize_user_loyalty(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.initialize_user_loyalty() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+BEGIN
+  -- Only for regular users, not restaurants or NGOs
+  IF NEW.role = 'user' THEN
+    INSERT INTO user_loyalty (user_id)
+    VALUES (NEW.id)
+    ON CONFLICT (user_id) DO NOTHING;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.initialize_user_loyalty() OWNER TO postgres;
 
 --
 -- Name: is_admin(); Type: FUNCTION; Schema: public; Owner: postgres
@@ -1320,6 +1532,62 @@ $$;
 ALTER FUNCTION public.notify_category_subscribers() OWNER TO postgres;
 
 --
+-- Name: notify_restaurant_of_issue(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.notify_restaurant_of_issue() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  v_user_name text;
+  v_order_number text;
+  v_notifications_exists boolean;
+BEGIN
+  -- Check if notifications table exists
+  SELECT EXISTS (
+    SELECT FROM information_schema.tables 
+    WHERE table_schema = 'public' 
+    AND table_name = 'notifications'
+  ) INTO v_notifications_exists;
+  
+  -- Only create notification if table exists
+  IF v_notifications_exists THEN
+    -- Get user name and order number
+    SELECT p.full_name, o.order_number
+    INTO v_user_name, v_order_number
+    FROM profiles p
+    JOIN orders o ON o.id = NEW.order_id
+    WHERE p.id = NEW.user_id;
+    
+    -- Create notification for restaurant (restaurant_id is already the profile_id)
+    INSERT INTO notifications (
+      user_id,
+      title,
+      message,
+      type,
+      data
+    ) VALUES (
+      NEW.restaurant_id,
+      'Order Issue Reported',
+      v_user_name || ' reported an issue with order #' || v_order_number,
+      'order_issue',
+      jsonb_build_object(
+        'issue_id', NEW.id,
+        'order_id', NEW.order_id,
+        'issue_type', NEW.issue_type
+      )
+    );
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.notify_restaurant_of_issue() OWNER TO postgres;
+
+--
 -- Name: prevent_role_update(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1345,36 +1613,45 @@ CREATE FUNCTION public.process_email_queue_item(p_email_id uuid, p_success boole
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
+DECLARE
+  v_order_id uuid;
+  v_recipient_email text;
+  v_email_type text;
 BEGIN
+  SELECT order_id, recipient_email, email_type
+  INTO v_order_id, v_recipient_email, v_email_type
+  FROM email_queue
+  WHERE id = p_email_id;
+  
   IF p_success THEN
     UPDATE email_queue
-    SET 
-      status = 'sent',
-      sent_at = NOW(),
-      updated_at = NOW()
+    SET status = 'sent', sent_at = NOW()
     WHERE id = p_email_id;
+    
+    INSERT INTO email_logs (
+      email_queue_id, order_id, recipient_email, email_type, status
+    ) VALUES (
+      p_email_id, v_order_id, v_recipient_email, v_email_type, 'sent'
+    );
   ELSE
     UPDATE email_queue
     SET 
-      status = 'failed',
       attempts = attempts + 1,
-      last_attempt_at = NOW(),
-      error_message = p_error_message,
-      updated_at = NOW()
+      last_error = p_error_message,
+      status = CASE WHEN attempts + 1 >= 3 THEN 'failed' ELSE 'pending' END
     WHERE id = p_email_id;
+    
+    INSERT INTO email_logs (
+      email_queue_id, order_id, recipient_email, email_type, status, error_message
+    ) VALUES (
+      p_email_id, v_order_id, v_recipient_email, v_email_type, 'failed', p_error_message
+    );
   END IF;
 END;
 $$;
 
 
 ALTER FUNCTION public.process_email_queue_item(p_email_id uuid, p_success boolean, p_error_message text) OWNER TO postgres;
-
---
--- Name: FUNCTION process_email_queue_item(p_email_id uuid, p_success boolean, p_error_message text); Type: COMMENT; Schema: public; Owner: postgres
---
-
-COMMENT ON FUNCTION public.process_email_queue_item(p_email_id uuid, p_success boolean, p_error_message text) IS 'Marks an email as sent or failed. Called by Edge Function after sending.';
-
 
 --
 -- Name: provision_auth_user(text, text, text, text); Type: FUNCTION; Schema: public; Owner: postgres
@@ -1422,10 +1699,9 @@ BEGIN
   END IF;
 
   -- Verified: after OTP verify you have a session, so mark verified true
-  -- If you want stricter logic, set it based on your app rules.
   v_is_verified := true;
 
-  -- Approval status logic
+  -- Approval status logic (ORIGINAL VERSION)
   v_approval_status :=
     CASE
       WHEN v_role IN ('restaurant', 'ngo') THEN 'pending'
@@ -1433,7 +1709,7 @@ BEGIN
       ELSE 'approved'
     END;
 
-  -- 1) Upsert profile (CRITICAL)
+  -- 1) Upsert profile (ORIGINAL VERSION)
   INSERT INTO public.profiles (
     id, email, role, full_name, phone_number, is_verified, approval_status, created_at, updated_at
   )
@@ -1461,7 +1737,6 @@ BEGIN
       ON CONFLICT (profile_id) DO UPDATE SET
         restaurant_name = COALESCE(EXCLUDED.restaurant_name, public.restaurants.restaurant_name);
     EXCEPTION WHEN OTHERS THEN
-      -- Do not fail provisioning if restaurant insert fails
       RAISE WARNING 'restaurants upsert failed for user %: % (SQLSTATE %)', v_uid, SQLERRM, SQLSTATE;
     END;
 
@@ -1476,7 +1751,6 @@ BEGIN
       ON CONFLICT (profile_id) DO UPDATE SET
         organization_name = COALESCE(EXCLUDED.organization_name, public.ngos.organization_name);
     EXCEPTION WHEN OTHERS THEN
-      -- Do not fail provisioning if ngo insert fails
       RAISE WARNING 'ngos upsert failed for user %: % (SQLSTATE %)', v_uid, SQLERRM, SQLSTATE;
     END;
   END IF;
@@ -1517,78 +1791,156 @@ DECLARE
   v_ngo_email text;
   v_ngo_name text;
   v_order_data jsonb;
+  v_email_id uuid;
   v_buyer_type text;
 BEGIN
-  -- Get order details with all related data
-  SELECT jsonb_build_object(
-    'order_id', NEW.id,
-    'order_number', COALESCE(NEW.order_number, NEW.id::text),
-    'total_amount', NEW.total_amount,
-    'delivery_type', NEW.delivery_type,
-    'delivery_address', NEW.delivery_address,
-    'created_at', NEW.created_at,
-    'items', (
-      SELECT jsonb_agg(
-        jsonb_build_object(
-          'meal_title', COALESCE(m.title, oi.meal_title),
-          'quantity', oi.quantity,
-          'unit_price', oi.unit_price,
-          'subtotal', (oi.quantity * oi.unit_price)  -- ✅ CALCULATE instead of read
-        )
-      )
-      FROM order_items oi
-      LEFT JOIN meals m ON oi.meal_id = m.id
-      WHERE oi.order_id = NEW.id
-    )
-  ) INTO v_order_data;
-
-  -- Get user/buyer details
-  SELECT 
-    p.email,
-    p.full_name,
-    p.role
-  INTO 
-    v_user_email,
-    v_user_name,
-    v_buyer_type
-  FROM profiles p
-  WHERE p.id = NEW.user_id;
-
+  -- Get user details
+  SELECT email, full_name, role
+  INTO v_user_email, v_user_name, v_buyer_type
+  FROM profiles
+  WHERE id = NEW.user_id;
+  
   -- Get restaurant details
-  SELECT 
-    p.email,
-    r.restaurant_name
-  INTO 
-    v_restaurant_email,
-    v_restaurant_name
+  SELECT p.email, r.restaurant_name 
+  INTO v_restaurant_email, v_restaurant_name
   FROM restaurants r
-  JOIN profiles p ON r.profile_id = p.id
+  JOIN profiles p ON p.id = r.profile_id
   WHERE r.profile_id = NEW.restaurant_id;
-
+  
   -- Get NGO details if donation order
+  -- ✅ CRITICAL FIX: Use organization_name NOT ngo_name!
   IF NEW.delivery_type = 'donation' AND NEW.ngo_id IS NOT NULL THEN
-    SELECT 
-      p.email,
-      n.organization_name
-    INTO 
-      v_ngo_email,
-      v_ngo_name
+    SELECT p.email, n.organization_name 
+    INTO v_ngo_email, v_ngo_name
     FROM ngos n
-    JOIN profiles p ON n.profile_id = p.id
+    JOIN profiles p ON p.id = n.profile_id
     WHERE n.profile_id = NEW.ngo_id;
   END IF;
+  
+  -- Build order data with items
+  -- ✅ CRITICAL FIX: Use COALESCE to handle empty items array
+  SELECT jsonb_build_object(
+    'order_id', NEW.id,
+    'order_number', NEW.order_number,
+    'buyer_name', v_user_name,
+    'buyer_type', v_buyer_type,
+    'restaurant_name', v_restaurant_name,
+    'ngo_name', v_ngo_name,
+    'delivery_type', NEW.delivery_type,
+    'delivery_address', NEW.delivery_address,
+    'total_amount', NEW.total_amount,
+    'created_at', NEW.created_at,
+    'items', COALESCE(
+      (
+        SELECT jsonb_agg(
+          jsonb_build_object(
+            'meal_title', oi.meal_title,
+            'quantity', oi.quantity,
+            'unit_price', oi.unit_price,
+            'subtotal', oi.quantity * oi.unit_price
+          )
+        )
+        FROM order_items oi
+        WHERE oi.order_id = NEW.id
+      ),
+      '[]'::jsonb
+    )
+  ) INTO v_order_data;
+  
+  -- SCENARIO 1 & 2: User purchases (delivery/pickup or donate to NGO)
+  IF v_buyer_type = 'user' THEN
+    
+    -- Email 1: Invoice to user
+    IF v_user_email IS NOT NULL THEN
+      INSERT INTO email_queue (
+        order_id, recipient_email, recipient_type, email_type, email_data
+      ) VALUES (
+        NEW.id, 
+        v_user_email, 
+        'user', 
+        CASE WHEN NEW.delivery_type = 'donation' THEN 'ngo_confirmation' ELSE 'invoice' END,
+        v_order_data
+      )
+      RETURNING id INTO v_email_id;
+      
+      INSERT INTO email_logs (
+        email_queue_id, order_id, recipient_email, email_type, status
+      ) VALUES (
+        v_email_id, NEW.id, v_user_email,
+        CASE WHEN NEW.delivery_type = 'donation' THEN 'ngo_confirmation' ELSE 'invoice' END,
+        'queued'
+      );
+    END IF;
+    
+    -- Email 2: New order notification to restaurant
+    IF v_restaurant_email IS NOT NULL THEN
+      INSERT INTO email_queue (
+        order_id, recipient_email, recipient_type, email_type, email_data
+      ) VALUES (
+        NEW.id, v_restaurant_email, 'restaurant', 'new_order', v_order_data
+      )
+      RETURNING id INTO v_email_id;
+      
+      INSERT INTO email_logs (
+        email_queue_id, order_id, recipient_email, email_type, status
+      ) VALUES (
+        v_email_id, NEW.id, v_restaurant_email, 'new_order', 'queued'
+      );
+    END IF;
+    
+    -- Email 3: If donation, notify NGO
+    IF NEW.delivery_type = 'donation' AND v_ngo_email IS NOT NULL THEN
+      INSERT INTO email_queue (
+        order_id, recipient_email, recipient_type, email_type, email_data
+      ) VALUES (
+        NEW.id, v_ngo_email, 'ngo', 'ngo_pickup', v_order_data
+      )
+      RETURNING id INTO v_email_id;
+      
+      INSERT INTO email_logs (
+        email_queue_id, order_id, recipient_email, email_type, status
+      ) VALUES (
+        v_email_id, NEW.id, v_ngo_email, 'ngo_pickup', 'queued'
+      );
+    END IF;
 
-  -- Log order creation (replace with actual email queue logic)
-  RAISE NOTICE '✅ Order % created: User=%, Restaurant=%, NGO=%', 
-    COALESCE(NEW.order_number, NEW.id::text), 
-    v_user_email, 
-    v_restaurant_email, 
-    v_ngo_email;
+  -- SCENARIO 3: NGO purchases
+  ELSIF v_buyer_type = 'ngo' THEN
+    
+    -- Email 1: New order notification to restaurant
+    IF v_restaurant_email IS NOT NULL THEN
+      INSERT INTO email_queue (
+        order_id, recipient_email, recipient_type, email_type, email_data
+      ) VALUES (
+        NEW.id, v_restaurant_email, 'restaurant', 'new_order', v_order_data
+      )
+      RETURNING id INTO v_email_id;
+      
+      INSERT INTO email_logs (
+        email_queue_id, order_id, recipient_email, email_type, status
+      ) VALUES (
+        v_email_id, NEW.id, v_restaurant_email, 'new_order', 'queued'
+      );
+    END IF;
+    
+    -- Email 2: Confirmation to NGO
+    IF v_user_email IS NOT NULL THEN
+      INSERT INTO email_queue (
+        order_id, recipient_email, recipient_type, email_type, email_data
+      ) VALUES (
+        NEW.id, v_user_email, 'ngo', 'ngo_confirmation', v_order_data
+      )
+      RETURNING id INTO v_email_id;
+      
+      INSERT INTO email_logs (
+        email_queue_id, order_id, recipient_email, email_type, status
+      ) VALUES (
+        v_email_id, NEW.id, v_user_email, 'ngo_confirmation', 'queued'
+      );
+    END IF;
 
-  RETURN NEW;
-EXCEPTION WHEN OTHERS THEN
-  -- Don't fail order creation if email queueing fails
-  RAISE WARNING '⚠️ Failed to queue order emails: % (SQLSTATE: %)', SQLERRM, SQLSTATE;
+  END IF;
+  
   RETURN NEW;
 END;
 $$;
@@ -1597,10 +1949,147 @@ $$;
 ALTER FUNCTION public.queue_order_emails() OWNER TO postgres;
 
 --
--- Name: FUNCTION queue_order_emails(); Type: COMMENT; Schema: public; Owner: postgres
+-- Name: redeem_reward(uuid, uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-COMMENT ON FUNCTION public.queue_order_emails() IS 'Trigger function to queue email notifications when orders are created. Calculates subtotal from quantity * unit_price instead of reading non-existent column.';
+CREATE FUNCTION public.redeem_reward(p_user_id uuid, p_reward_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  v_available_points int;
+  v_points_cost int;
+  v_current_tier text;
+  v_min_tier text;
+  v_valid_days int;
+  v_transaction_id uuid;
+  v_reward_id uuid;
+BEGIN
+  -- Get user loyalty info
+  SELECT available_points, current_tier
+  INTO v_available_points, v_current_tier
+  FROM user_loyalty
+  WHERE user_id = p_user_id;
+  
+  -- Get reward info
+  SELECT points_cost, min_tier, valid_days
+  INTO v_points_cost, v_min_tier, v_valid_days
+  FROM rewards_catalog
+  WHERE id = p_reward_id AND is_active = true;
+  
+  -- Validate reward exists
+  IF v_points_cost IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Reward not found or inactive');
+  END IF;
+  
+  -- Check if user has enough points
+  IF v_available_points < v_points_cost THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Insufficient points');
+  END IF;
+  
+  -- Check tier requirement
+  IF v_min_tier IS NOT NULL THEN
+    IF (v_current_tier = 'bronze' AND v_min_tier IN ('silver', 'gold', 'platinum')) OR
+       (v_current_tier = 'silver' AND v_min_tier IN ('gold', 'platinum')) OR
+       (v_current_tier = 'gold' AND v_min_tier = 'platinum') THEN
+      RETURN jsonb_build_object('success', false, 'error', 'Tier requirement not met');
+    END IF;
+  END IF;
+  
+  -- Deduct points
+  UPDATE user_loyalty
+  SET available_points = available_points - v_points_cost,
+      updated_at = NOW()
+  WHERE user_id = p_user_id;
+  
+  -- Record transaction
+  INSERT INTO loyalty_transactions (
+    user_id,
+    points,
+    transaction_type,
+    source,
+    reward_id,
+    description
+  ) VALUES (
+    p_user_id,
+    -v_points_cost,
+    'redeemed',
+    'reward_redemption',
+    p_reward_id,
+    'Redeemed reward for ' || v_points_cost || ' points'
+  )
+  RETURNING id INTO v_transaction_id;
+  
+  -- Create user reward
+  INSERT INTO user_rewards (
+    user_id,
+    reward_id,
+    transaction_id,
+    expires_at
+  ) VALUES (
+    p_user_id,
+    p_reward_id,
+    v_transaction_id,
+    NOW() + (v_valid_days || ' days')::interval
+  )
+  RETURNING id INTO v_reward_id;
+  
+  RETURN jsonb_build_object(
+    'success', true,
+    'reward_id', v_reward_id,
+    'remaining_points', v_available_points - v_points_cost
+  );
+END;
+$$;
+
+
+ALTER FUNCTION public.redeem_reward(p_user_id uuid, p_reward_id uuid) OWNER TO postgres;
+
+--
+-- Name: safe_delete_meal(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.safe_delete_meal(p_meal_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+DECLARE
+  v_order_count INT;
+  v_result jsonb;
+BEGIN
+  -- Check if meal is in any orders
+  SELECT COUNT(*) INTO v_order_count
+  FROM order_items
+  WHERE meal_id = p_meal_id;
+  
+  IF v_order_count > 0 THEN
+    -- Can't delete - meal is in orders
+    v_result := jsonb_build_object(
+      'success', false,
+      'message', format('Cannot delete meal. It is in %s order(s). Mark as inactive instead.', v_order_count),
+      'order_count', v_order_count
+    );
+  ELSE
+    -- Safe to delete
+    DELETE FROM meals WHERE id = p_meal_id;
+    
+    v_result := jsonb_build_object(
+      'success', true,
+      'message', 'Meal deleted successfully'
+    );
+  END IF;
+  
+  RETURN v_result;
+END;
+$$;
+
+
+ALTER FUNCTION public.safe_delete_meal(p_meal_id uuid) OWNER TO postgres;
+
+--
+-- Name: FUNCTION safe_delete_meal(p_meal_id uuid); Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON FUNCTION public.safe_delete_meal(p_meal_id uuid) IS 'Safely deletes a meal only if it is not in any orders. Otherwise suggests marking as inactive.';
 
 
 --
@@ -1778,25 +2267,193 @@ $$;
 ALTER FUNCTION public.set_updated_at() OWNER TO postgres;
 
 --
+-- Name: submit_restaurant_rating(uuid, integer, text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.submit_restaurant_rating(p_order_id uuid, p_rating integer, p_review_text text DEFAULT NULL::text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  v_user_id uuid;
+  v_restaurant_id uuid;
+  v_order_status text;
+  v_rating_id uuid;
+BEGIN
+  -- Get authenticated user
+  v_user_id := auth.uid();
+  
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+  
+  -- Validate rating value
+  IF p_rating < 1 OR p_rating > 5 THEN
+    RAISE EXCEPTION 'Rating must be between 1 and 5';
+  END IF;
+  
+  -- Get order details and validate
+  SELECT 
+    o.restaurant_id,
+    o.status::text
+  INTO 
+    v_restaurant_id,
+    v_order_status
+  FROM orders o
+  WHERE o.id = p_order_id
+    AND o.user_id = v_user_id;
+  
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Order not found or does not belong to user';
+  END IF;
+  
+  -- Check if order is completed/delivered
+  IF v_order_status NOT IN ('delivered', 'completed') THEN
+    RAISE EXCEPTION 'Can only rate completed or delivered orders';
+  END IF;
+  
+  -- Insert or update rating
+  INSERT INTO restaurant_ratings (
+    order_id,
+    user_id,
+    restaurant_id,
+    rating,
+    review_text
+  )
+  VALUES (
+    p_order_id,
+    v_user_id,
+    v_restaurant_id,
+    p_rating,
+    p_review_text
+  )
+  ON CONFLICT (order_id) 
+  DO UPDATE SET
+    rating = EXCLUDED.rating,
+    review_text = EXCLUDED.review_text,
+    updated_at = NOW()
+  RETURNING id INTO v_rating_id;
+  
+  -- Also update the orders table rating columns (for backward compatibility)
+  UPDATE orders
+  SET 
+    rating = p_rating,
+    review_text = p_review_text,
+    reviewed_at = NOW()
+  WHERE id = p_order_id;
+  
+  RETURN jsonb_build_object(
+    'success', true,
+    'rating_id', v_rating_id,
+    'message', 'Rating submitted successfully'
+  );
+  
+EXCEPTION
+  WHEN OTHERS THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'error', SQLERRM
+    );
+END;
+$$;
+
+
+ALTER FUNCTION public.submit_restaurant_rating(p_order_id uuid, p_rating integer, p_review_text text) OWNER TO postgres;
+
+--
+-- Name: FUNCTION submit_restaurant_rating(p_order_id uuid, p_rating integer, p_review_text text); Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON FUNCTION public.submit_restaurant_rating(p_order_id uuid, p_rating integer, p_review_text text) IS 'Submit or update a restaurant rating for a completed order. 
+Automatically updates restaurant average rating.';
+
+
+--
+-- Name: sync_profile_emails(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.sync_profile_emails() RETURNS TABLE(profile_id uuid, old_email text, new_email text, updated boolean)
+    LANGUAGE sql SECURITY DEFINER
+    SET search_path TO 'public', 'auth'
+    AS $$
+  WITH to_fix AS (
+    SELECT
+      p.id AS profile_id,
+      p.email::text AS old_email,
+      au.email::text AS new_email
+    FROM public.profiles p
+    JOIN auth.users au ON au.id = p.id
+    WHERE p.email IS NULL OR p.email = ''
+  ),
+  upd AS (
+    UPDATE public.profiles p
+    SET email = to_fix.new_email,
+        updated_at = NOW()
+    FROM to_fix
+    WHERE p.id = to_fix.profile_id
+    RETURNING p.id
+  )
+  SELECT
+    to_fix.profile_id,
+    to_fix.old_email,
+    to_fix.new_email,
+    true AS updated
+  FROM to_fix
+  JOIN upd ON upd.id = to_fix.profile_id;
+$$;
+
+
+ALTER FUNCTION public.sync_profile_emails() OWNER TO postgres;
+
+--
+-- Name: FUNCTION sync_profile_emails(); Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON FUNCTION public.sync_profile_emails() IS 'Syncs missing emails from auth.users to profiles table';
+
+
+--
 -- Name: sync_user_verification(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
 CREATE FUNCTION public.sync_user_verification() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$
+DECLARE
+  v_role text;
 BEGIN
+  -- Only sync verification if email was just confirmed
   IF (OLD.email_confirmed_at IS NULL AND NEW.email_confirmed_at IS NOT NULL) THEN
-    UPDATE public.profiles
-    SET is_verified = true,
-        updated_at = now()
+    
+    -- Get the user's role from profiles
+    SELECT role INTO v_role
+    FROM public.profiles
     WHERE id = NEW.id;
+    
+    -- Only set is_verified=true for regular users
+    -- Restaurant/NGO users need admin approval first
+    IF v_role NOT IN ('restaurant', 'ngo') THEN
+      UPDATE public.profiles
+      SET is_verified = true,
+          updated_at = now()
+      WHERE id = NEW.id;
+    END IF;
+    
   END IF;
+  
   RETURN NEW;
 END;
 $$;
 
 
 ALTER FUNCTION public.sync_user_verification() OWNER TO postgres;
+
+--
+-- Name: FUNCTION sync_user_verification(); Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON FUNCTION public.sync_user_verification() IS 'Syncs email verification status from auth.users to profiles. Does NOT verify restaurant/ngo users - they need admin approval.';
+
 
 --
 -- Name: update_cart_items_updated_at(); Type: FUNCTION; Schema: public; Owner: postgres
@@ -1831,6 +2488,30 @@ $$;
 
 
 ALTER FUNCTION public.update_conversation_last_message() OWNER TO postgres;
+
+--
+-- Name: update_order_issue_timestamp(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.update_order_issue_timestamp() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  
+  -- Set resolved_at when status changes to resolved
+  IF NEW.status = 'resolved' AND OLD.status != 'resolved' THEN
+    NEW.resolved_at = NOW();
+    NEW.resolved_by = auth.uid();
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_order_issue_timestamp() OWNER TO postgres;
 
 --
 -- Name: update_profile_default_location(); Type: FUNCTION; Schema: public; Owner: postgres
@@ -1875,6 +2556,50 @@ $$;
 ALTER FUNCTION public.update_profile_default_location() OWNER TO postgres;
 
 --
+-- Name: update_restaurant_rating(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.update_restaurant_rating() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  v_avg_rating numeric;
+  v_rating_count integer;
+BEGIN
+  -- Calculate new average rating and count
+  SELECT 
+    COALESCE(AVG(rating), 0),
+    COUNT(*)
+  INTO 
+    v_avg_rating,
+    v_rating_count
+  FROM restaurant_ratings
+  WHERE restaurant_id = COALESCE(NEW.restaurant_id, OLD.restaurant_id);
+  
+  -- Update restaurant table
+  UPDATE restaurants
+  SET 
+    rating = ROUND(v_avg_rating::numeric, 1),
+    rating_count = v_rating_count,
+    updated_at = NOW()
+  WHERE profile_id = COALESCE(NEW.restaurant_id, OLD.restaurant_id);
+  
+  RETURN COALESCE(NEW, OLD);
+END;
+$$;
+
+
+ALTER FUNCTION public.update_restaurant_rating() OWNER TO postgres;
+
+--
+-- Name: FUNCTION update_restaurant_rating(); Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON FUNCTION public.update_restaurant_rating() IS 'Automatically recalculates restaurant average rating when a rating is added, updated, or deleted';
+
+
+--
 -- Name: update_restaurant_rush_hour_flag(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1916,6 +2641,47 @@ $$;
 
 
 ALTER FUNCTION public.update_updated_at_column() OWNER TO postgres;
+
+--
+-- Name: update_user_tier(uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.update_user_tier(p_user_id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  v_lifetime_points int;
+  v_new_tier text;
+  v_current_tier text;
+BEGIN
+  SELECT lifetime_points, current_tier
+  INTO v_lifetime_points, v_current_tier
+  FROM user_loyalty
+  WHERE user_id = p_user_id;
+  
+  -- Determine tier based on lifetime points
+  IF v_lifetime_points >= 1000 THEN
+    v_new_tier := 'platinum';
+  ELSIF v_lifetime_points >= 500 THEN
+    v_new_tier := 'gold';
+  ELSIF v_lifetime_points >= 200 THEN
+    v_new_tier := 'silver';
+  ELSE
+    v_new_tier := 'bronze';
+  END IF;
+  
+  -- Update tier if changed
+  IF v_new_tier != v_current_tier THEN
+    UPDATE user_loyalty
+    SET current_tier = v_new_tier, updated_at = NOW()
+    WHERE user_id = p_user_id;
+  END IF;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_user_tier(p_user_id uuid) OWNER TO postgres;
 
 --
 -- Name: verify_pickup_code(uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
@@ -1965,11 +2731,12 @@ ALTER TABLE public.backup_profiles_role OWNER TO postgres;
 
 CREATE TABLE public.cart_items (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid,
+    profile_id uuid,
     meal_id uuid,
     quantity integer DEFAULT 1,
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now()
+    updated_at timestamp with time zone DEFAULT now(),
+    user_id uuid NOT NULL
 );
 
 
@@ -1979,14 +2746,14 @@ ALTER TABLE public.cart_items OWNER TO postgres;
 -- Name: TABLE cart_items; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON TABLE public.cart_items IS 'Cart items table - cleaned up invalid price references on 2026-02-05';
+COMMENT ON TABLE public.cart_items IS 'Shopping cart for all user types (users, NGOs). Uses profile_id to support all roles.';
 
 
 --
--- Name: COLUMN cart_items.user_id; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN cart_items.profile_id; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.cart_items.user_id IS 'User who owns this cart item';
+COMMENT ON COLUMN public.cart_items.profile_id IS 'Profile ID of cart owner (works for users, NGOs, and all roles)';
 
 
 --
@@ -2110,11 +2877,26 @@ CREATE TABLE public.restaurants (
     phone text,
     address text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    rating_count integer DEFAULT 0
 );
 
 
 ALTER TABLE public.restaurants OWNER TO postgres;
+
+--
+-- Name: COLUMN restaurants.rating; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.restaurants.rating IS 'Average rating (0-5 stars) calculated from all user ratings';
+
+
+--
+-- Name: COLUMN restaurants.rating_count; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.restaurants.rating_count IS 'Total number of ratings received';
+
 
 --
 -- Name: conversation_details; Type: VIEW; Schema: public; Owner: postgres
@@ -2164,6 +2946,25 @@ CREATE VIEW public.conversation_details AS
 ALTER VIEW public.conversation_details OWNER TO postgres;
 
 --
+-- Name: email_logs; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.email_logs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    email_queue_id uuid,
+    order_id uuid,
+    recipient_email text NOT NULL,
+    email_type text NOT NULL,
+    status text NOT NULL,
+    error_message text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT email_logs_status_check CHECK ((status = ANY (ARRAY['queued'::text, 'sent'::text, 'failed'::text])))
+);
+
+
+ALTER TABLE public.email_logs OWNER TO postgres;
+
+--
 -- Name: email_queue; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2176,11 +2977,10 @@ CREATE TABLE public.email_queue (
     email_data jsonb NOT NULL,
     status text DEFAULT 'pending'::text NOT NULL,
     attempts integer DEFAULT 0 NOT NULL,
-    last_attempt_at timestamp with time zone,
-    sent_at timestamp with time zone,
-    error_message text,
+    last_error text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    sent_at timestamp with time zone,
+    CONSTRAINT email_queue_attempts_check CHECK ((attempts <= 3)),
     CONSTRAINT email_queue_email_type_check CHECK ((email_type = ANY (ARRAY['invoice'::text, 'new_order'::text, 'ngo_pickup'::text, 'ngo_confirmation'::text]))),
     CONSTRAINT email_queue_recipient_type_check CHECK ((recipient_type = ANY (ARRAY['user'::text, 'restaurant'::text, 'ngo'::text]))),
     CONSTRAINT email_queue_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'sent'::text, 'failed'::text])))
@@ -2188,13 +2988,6 @@ CREATE TABLE public.email_queue (
 
 
 ALTER TABLE public.email_queue OWNER TO postgres;
-
---
--- Name: TABLE email_queue; Type: COMMENT; Schema: public; Owner: postgres
---
-
-COMMENT ON TABLE public.email_queue IS 'Queue for order-related emails. Processed by Edge Function.';
-
 
 --
 -- Name: favorite_restaurants; Type: TABLE; Schema: public; Owner: postgres
@@ -2265,6 +3058,34 @@ ALTER TABLE public.free_meal_user_notifications OWNER TO postgres;
 --
 
 COMMENT ON TABLE public.free_meal_user_notifications IS 'Special notifications for free meal donations - separate from category notifications';
+
+
+--
+-- Name: loyalty_transactions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.loyalty_transactions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    points integer NOT NULL,
+    transaction_type text NOT NULL,
+    source text NOT NULL,
+    order_id uuid,
+    reward_id uuid,
+    description text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT loyalty_transactions_source_check CHECK ((source = ANY (ARRAY['order'::text, 'donation'::text, 'referral'::text, 'bonus'::text, 'reward_redemption'::text]))),
+    CONSTRAINT loyalty_transactions_transaction_type_check CHECK ((transaction_type = ANY (ARRAY['earned'::text, 'redeemed'::text, 'expired'::text, 'bonus'::text])))
+);
+
+
+ALTER TABLE public.loyalty_transactions OWNER TO postgres;
+
+--
+-- Name: TABLE loyalty_transactions; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.loyalty_transactions IS 'History of all points earned and redeemed';
 
 
 --
@@ -2430,6 +3251,60 @@ CREATE TABLE public.ngos (
 ALTER TABLE public.ngos OWNER TO postgres;
 
 --
+-- Name: order_issues; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.order_issues (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    order_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    restaurant_id uuid NOT NULL,
+    issue_type text NOT NULL,
+    description text NOT NULL,
+    photo_url text,
+    status text DEFAULT 'pending'::text NOT NULL,
+    resolution_notes text,
+    refund_amount numeric(10,2),
+    resolved_at timestamp with time zone,
+    resolved_by uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT order_issues_issue_type_check CHECK ((issue_type = ANY (ARRAY['food_quality'::text, 'wrong_order'::text, 'missing_items'::text, 'cold_food'::text, 'packaging_issue'::text, 'other'::text]))),
+    CONSTRAINT order_issues_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'under_review'::text, 'resolved'::text, 'rejected'::text])))
+);
+
+
+ALTER TABLE public.order_issues OWNER TO postgres;
+
+--
+-- Name: TABLE order_issues; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.order_issues IS 'User-reported issues with completed orders';
+
+
+--
+-- Name: COLUMN order_issues.issue_type; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.order_issues.issue_type IS 'Type of issue: food_quality, wrong_order, missing_items, cold_food, packaging_issue, other';
+
+
+--
+-- Name: COLUMN order_issues.photo_url; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.order_issues.photo_url IS 'URL to uploaded photo evidence of the issue';
+
+
+--
+-- Name: COLUMN order_issues.status; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.order_issues.status IS 'Issue status: pending, under_review, resolved, rejected';
+
+
+--
 -- Name: order_items; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2439,11 +3314,26 @@ CREATE TABLE public.order_items (
     meal_id uuid,
     meal_title text,
     quantity integer NOT NULL,
-    unit_price numeric(12,2) NOT NULL
+    unit_price numeric(12,2) NOT NULL,
+    subtotal numeric(12,2) GENERATED ALWAYS AS (((quantity)::numeric * unit_price)) STORED
 );
 
 
 ALTER TABLE public.order_items OWNER TO postgres;
+
+--
+-- Name: TABLE order_items; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.order_items IS 'Stores individual items within an order. Each order can have multiple meal items.';
+
+
+--
+-- Name: COLUMN order_items.subtotal; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.order_items.subtotal IS 'Computed as quantity * unit_price. Used in order emails and reporting.';
+
 
 --
 -- Name: order_status_history; Type: TABLE; Schema: public; Owner: postgres
@@ -2632,6 +3522,77 @@ CREATE TABLE public.payments (
 ALTER TABLE public.payments OWNER TO postgres;
 
 --
+-- Name: restaurant_ratings; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.restaurant_ratings (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    order_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    restaurant_id uuid NOT NULL,
+    rating integer NOT NULL,
+    review_text text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT restaurant_ratings_rating_check CHECK (((rating >= 1) AND (rating <= 5)))
+);
+
+
+ALTER TABLE public.restaurant_ratings OWNER TO postgres;
+
+--
+-- Name: TABLE restaurant_ratings; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.restaurant_ratings IS 'Individual restaurant ratings from users after order completion';
+
+
+--
+-- Name: COLUMN restaurant_ratings.rating; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.restaurant_ratings.rating IS 'Rating value from 1 to 5 stars';
+
+
+--
+-- Name: COLUMN restaurant_ratings.review_text; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.restaurant_ratings.review_text IS 'Optional text review from user';
+
+
+--
+-- Name: rewards_catalog; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.rewards_catalog (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    reward_type text NOT NULL,
+    title text NOT NULL,
+    description text NOT NULL,
+    points_cost integer NOT NULL,
+    discount_percentage integer,
+    discount_amount numeric(10,2),
+    min_tier text,
+    is_active boolean DEFAULT true NOT NULL,
+    valid_days integer DEFAULT 30 NOT NULL,
+    icon text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT rewards_catalog_min_tier_check CHECK ((min_tier = ANY (ARRAY['bronze'::text, 'silver'::text, 'gold'::text, 'platinum'::text]))),
+    CONSTRAINT rewards_catalog_reward_type_check CHECK ((reward_type = ANY (ARRAY['discount'::text, 'free_delivery'::text, 'donation'::text, 'priority_support'::text, 'special_offer'::text])))
+);
+
+
+ALTER TABLE public.rewards_catalog OWNER TO postgres;
+
+--
+-- Name: TABLE rewards_catalog; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.rewards_catalog IS 'Available rewards that users can redeem';
+
+
+--
 -- Name: user_addresses; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2651,6 +3612,31 @@ CREATE TABLE public.user_addresses (
 ALTER TABLE public.user_addresses OWNER TO postgres;
 
 --
+-- Name: user_badges; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.user_badges (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    badge_type text NOT NULL,
+    badge_name text NOT NULL,
+    badge_description text NOT NULL,
+    icon text NOT NULL,
+    earned_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT user_badges_badge_type_check CHECK ((badge_type = ANY (ARRAY['food_rescuer'::text, 'ngo_supporter'::text, 'eco_warrior'::text, 'first_order'::text, 'loyal_customer'::text, 'top_donor'::text, 'community_hero'::text, 'early_adopter'::text])))
+);
+
+
+ALTER TABLE public.user_badges OWNER TO postgres;
+
+--
+-- Name: TABLE user_badges; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.user_badges IS 'Badges earned by users for achievements';
+
+
+--
 -- Name: user_category_preferences; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2668,6 +3654,35 @@ CREATE TABLE public.user_category_preferences (
 ALTER TABLE public.user_category_preferences OWNER TO postgres;
 
 --
+-- Name: user_loyalty; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.user_loyalty (
+    user_id uuid NOT NULL,
+    total_points integer DEFAULT 0 NOT NULL,
+    available_points integer DEFAULT 0 NOT NULL,
+    lifetime_points integer DEFAULT 0 NOT NULL,
+    current_tier text DEFAULT 'bronze'::text NOT NULL,
+    total_orders integer DEFAULT 0 NOT NULL,
+    total_donations integer DEFAULT 0 NOT NULL,
+    meals_rescued integer DEFAULT 0 NOT NULL,
+    co2_saved numeric(10,2) DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT user_loyalty_current_tier_check CHECK ((current_tier = ANY (ARRAY['bronze'::text, 'silver'::text, 'gold'::text, 'platinum'::text])))
+);
+
+
+ALTER TABLE public.user_loyalty OWNER TO postgres;
+
+--
+-- Name: TABLE user_loyalty; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.user_loyalty IS 'User loyalty profiles with points and tier information';
+
+
+--
 -- Name: user_notifications_summary; Type: VIEW; Schema: public; Owner: postgres
 --
 
@@ -2682,6 +3697,33 @@ CREATE VIEW public.user_notifications_summary AS
 
 
 ALTER VIEW public.user_notifications_summary OWNER TO postgres;
+
+--
+-- Name: user_rewards; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.user_rewards (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    reward_id uuid NOT NULL,
+    transaction_id uuid,
+    status text DEFAULT 'active'::text NOT NULL,
+    redeemed_at timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    used_at timestamp with time zone,
+    order_id uuid,
+    CONSTRAINT user_rewards_status_check CHECK ((status = ANY (ARRAY['active'::text, 'used'::text, 'expired'::text])))
+);
+
+
+ALTER TABLE public.user_rewards OWNER TO postgres;
+
+--
+-- Name: TABLE user_rewards; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.user_rewards IS 'Rewards redeemed by users';
+
 
 --
 -- Name: orders order_code; Type: DEFAULT; Schema: public; Owner: postgres
@@ -2707,11 +3749,19 @@ ALTER TABLE ONLY public.cart_items
 
 
 --
--- Name: cart_items cart_items_user_id_meal_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: cart_items cart_items_profile_id_meal_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.cart_items
-    ADD CONSTRAINT cart_items_user_id_meal_id_key UNIQUE (user_id, meal_id);
+    ADD CONSTRAINT cart_items_profile_id_meal_id_key UNIQUE (profile_id, meal_id);
+
+
+--
+-- Name: cart_items cart_items_user_meal_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.cart_items
+    ADD CONSTRAINT cart_items_user_meal_unique UNIQUE (user_id, meal_id);
 
 
 --
@@ -2736,6 +3786,14 @@ ALTER TABLE ONLY public.conversations
 
 ALTER TABLE ONLY public.conversations
     ADD CONSTRAINT conversations_unique_pair UNIQUE (ngo_id, restaurant_id);
+
+
+--
+-- Name: email_logs email_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.email_logs
+    ADD CONSTRAINT email_logs_pkey PRIMARY KEY (id);
 
 
 --
@@ -2787,6 +3845,14 @@ ALTER TABLE ONLY public.free_meal_user_notifications
 
 
 --
+-- Name: loyalty_transactions loyalty_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.loyalty_transactions
+    ADD CONSTRAINT loyalty_transactions_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: meal_reports meal_reports_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2816,6 +3882,14 @@ ALTER TABLE ONLY public.messages
 
 ALTER TABLE ONLY public.ngos
     ADD CONSTRAINT ngos_pkey PRIMARY KEY (profile_id);
+
+
+--
+-- Name: order_issues order_issues_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.order_issues
+    ADD CONSTRAINT order_issues_pkey PRIMARY KEY (id);
 
 
 --
@@ -2875,11 +3949,43 @@ ALTER TABLE ONLY public.profiles
 
 
 --
+-- Name: restaurant_ratings restaurant_ratings_order_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.restaurant_ratings
+    ADD CONSTRAINT restaurant_ratings_order_unique UNIQUE (order_id);
+
+
+--
+-- Name: restaurant_ratings restaurant_ratings_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.restaurant_ratings
+    ADD CONSTRAINT restaurant_ratings_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: restaurant_ratings restaurant_ratings_user_restaurant_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.restaurant_ratings
+    ADD CONSTRAINT restaurant_ratings_user_restaurant_unique UNIQUE (user_id, restaurant_id, order_id);
+
+
+--
 -- Name: restaurants restaurants_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.restaurants
     ADD CONSTRAINT restaurants_pkey PRIMARY KEY (profile_id);
+
+
+--
+-- Name: rewards_catalog rewards_catalog_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.rewards_catalog
+    ADD CONSTRAINT rewards_catalog_pkey PRIMARY KEY (id);
 
 
 --
@@ -2899,6 +4005,22 @@ ALTER TABLE ONLY public.user_addresses
 
 
 --
+-- Name: user_badges user_badges_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_badges
+    ADD CONSTRAINT user_badges_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_badges user_badges_user_id_badge_type_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_badges
+    ADD CONSTRAINT user_badges_user_id_badge_type_key UNIQUE (user_id, badge_type);
+
+
+--
 -- Name: user_category_preferences user_category_preferences_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2915,6 +4037,22 @@ ALTER TABLE ONLY public.user_category_preferences
 
 
 --
+-- Name: user_loyalty user_loyalty_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_loyalty
+    ADD CONSTRAINT user_loyalty_pkey PRIMARY KEY (user_id);
+
+
+--
+-- Name: user_rewards user_rewards_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_rewards
+    ADD CONSTRAINT user_rewards_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: idx_cart_items_created_at; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -2926,6 +4064,20 @@ CREATE INDEX idx_cart_items_created_at ON public.cart_items USING btree (created
 --
 
 CREATE INDEX idx_cart_items_meal_id ON public.cart_items USING btree (meal_id);
+
+
+--
+-- Name: idx_cart_items_profile_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_cart_items_profile_id ON public.cart_items USING btree (profile_id);
+
+
+--
+-- Name: idx_cart_items_profile_meal; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_cart_items_profile_meal ON public.cart_items USING btree (profile_id, meal_id);
 
 
 --
@@ -2985,10 +4137,17 @@ CREATE INDEX idx_conversations_restaurant_id ON public.conversations USING btree
 
 
 --
--- Name: idx_email_queue_order_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_email_logs_order; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX idx_email_queue_order_id ON public.email_queue USING btree (order_id);
+CREATE INDEX idx_email_logs_order ON public.email_logs USING btree (order_id, created_at DESC);
+
+
+--
+-- Name: idx_email_queue_order; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_email_queue_order ON public.email_queue USING btree (order_id);
 
 
 --
@@ -3010,6 +4169,13 @@ CREATE INDEX idx_favorite_restaurants_restaurant_id ON public.favorite_restauran
 --
 
 CREATE INDEX idx_favorite_restaurants_user_id ON public.favorite_restaurants USING btree (user_id);
+
+
+--
+-- Name: idx_favorites_user_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_favorites_user_id ON public.favorites USING btree (user_id);
 
 
 --
@@ -3076,6 +4242,20 @@ CREATE INDEX idx_free_meal_user_notifications_user_id ON public.free_meal_user_n
 
 
 --
+-- Name: idx_loyalty_transactions_order; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_loyalty_transactions_order ON public.loyalty_transactions USING btree (order_id);
+
+
+--
+-- Name: idx_loyalty_transactions_user; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_loyalty_transactions_user ON public.loyalty_transactions USING btree (user_id, created_at DESC);
+
+
+--
 -- Name: idx_meal_reports_created_at; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3111,10 +4291,52 @@ CREATE INDEX idx_meal_reports_user_id ON public.meal_reports USING btree (user_i
 
 
 --
+-- Name: idx_meals_active_available; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_meals_active_available ON public.meals USING btree (status, quantity_available, expiry_date) WHERE ((status = 'active'::text) AND (quantity_available > 0));
+
+
+--
+-- Name: INDEX idx_meals_active_available; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON INDEX public.idx_meals_active_available IS 'Partial index for active meals with available quantity. Optimizes home screen meal listing query.';
+
+
+--
+-- Name: idx_meals_category; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_meals_category ON public.meals USING btree (category) WHERE (status = 'active'::text);
+
+
+--
+-- Name: INDEX idx_meals_category; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON INDEX public.idx_meals_category IS 'Index for filtering meals by category. Useful for category-specific meal listings.';
+
+
+--
 -- Name: idx_meals_created_at; Type: INDEX; Schema: public; Owner: postgres
 --
 
 CREATE INDEX idx_meals_created_at ON public.meals USING btree (created_at DESC);
+
+
+--
+-- Name: idx_meals_created_at_desc; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_meals_created_at_desc ON public.meals USING btree (created_at DESC);
+
+
+--
+-- Name: INDEX idx_meals_created_at_desc; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON INDEX public.idx_meals_created_at_desc IS 'Index for ordering meals by creation date (newest first). Used in home screen pagination.';
 
 
 --
@@ -3125,10 +4347,38 @@ CREATE INDEX idx_meals_expiry_date ON public.meals USING btree (expiry_date);
 
 
 --
+-- Name: idx_meals_expiry_range; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_meals_expiry_range ON public.meals USING btree (expiry_date) WHERE ((status = 'active'::text) AND (quantity_available > 0));
+
+
+--
+-- Name: INDEX idx_meals_expiry_range; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON INDEX public.idx_meals_expiry_range IS 'Index for finding meals by expiry date range. Useful for "expiring soon" features.';
+
+
+--
 -- Name: idx_meals_restaurant_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
 CREATE INDEX idx_meals_restaurant_id ON public.meals USING btree (restaurant_id);
+
+
+--
+-- Name: idx_meals_restaurant_lookup; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_meals_restaurant_lookup ON public.meals USING btree (restaurant_id, status) WHERE (status = 'active'::text);
+
+
+--
+-- Name: INDEX idx_meals_restaurant_lookup; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON INDEX public.idx_meals_restaurant_lookup IS 'Composite index for restaurant joins. Optimizes queries that filter by restaurant and status.';
 
 
 --
@@ -3167,6 +4417,34 @@ CREATE INDEX idx_messages_sender_id ON public.messages USING btree (sender_id);
 
 
 --
+-- Name: idx_order_issues_order; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_order_issues_order ON public.order_issues USING btree (order_id);
+
+
+--
+-- Name: idx_order_issues_restaurant; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_order_issues_restaurant ON public.order_issues USING btree (restaurant_id, status, created_at DESC);
+
+
+--
+-- Name: idx_order_issues_status; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_order_issues_status ON public.order_issues USING btree (status, created_at DESC);
+
+
+--
+-- Name: idx_order_issues_user; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_order_issues_user ON public.order_issues USING btree (user_id, created_at DESC);
+
+
+--
 -- Name: idx_order_items_meal_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3195,6 +4473,13 @@ CREATE INDEX idx_orders_created_at ON public.orders USING btree (created_at DESC
 
 
 --
+-- Name: idx_orders_ngo_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_orders_ngo_id ON public.orders USING btree (ngo_id);
+
+
+--
 -- Name: idx_orders_order_number; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3220,6 +4505,13 @@ CREATE INDEX idx_orders_restaurant_id ON public.orders USING btree (restaurant_i
 --
 
 CREATE INDEX idx_orders_restaurant_status ON public.orders USING btree (restaurant_id, status, created_at DESC);
+
+
+--
+-- Name: idx_orders_status; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_orders_status ON public.orders USING btree (status);
 
 
 --
@@ -3265,10 +4557,45 @@ CREATE INDEX idx_profiles_email ON public.profiles USING btree (email);
 
 
 --
+-- Name: idx_profiles_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_profiles_id ON public.profiles USING btree (id);
+
+
+--
 -- Name: idx_profiles_role; Type: INDEX; Schema: public; Owner: postgres
 --
 
 CREATE INDEX idx_profiles_role ON public.profiles USING btree (role);
+
+
+--
+-- Name: idx_restaurant_ratings_order; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_restaurant_ratings_order ON public.restaurant_ratings USING btree (order_id);
+
+
+--
+-- Name: idx_restaurant_ratings_restaurant; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_restaurant_ratings_restaurant ON public.restaurant_ratings USING btree (restaurant_id);
+
+
+--
+-- Name: idx_restaurant_ratings_user; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_restaurant_ratings_user ON public.restaurant_ratings USING btree (user_id);
+
+
+--
+-- Name: idx_rewards_catalog_active; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_rewards_catalog_active ON public.rewards_catalog USING btree (is_active, points_cost);
 
 
 --
@@ -3300,6 +4627,13 @@ CREATE INDEX idx_rush_hours_restaurant_id ON public.rush_hours USING btree (rest
 
 
 --
+-- Name: idx_user_badges_user; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_user_badges_user ON public.user_badges USING btree (user_id, earned_at DESC);
+
+
+--
 -- Name: idx_user_category_preferences_category; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -3318,6 +4652,34 @@ CREATE INDEX idx_user_category_preferences_notifications_enabled ON public.user_
 --
 
 CREATE INDEX idx_user_category_preferences_user_id ON public.user_category_preferences USING btree (user_id);
+
+
+--
+-- Name: idx_user_loyalty_points; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_user_loyalty_points ON public.user_loyalty USING btree (available_points DESC);
+
+
+--
+-- Name: idx_user_loyalty_tier; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_user_loyalty_tier ON public.user_loyalty USING btree (current_tier);
+
+
+--
+-- Name: idx_user_rewards_status; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_user_rewards_status ON public.user_rewards USING btree (status, expires_at);
+
+
+--
+-- Name: idx_user_rewards_user; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_user_rewards_user ON public.user_rewards USING btree (user_id, status, expires_at);
 
 
 --
@@ -3398,10 +4760,24 @@ CREATE TRIGGER trigger_auto_generate_order_codes BEFORE INSERT ON public.orders 
 
 
 --
+-- Name: orders trigger_award_order_points; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER trigger_award_order_points AFTER UPDATE ON public.orders FOR EACH ROW EXECUTE FUNCTION public.award_order_points();
+
+
+--
 -- Name: user_addresses trigger_handle_address_deletion; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
 CREATE TRIGGER trigger_handle_address_deletion BEFORE DELETE ON public.user_addresses FOR EACH ROW EXECUTE FUNCTION public.handle_address_deletion();
+
+
+--
+-- Name: profiles trigger_initialize_loyalty; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER trigger_initialize_loyalty AFTER INSERT ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.initialize_user_loyalty();
 
 
 --
@@ -3412,6 +4788,13 @@ CREATE TRIGGER trigger_log_order_status_change BEFORE UPDATE ON public.orders FO
 
 
 --
+-- Name: order_issues trigger_notify_restaurant_issue; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER trigger_notify_restaurant_issue AFTER INSERT ON public.order_issues FOR EACH ROW EXECUTE FUNCTION public.notify_restaurant_of_issue();
+
+
+--
 -- Name: orders trigger_queue_order_emails; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -3419,10 +4802,38 @@ CREATE TRIGGER trigger_queue_order_emails AFTER INSERT ON public.orders FOR EACH
 
 
 --
+-- Name: order_issues trigger_update_issue_timestamp; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER trigger_update_issue_timestamp BEFORE UPDATE ON public.order_issues FOR EACH ROW EXECUTE FUNCTION public.update_order_issue_timestamp();
+
+
+--
 -- Name: user_addresses trigger_update_profile_default_location; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
 CREATE TRIGGER trigger_update_profile_default_location AFTER INSERT OR UPDATE OF is_default, address_text ON public.user_addresses FOR EACH ROW EXECUTE FUNCTION public.update_profile_default_location();
+
+
+--
+-- Name: restaurant_ratings trigger_update_restaurant_rating_delete; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER trigger_update_restaurant_rating_delete AFTER DELETE ON public.restaurant_ratings FOR EACH ROW EXECUTE FUNCTION public.update_restaurant_rating();
+
+
+--
+-- Name: restaurant_ratings trigger_update_restaurant_rating_insert; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER trigger_update_restaurant_rating_insert AFTER INSERT ON public.restaurant_ratings FOR EACH ROW EXECUTE FUNCTION public.update_restaurant_rating();
+
+
+--
+-- Name: restaurant_ratings trigger_update_restaurant_rating_update; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER trigger_update_restaurant_rating_update AFTER UPDATE ON public.restaurant_ratings FOR EACH ROW EXECUTE FUNCTION public.update_restaurant_rating();
 
 
 --
@@ -3438,7 +4849,15 @@ ALTER TABLE ONLY public.cart_items
 --
 
 ALTER TABLE ONLY public.cart_items
-    ADD CONSTRAINT cart_items_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+    ADD CONSTRAINT cart_items_user_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: cart_items cart_items_user_id_fkey1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.cart_items
+    ADD CONSTRAINT cart_items_user_id_fkey1 FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
 
 
 --
@@ -3474,6 +4893,22 @@ ALTER TABLE ONLY public.conversations
 
 
 --
+-- Name: email_logs email_logs_email_queue_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.email_logs
+    ADD CONSTRAINT email_logs_email_queue_id_fkey FOREIGN KEY (email_queue_id) REFERENCES public.email_queue(id) ON DELETE SET NULL;
+
+
+--
+-- Name: email_logs email_logs_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.email_logs
+    ADD CONSTRAINT email_logs_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
+
+
+--
 -- Name: email_queue email_queue_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3490,11 +4925,33 @@ ALTER TABLE ONLY public.favorite_restaurants
 
 
 --
+-- Name: CONSTRAINT favorite_restaurants_restaurant_id_fkey ON favorite_restaurants; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON CONSTRAINT favorite_restaurants_restaurant_id_fkey ON public.favorite_restaurants IS 'When a restaurant is deleted, automatically remove it from all favorites';
+
+
+--
 -- Name: favorite_restaurants favorite_restaurants_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.favorite_restaurants
     ADD CONSTRAINT favorite_restaurants_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: favorites favorites_meal_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.favorites
+    ADD CONSTRAINT favorites_meal_id_fkey FOREIGN KEY (meal_id) REFERENCES public.meals(id) ON DELETE CASCADE;
+
+
+--
+-- Name: CONSTRAINT favorites_meal_id_fkey ON favorites; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON CONSTRAINT favorites_meal_id_fkey ON public.favorites IS 'When a meal is deleted, automatically remove it from all favorites';
 
 
 --
@@ -3562,6 +5019,22 @@ ALTER TABLE ONLY public.free_meal_user_notifications
 
 
 --
+-- Name: loyalty_transactions loyalty_transactions_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.loyalty_transactions
+    ADD CONSTRAINT loyalty_transactions_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE SET NULL;
+
+
+--
+-- Name: loyalty_transactions loyalty_transactions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.loyalty_transactions
+    ADD CONSTRAINT loyalty_transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
 -- Name: meal_reports meal_reports_meal_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3618,18 +5091,50 @@ ALTER TABLE ONLY public.ngos
 
 
 --
+-- Name: order_issues order_issues_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.order_issues
+    ADD CONSTRAINT order_issues_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
+
+
+--
+-- Name: order_issues order_issues_resolved_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.order_issues
+    ADD CONSTRAINT order_issues_resolved_by_fkey FOREIGN KEY (resolved_by) REFERENCES public.profiles(id);
+
+
+--
+-- Name: order_issues order_issues_restaurant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.order_issues
+    ADD CONSTRAINT order_issues_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES public.restaurants(profile_id) ON DELETE CASCADE;
+
+
+--
+-- Name: order_issues order_issues_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.order_issues
+    ADD CONSTRAINT order_issues_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
 -- Name: order_items order_items_meal_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.order_items
-    ADD CONSTRAINT order_items_meal_id_fkey FOREIGN KEY (meal_id) REFERENCES public.meals(id) ON DELETE SET NULL;
+    ADD CONSTRAINT order_items_meal_id_fkey FOREIGN KEY (meal_id) REFERENCES public.meals(id) ON DELETE RESTRICT;
 
 
 --
 -- Name: CONSTRAINT order_items_meal_id_fkey ON order_items; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON CONSTRAINT order_items_meal_id_fkey ON public.order_items IS 'Foreign key to meals table for order item details';
+COMMENT ON CONSTRAINT order_items_meal_id_fkey ON public.order_items IS 'Prevents deleting meals that are in orders. Protects order history and email generation.';
 
 
 --
@@ -3638,6 +5143,13 @@ COMMENT ON CONSTRAINT order_items_meal_id_fkey ON public.order_items IS 'Foreign
 
 ALTER TABLE ONLY public.order_items
     ADD CONSTRAINT order_items_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
+
+
+--
+-- Name: CONSTRAINT order_items_order_id_fkey ON order_items; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON CONSTRAINT order_items_order_id_fkey ON public.order_items IS 'When an order is deleted, automatically delete all its items';
 
 
 --
@@ -3697,6 +5209,30 @@ ALTER TABLE ONLY public.profiles
 
 
 --
+-- Name: restaurant_ratings restaurant_ratings_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.restaurant_ratings
+    ADD CONSTRAINT restaurant_ratings_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
+
+
+--
+-- Name: restaurant_ratings restaurant_ratings_restaurant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.restaurant_ratings
+    ADD CONSTRAINT restaurant_ratings_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES public.restaurants(profile_id) ON DELETE CASCADE;
+
+
+--
+-- Name: restaurant_ratings restaurant_ratings_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.restaurant_ratings
+    ADD CONSTRAINT restaurant_ratings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
 -- Name: restaurants restaurants_profile_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3721,6 +5257,14 @@ ALTER TABLE ONLY public.user_addresses
 
 
 --
+-- Name: user_badges user_badges_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_badges
+    ADD CONSTRAINT user_badges_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
 -- Name: user_category_preferences user_category_preferences_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3729,10 +5273,98 @@ ALTER TABLE ONLY public.user_category_preferences
 
 
 --
--- Name: order_status_history Allow status history inserts; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user_loyalty user_loyalty_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Allow status history inserts" ON public.order_status_history FOR INSERT TO authenticated WITH CHECK (true);
+ALTER TABLE ONLY public.user_loyalty
+    ADD CONSTRAINT user_loyalty_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_rewards user_rewards_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_rewards
+    ADD CONSTRAINT user_rewards_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE SET NULL;
+
+
+--
+-- Name: user_rewards user_rewards_reward_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_rewards
+    ADD CONSTRAINT user_rewards_reward_id_fkey FOREIGN KEY (reward_id) REFERENCES public.rewards_catalog(id) ON DELETE CASCADE;
+
+
+--
+-- Name: user_rewards user_rewards_transaction_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_rewards
+    ADD CONSTRAINT user_rewards_transaction_id_fkey FOREIGN KEY (transaction_id) REFERENCES public.loyalty_transactions(id) ON DELETE SET NULL;
+
+
+--
+-- Name: user_rewards user_rewards_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_rewards
+    ADD CONSTRAINT user_rewards_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: order_issues Admins can manage all issues; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Admins can manage all issues" ON public.order_issues TO service_role USING (true) WITH CHECK (true);
+
+
+--
+-- Name: order_items Admins can view all order items; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Admins can view all order items" ON public.order_items FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.profiles
+  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::text)))));
+
+
+--
+-- Name: POLICY "Admins can view all order items" ON order_items; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON POLICY "Admins can view all order items" ON public.order_items IS 'Allows admin users to view all order items for management purposes';
+
+
+--
+-- Name: order_status_history Admins can view all order status history; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Admins can view all order status history" ON public.order_status_history FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.profiles
+  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::text)))));
+
+
+--
+-- Name: POLICY "Admins can view all order status history" ON order_status_history; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON POLICY "Admins can view all order status history" ON public.order_status_history IS 'Allows admin users to view all order status history for management purposes';
+
+
+--
+-- Name: orders Admins can view all orders; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Admins can view all orders" ON public.orders FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.profiles
+  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::text)))));
+
+
+--
+-- Name: POLICY "Admins can view all orders" ON orders; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON POLICY "Admins can view all orders" ON public.orders IS 'Allows admin users to view all orders in the system for management purposes';
 
 
 --
@@ -3743,31 +5375,45 @@ CREATE POLICY "Anonymous can view active meals" ON public.meals FOR SELECT TO an
 
 
 --
--- Name: ngos NGO owners can insert own details; Type: POLICY; Schema: public; Owner: postgres
+-- Name: rewards_catalog Anyone can view active rewards; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "NGO owners can insert own details" ON public.ngos FOR INSERT WITH CHECK ((auth.uid() = profile_id));
-
-
---
--- Name: ngos NGO owners can update own details; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "NGO owners can update own details" ON public.ngos FOR UPDATE USING ((auth.uid() = profile_id));
+CREATE POLICY "Anyone can view active rewards" ON public.rewards_catalog FOR SELECT TO authenticated USING ((is_active = true));
 
 
 --
--- Name: ngos NGO owners can update own record; Type: POLICY; Schema: public; Owner: postgres
+-- Name: restaurant_ratings Anyone can view restaurant ratings; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "NGO owners can update own record" ON public.ngos FOR UPDATE TO authenticated USING (((auth.uid() = profile_id) OR public.is_admin())) WITH CHECK (((auth.uid() = profile_id) OR public.is_admin()));
+CREATE POLICY "Anyone can view restaurant ratings" ON public.restaurant_ratings FOR SELECT USING (true);
 
 
 --
--- Name: ngos NGO owners can view own record; Type: POLICY; Schema: public; Owner: postgres
+-- Name: cart_items Authenticated users can delete own cart items; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "NGO owners can view own record" ON public.ngos FOR SELECT TO authenticated USING (((auth.uid() = profile_id) OR public.is_admin()));
+CREATE POLICY "Authenticated users can delete own cart items" ON public.cart_items FOR DELETE TO authenticated USING ((auth.uid() = profile_id));
+
+
+--
+-- Name: cart_items Authenticated users can insert own cart items; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Authenticated users can insert own cart items" ON public.cart_items FOR INSERT TO authenticated WITH CHECK ((auth.uid() = profile_id));
+
+
+--
+-- Name: cart_items Authenticated users can update own cart items; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Authenticated users can update own cart items" ON public.cart_items FOR UPDATE TO authenticated USING ((auth.uid() = profile_id)) WITH CHECK ((auth.uid() = profile_id));
+
+
+--
+-- Name: cart_items Authenticated users can view own cart items; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Authenticated users can view own cart items" ON public.cart_items FOR SELECT TO authenticated USING ((auth.uid() = profile_id));
 
 
 --
@@ -3778,13 +5424,6 @@ CREATE POLICY "NGOs can create conversations" ON public.conversations FOR INSERT
 
 
 --
--- Name: ngos NGOs can update their own profile; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "NGOs can update their own profile" ON public.ngos FOR UPDATE TO authenticated USING ((profile_id = auth.uid())) WITH CHECK ((profile_id = auth.uid()));
-
-
---
 -- Name: orders NGOs can view their orders; Type: POLICY; Schema: public; Owner: postgres
 --
 
@@ -3792,54 +5431,10 @@ CREATE POLICY "NGOs can view their orders" ON public.orders FOR SELECT TO authen
 
 
 --
--- Name: ngos NGOs can view their own profile; Type: POLICY; Schema: public; Owner: postgres
+-- Name: POLICY "NGOs can view their orders" ON orders; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "NGOs can view their own profile" ON public.ngos FOR SELECT TO authenticated USING ((profile_id = auth.uid()));
-
-
---
--- Name: ngos NGOs: public browse approved; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "NGOs: public browse approved" ON public.ngos FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM public.profiles p
-  WHERE ((p.id = ngos.profile_id) AND (p.approval_status = 'approved'::text)))));
-
-
---
--- Name: ngos NGOs: select own; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "NGOs: select own" ON public.ngos FOR SELECT USING ((auth.uid() = profile_id));
-
-
---
--- Name: ngos NGOs: update own; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "NGOs: update own" ON public.ngos FOR UPDATE USING ((auth.uid() = profile_id)) WITH CHECK ((auth.uid() = profile_id));
-
-
---
--- Name: profiles Profiles: select own; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Profiles: select own" ON public.profiles FOR SELECT USING ((auth.uid() = id));
-
-
---
--- Name: profiles Profiles: update own; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Profiles: update own" ON public.profiles FOR UPDATE USING ((auth.uid() = id)) WITH CHECK ((auth.uid() = id));
-
-
---
--- Name: ngos Public can view NGOs; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Public can view NGOs" ON public.ngos FOR SELECT TO authenticated, anon USING (true);
+COMMENT ON POLICY "NGOs can view their orders" ON public.orders IS 'Allows NGOs to view orders assigned to them';
 
 
 --
@@ -3850,42 +5445,10 @@ CREATE POLICY "Public can view active rush hours" ON public.rush_hours FOR SELEC
 
 
 --
--- Name: ngos Public can view approved ngos; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Public can view approved ngos" ON public.ngos FOR SELECT TO authenticated, anon USING ((EXISTS ( SELECT 1
-   FROM public.profiles p
-  WHERE ((p.id = ngos.profile_id) AND (p.approval_status = 'approved'::text)))));
-
-
---
--- Name: profiles Public can view approved profiles; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Public can view approved profiles" ON public.profiles FOR SELECT TO authenticated, anon USING ((approval_status = 'approved'::text));
-
-
---
--- Name: restaurants Public can view approved restaurants; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Public can view approved restaurants" ON public.restaurants FOR SELECT TO authenticated, anon USING ((EXISTS ( SELECT 1
-   FROM public.profiles p
-  WHERE ((p.id = restaurants.profile_id) AND (p.approval_status = 'approved'::text)))));
-
-
---
 -- Name: meals Public can view available meals; Type: POLICY; Schema: public; Owner: postgres
 --
 
 CREATE POLICY "Public can view available meals" ON public.meals FOR SELECT TO authenticated, anon USING (((quantity_available > 0) AND (expiry_date > now())));
-
-
---
--- Name: ngos Public can view ngos; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Public can view ngos" ON public.ngos FOR SELECT USING (true);
 
 
 --
@@ -3959,15 +5522,6 @@ CREATE POLICY "Restaurants can delete their own rush hours" ON public.rush_hours
 
 
 --
--- Name: order_status_history Restaurants can insert status history for their orders; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Restaurants can insert status history for their orders" ON public.order_status_history FOR INSERT TO authenticated WITH CHECK ((EXISTS ( SELECT 1
-   FROM public.orders
-  WHERE ((orders.id = order_status_history.order_id) AND (orders.restaurant_id = auth.uid())))));
-
-
---
 -- Name: free_meal_notifications Restaurants can insert their own donations; Type: POLICY; Schema: public; Owner: postgres
 --
 
@@ -3986,6 +5540,13 @@ CREATE POLICY "Restaurants can insert their own meals" ON public.meals FOR INSER
 --
 
 CREATE POLICY "Restaurants can insert their own rush hours" ON public.rush_hours FOR INSERT TO authenticated WITH CHECK ((restaurant_id = auth.uid()));
+
+
+--
+-- Name: order_issues Restaurants can update their issues; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Restaurants can update their issues" ON public.order_issues FOR UPDATE TO authenticated USING ((restaurant_id = auth.uid())) WITH CHECK ((restaurant_id = auth.uid()));
 
 
 --
@@ -4017,31 +5578,6 @@ CREATE POLICY "Restaurants can update their own rush hours" ON public.rush_hours
 
 
 --
--- Name: order_items Restaurants can view assigned order items; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Restaurants can view assigned order items" ON public.order_items FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM public.orders
-  WHERE ((orders.id = order_items.order_id) AND (orders.restaurant_id = auth.uid())))));
-
-
---
--- Name: orders Restaurants can view assigned orders; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Restaurants can view assigned orders" ON public.orders FOR SELECT USING ((auth.uid() = restaurant_id));
-
-
---
--- Name: order_items Restaurants can view order items; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Restaurants can view order items" ON public.order_items FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.orders
-  WHERE ((orders.id = order_items.order_id) AND (orders.restaurant_id = auth.uid())))));
-
-
---
 -- Name: meal_reports Restaurants can view reports about their meals; Type: POLICY; Schema: public; Owner: postgres
 --
 
@@ -4049,12 +5585,10 @@ CREATE POLICY "Restaurants can view reports about their meals" ON public.meal_re
 
 
 --
--- Name: order_status_history Restaurants can view their order history; Type: POLICY; Schema: public; Owner: postgres
+-- Name: order_issues Restaurants can view their issues; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Restaurants can view their order history" ON public.order_status_history FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.orders
-  WHERE ((orders.id = order_status_history.order_id) AND (orders.restaurant_id = auth.uid())))));
+CREATE POLICY "Restaurants can view their issues" ON public.order_issues FOR SELECT TO authenticated USING ((restaurant_id = auth.uid()));
 
 
 --
@@ -4062,6 +5596,13 @@ CREATE POLICY "Restaurants can view their order history" ON public.order_status_
 --
 
 CREATE POLICY "Restaurants can view their orders" ON public.orders FOR SELECT TO authenticated USING ((restaurant_id = auth.uid()));
+
+
+--
+-- Name: POLICY "Restaurants can view their orders" ON orders; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON POLICY "Restaurants can view their orders" ON public.orders IS 'Allows restaurants to view orders assigned to them';
 
 
 --
@@ -4123,13 +5664,6 @@ CREATE POLICY "Service role can insert ngos" ON public.ngos FOR INSERT TO servic
 
 
 --
--- Name: profiles Service role can insert profiles; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Service role can insert profiles" ON public.profiles FOR INSERT TO service_role WITH CHECK (true);
-
-
---
 -- Name: restaurants Service role can insert restaurants; Type: POLICY; Schema: public; Owner: postgres
 --
 
@@ -4137,10 +5671,17 @@ CREATE POLICY "Service role can insert restaurants" ON public.restaurants FOR IN
 
 
 --
--- Name: email_queue Service role can manage email queue; Type: POLICY; Schema: public; Owner: postgres
+-- Name: email_logs Service role full access; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Service role can manage email queue" ON public.email_queue TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "Service role full access" ON public.email_logs TO service_role USING (true) WITH CHECK (true);
+
+
+--
+-- Name: email_queue Service role full access; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Service role full access" ON public.email_queue TO service_role USING (true) WITH CHECK (true);
 
 
 --
@@ -4158,6 +5699,41 @@ CREATE POLICY "System can insert restaurants" ON public.restaurants FOR INSERT W
 
 
 --
+-- Name: user_badges System can manage badges; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "System can manage badges" ON public.user_badges TO service_role USING (true) WITH CHECK (true);
+
+
+--
+-- Name: user_loyalty System can manage loyalty profiles; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "System can manage loyalty profiles" ON public.user_loyalty TO service_role USING (true) WITH CHECK (true);
+
+
+--
+-- Name: rewards_catalog System can manage rewards catalog; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "System can manage rewards catalog" ON public.rewards_catalog TO service_role USING (true) WITH CHECK (true);
+
+
+--
+-- Name: loyalty_transactions System can manage transactions; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "System can manage transactions" ON public.loyalty_transactions TO service_role USING (true) WITH CHECK (true);
+
+
+--
+-- Name: user_rewards System can manage user rewards; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "System can manage user rewards" ON public.user_rewards TO service_role USING (true) WITH CHECK (true);
+
+
+--
 -- Name: free_meal_notifications Users can claim free meals; Type: POLICY; Schema: public; Owner: postgres
 --
 
@@ -4165,10 +5741,26 @@ CREATE POLICY "Users can claim free meals" ON public.free_meal_notifications FOR
 
 
 --
+-- Name: order_issues Users can create issues for own orders; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Users can create issues for own orders" ON public.order_issues FOR INSERT TO authenticated WITH CHECK (((auth.uid() = user_id) AND (EXISTS ( SELECT 1
+   FROM public.orders o
+  WHERE ((o.id = order_issues.order_id) AND (o.user_id = auth.uid()) AND (o.status = ANY (ARRAY['completed'::public.order_status, 'delivered'::public.order_status])))))));
+
+
+--
 -- Name: orders Users can create orders; Type: POLICY; Schema: public; Owner: postgres
 --
 
 CREATE POLICY "Users can create orders" ON public.orders FOR INSERT WITH CHECK ((auth.uid() = user_id));
+
+
+--
+-- Name: favorites Users can delete favorites; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Users can delete favorites" ON public.favorites FOR DELETE USING ((auth.uid() = user_id));
 
 
 --
@@ -4207,6 +5799,20 @@ CREATE POLICY "Users can delete their own category preferences" ON public.user_c
 
 
 --
+-- Name: restaurant_ratings Users can delete their own ratings; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Users can delete their own ratings" ON public.restaurant_ratings FOR DELETE USING ((auth.uid() = user_id));
+
+
+--
+-- Name: favorites Users can insert favorites; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Users can insert favorites" ON public.favorites FOR INSERT WITH CHECK ((auth.uid() = user_id));
+
+
+--
 -- Name: user_addresses Users can insert own addresses; Type: POLICY; Schema: public; Owner: postgres
 --
 
@@ -4218,22 +5824,6 @@ CREATE POLICY "Users can insert own addresses" ON public.user_addresses FOR INSE
 --
 
 CREATE POLICY "Users can insert own favorite restaurants" ON public.favorite_restaurants FOR INSERT WITH CHECK ((auth.uid() = user_id));
-
-
---
--- Name: profiles Users can insert own profile; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Users can insert own profile" ON public.profiles FOR INSERT WITH CHECK ((auth.uid() = id));
-
-
---
--- Name: order_items Users can insert their order items; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Users can insert their order items" ON public.order_items FOR INSERT TO authenticated WITH CHECK ((EXISTS ( SELECT 1
-   FROM public.orders
-  WHERE ((orders.id = order_items.order_id) AND (orders.user_id = auth.uid())))));
 
 
 --
@@ -4272,17 +5862,19 @@ CREATE POLICY "Users can insert their own reports" ON public.meal_reports FOR IN
 
 
 --
--- Name: favorites Users can manage favorites; Type: POLICY; Schema: public; Owner: postgres
+-- Name: restaurant_ratings Users can rate their completed orders; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Users can manage favorites" ON public.favorites USING ((auth.uid() = user_id));
+CREATE POLICY "Users can rate their completed orders" ON public.restaurant_ratings FOR INSERT WITH CHECK (((auth.uid() = user_id) AND (EXISTS ( SELECT 1
+   FROM public.orders
+  WHERE ((orders.id = restaurant_ratings.order_id) AND (orders.user_id = auth.uid()) AND (orders.status = ANY (ARRAY['delivered'::public.order_status, 'completed'::public.order_status])))))));
 
 
 --
--- Name: cart_items Users can manage own cart; Type: POLICY; Schema: public; Owner: postgres
+-- Name: favorites Users can read favorites; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Users can manage own cart" ON public.cart_items USING ((auth.uid() = user_id));
+CREATE POLICY "Users can read favorites" ON public.favorites FOR SELECT USING ((auth.uid() = user_id));
 
 
 --
@@ -4295,26 +5887,17 @@ CREATE POLICY "Users can send messages in their conversations" ON public.message
 
 
 --
+-- Name: favorites Users can update favorites; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Users can update favorites" ON public.favorites FOR UPDATE USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
+
+
+--
 -- Name: user_addresses Users can update own addresses; Type: POLICY; Schema: public; Owner: postgres
 --
 
 CREATE POLICY "Users can update own addresses" ON public.user_addresses FOR UPDATE USING ((auth.uid() = user_id));
-
-
---
--- Name: ngos Users can update own ngo; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Users can update own ngo" ON public.ngos FOR UPDATE USING ((auth.uid() = profile_id));
-
-
---
--- Name: profiles Users can update own profile; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE TO authenticated USING (((auth.uid() = id) OR public.is_admin())) WITH CHECK ((public.is_admin() OR ((auth.uid() = id) AND (approval_status = ( SELECT p.approval_status
-   FROM public.profiles p
-  WHERE (p.id = auth.uid()))))));
 
 
 --
@@ -4378,10 +5961,10 @@ CREATE POLICY "Users can update their own orders" ON public.orders FOR UPDATE TO
 
 
 --
--- Name: profiles Users can update their own profile; Type: POLICY; Schema: public; Owner: postgres
+-- Name: restaurant_ratings Users can update their own ratings; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Users can update their own profile" ON public.profiles FOR UPDATE TO authenticated USING ((id = auth.uid())) WITH CHECK ((id = auth.uid()));
+CREATE POLICY "Users can update their own ratings" ON public.restaurant_ratings FOR UPDATE USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
 
 
 --
@@ -4415,6 +5998,13 @@ CREATE POLICY "Users can view own addresses" ON public.user_addresses FOR SELECT
 
 
 --
+-- Name: user_badges Users can view own badges; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Users can view own badges" ON public.user_badges FOR SELECT TO authenticated USING ((auth.uid() = user_id));
+
+
+--
 -- Name: favorite_restaurants Users can view own favorite restaurants; Type: POLICY; Schema: public; Owner: postgres
 --
 
@@ -4422,26 +6012,17 @@ CREATE POLICY "Users can view own favorite restaurants" ON public.favorite_resta
 
 
 --
--- Name: ngos Users can view own ngo; Type: POLICY; Schema: public; Owner: postgres
+-- Name: order_issues Users can view own issues; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Users can view own ngo" ON public.ngos FOR SELECT USING ((auth.uid() = profile_id));
-
-
---
--- Name: order_items Users can view own order items; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Users can view own order items" ON public.order_items FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM public.orders
-  WHERE ((orders.id = order_items.order_id) AND (orders.user_id = auth.uid())))));
+CREATE POLICY "Users can view own issues" ON public.order_issues FOR SELECT TO authenticated USING ((auth.uid() = user_id));
 
 
 --
--- Name: orders Users can view own orders; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user_loyalty Users can view own loyalty profile; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Users can view own orders" ON public.orders FOR SELECT USING ((auth.uid() = user_id));
+CREATE POLICY "Users can view own loyalty profile" ON public.user_loyalty FOR SELECT TO authenticated USING ((auth.uid() = user_id));
 
 
 --
@@ -4454,13 +6035,6 @@ CREATE POLICY "Users can view own payments" ON public.payments FOR SELECT USING 
 
 
 --
--- Name: profiles Users can view own profile; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT TO authenticated USING (((auth.uid() = id) OR public.is_admin()));
-
-
---
 -- Name: restaurants Users can view own restaurant; Type: POLICY; Schema: public; Owner: postgres
 --
 
@@ -4468,21 +6042,31 @@ CREATE POLICY "Users can view own restaurant" ON public.restaurants FOR SELECT U
 
 
 --
--- Name: order_status_history Users can view their order history; Type: POLICY; Schema: public; Owner: postgres
+-- Name: user_rewards Users can view own rewards; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Users can view their order history" ON public.order_status_history FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.orders
-  WHERE ((orders.id = order_status_history.order_id) AND (orders.user_id = auth.uid())))));
+CREATE POLICY "Users can view own rewards" ON public.user_rewards FOR SELECT TO authenticated USING ((auth.uid() = user_id));
 
 
 --
--- Name: order_items Users can view their order items; Type: POLICY; Schema: public; Owner: postgres
+-- Name: loyalty_transactions Users can view own transactions; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Users can view their order items" ON public.order_items FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.orders
-  WHERE ((orders.id = order_items.order_id) AND (orders.user_id = auth.uid())))));
+CREATE POLICY "Users can view own transactions" ON public.loyalty_transactions FOR SELECT TO authenticated USING ((auth.uid() = user_id));
+
+
+--
+-- Name: orders Users can view their orders; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Users can view their orders" ON public.orders FOR SELECT TO authenticated USING ((user_id = auth.uid()));
+
+
+--
+-- Name: POLICY "Users can view their orders" ON orders; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON POLICY "Users can view their orders" ON public.orders IS 'Allows users to view their own orders';
 
 
 --
@@ -4528,24 +6112,19 @@ CREATE POLICY "Users can view their own notifications" ON public.category_notifi
 
 
 --
--- Name: orders Users can view their own orders; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Users can view their own orders" ON public.orders FOR SELECT TO authenticated USING ((user_id = auth.uid()));
-
-
---
--- Name: profiles Users can view their own profile; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Users can view their own profile" ON public.profiles FOR SELECT TO authenticated USING ((id = auth.uid()));
-
-
---
 -- Name: meal_reports Users can view their own reports; Type: POLICY; Schema: public; Owner: postgres
 --
 
 CREATE POLICY "Users can view their own reports" ON public.meal_reports FOR SELECT TO authenticated USING ((user_id = auth.uid()));
+
+
+--
+-- Name: email_logs Users view own logs; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Users view own logs" ON public.email_logs FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
+   FROM public.orders o
+  WHERE ((o.id = email_logs.order_id) AND (o.user_id = auth.uid())))));
 
 
 --
@@ -4565,6 +6144,12 @@ ALTER TABLE public.category_notifications ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: email_logs; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.email_logs ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: email_queue; Type: ROW SECURITY; Schema: public; Owner: postgres
@@ -4597,6 +6182,12 @@ ALTER TABLE public.free_meal_notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.free_meal_user_notifications ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: loyalty_transactions; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.loyalty_transactions ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: meal_reports; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
@@ -4615,10 +6206,33 @@ ALTER TABLE public.meals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: ngos; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: ngos ngos_select_owner; Type: POLICY; Schema: public; Owner: postgres
 --
 
-ALTER TABLE public.ngos ENABLE ROW LEVEL SECURITY;
+CREATE POLICY ngos_select_owner ON public.ngos FOR SELECT TO authenticated USING (((profile_id = auth.uid()) OR public.is_admin()));
+
+
+--
+-- Name: ngos ngos_select_public_approved; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY ngos_select_public_approved ON public.ngos FOR SELECT TO authenticated, anon USING ((EXISTS ( SELECT 1
+   FROM public.profiles p
+  WHERE ((p.id = ngos.profile_id) AND (p.approval_status = 'approved'::text)))));
+
+
+--
+-- Name: ngos ngos_update_owner; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY ngos_update_owner ON public.ngos FOR UPDATE TO authenticated USING (((profile_id = auth.uid()) OR public.is_admin())) WITH CHECK (((profile_id = auth.uid()) OR public.is_admin()));
+
+
+--
+-- Name: order_issues; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.order_issues ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: order_items; Type: ROW SECURITY; Schema: public; Owner: postgres
@@ -4627,10 +6241,115 @@ ALTER TABLE public.ngos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: order_items order_items_insert_users; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY order_items_insert_users ON public.order_items FOR INSERT TO authenticated WITH CHECK ((order_id IN ( SELECT orders.id
+   FROM public.orders
+  WHERE (orders.user_id = auth.uid()))));
+
+
+--
+-- Name: order_items order_items_select_ngos; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY order_items_select_ngos ON public.order_items FOR SELECT TO authenticated USING ((order_id IN ( SELECT orders.id
+   FROM public.orders
+  WHERE (orders.ngo_id = auth.uid()))));
+
+
+--
+-- Name: POLICY order_items_select_ngos ON order_items; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON POLICY order_items_select_ngos ON public.order_items IS 'NGOs can view their order items - uses IN subquery to prevent recursion';
+
+
+--
+-- Name: order_items order_items_select_restaurants; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY order_items_select_restaurants ON public.order_items FOR SELECT TO authenticated USING ((order_id IN ( SELECT orders.id
+   FROM public.orders
+  WHERE (orders.restaurant_id = auth.uid()))));
+
+
+--
+-- Name: POLICY order_items_select_restaurants ON order_items; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON POLICY order_items_select_restaurants ON public.order_items IS 'Restaurants can view their order items - uses IN subquery to prevent recursion';
+
+
+--
+-- Name: order_items order_items_select_users; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY order_items_select_users ON public.order_items FOR SELECT TO authenticated USING ((order_id IN ( SELECT orders.id
+   FROM public.orders
+  WHERE (orders.user_id = auth.uid()))));
+
+
+--
+-- Name: POLICY order_items_select_users ON order_items; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON POLICY order_items_select_users ON public.order_items IS 'Users can view their order items - uses IN subquery to prevent recursion when querying orders with nested order_items';
+
+
+--
 -- Name: order_status_history; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.order_status_history ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: order_status_history order_status_history_insert_all; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY order_status_history_insert_all ON public.order_status_history FOR INSERT TO authenticated WITH CHECK (true);
+
+
+--
+-- Name: order_status_history order_status_history_insert_restaurants; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY order_status_history_insert_restaurants ON public.order_status_history FOR INSERT TO authenticated WITH CHECK ((order_id IN ( SELECT orders.id
+   FROM public.orders
+  WHERE (orders.restaurant_id = auth.uid()))));
+
+
+--
+-- Name: order_status_history order_status_history_select_restaurants; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY order_status_history_select_restaurants ON public.order_status_history FOR SELECT TO authenticated USING ((order_id IN ( SELECT orders.id
+   FROM public.orders
+  WHERE (orders.restaurant_id = auth.uid()))));
+
+
+--
+-- Name: POLICY order_status_history_select_restaurants ON order_status_history; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON POLICY order_status_history_select_restaurants ON public.order_status_history IS 'Restaurants can view order history - uses IN subquery to prevent recursion';
+
+
+--
+-- Name: order_status_history order_status_history_select_users; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY order_status_history_select_users ON public.order_status_history FOR SELECT TO authenticated USING ((order_id IN ( SELECT orders.id
+   FROM public.orders
+  WHERE (orders.user_id = auth.uid()))));
+
+
+--
+-- Name: POLICY order_status_history_select_users ON order_status_history; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON POLICY order_status_history_select_users ON public.order_status_history IS 'Users can view order history - uses IN subquery to prevent recursion';
+
 
 --
 -- Name: orders; Type: ROW SECURITY; Schema: public; Owner: postgres
@@ -4645,16 +6364,72 @@ ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: profiles; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: profiles profiles_insert_service; Type: POLICY; Schema: public; Owner: postgres
 --
 
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY profiles_insert_service ON public.profiles FOR INSERT TO service_role WITH CHECK (true);
+
 
 --
--- Name: restaurants; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: profiles profiles_insert_users; Type: POLICY; Schema: public; Owner: postgres
 --
 
-ALTER TABLE public.restaurants ENABLE ROW LEVEL SECURITY;
+CREATE POLICY profiles_insert_users ON public.profiles FOR INSERT TO authenticated WITH CHECK ((id = auth.uid()));
+
+
+--
+-- Name: profiles profiles_select_approved; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY profiles_select_approved ON public.profiles FOR SELECT TO authenticated, anon USING ((approval_status = 'approved'::text));
+
+
+--
+-- Name: POLICY profiles_select_approved ON profiles; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON POLICY profiles_select_approved ON public.profiles IS 'Public can view approved profiles - direct check, no function calls';
+
+
+--
+-- Name: profiles profiles_select_own; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY profiles_select_own ON public.profiles FOR SELECT TO authenticated USING ((id = auth.uid()));
+
+
+--
+-- Name: POLICY profiles_select_own ON profiles; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON POLICY profiles_select_own ON public.profiles IS 'Users can view their own profile - direct check, no function calls, prevents recursion';
+
+
+--
+-- Name: profiles profiles_update_own; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY profiles_update_own ON public.profiles FOR UPDATE TO authenticated USING ((id = auth.uid())) WITH CHECK ((id = auth.uid()));
+
+
+--
+-- Name: POLICY profiles_update_own ON profiles; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON POLICY profiles_update_own ON public.profiles IS 'Users can update their own profile - direct check, no is_admin() call';
+
+
+--
+-- Name: restaurant_ratings; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.restaurant_ratings ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: rewards_catalog; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.rewards_catalog ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: rush_hours; Type: ROW SECURITY; Schema: public; Owner: postgres
@@ -4669,10 +6444,28 @@ ALTER TABLE public.rush_hours ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_addresses ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: user_badges; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.user_badges ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: user_category_preferences; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
 ALTER TABLE public.user_category_preferences ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: user_loyalty; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.user_loyalty ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: user_rewards; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.user_rewards ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: pg_database_owner
@@ -4712,12 +6505,39 @@ GRANT ALL ON FUNCTION public.auto_generate_order_codes() TO service_role;
 
 
 --
+-- Name: FUNCTION award_order_points(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.award_order_points() TO anon;
+GRANT ALL ON FUNCTION public.award_order_points() TO authenticated;
+GRANT ALL ON FUNCTION public.award_order_points() TO service_role;
+
+
+--
 -- Name: FUNCTION calculate_effective_price(p_meal_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
 GRANT ALL ON FUNCTION public.calculate_effective_price(p_meal_id uuid) TO anon;
 GRANT ALL ON FUNCTION public.calculate_effective_price(p_meal_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.calculate_effective_price(p_meal_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION can_rate_order(p_order_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.can_rate_order(p_order_id uuid) TO anon;
+GRANT ALL ON FUNCTION public.can_rate_order(p_order_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.can_rate_order(p_order_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION check_and_award_badges(p_user_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.check_and_award_badges(p_user_id uuid) TO anon;
+GRANT ALL ON FUNCTION public.check_and_award_badges(p_user_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.check_and_award_badges(p_user_id uuid) TO service_role;
 
 
 --
@@ -4865,6 +6685,15 @@ GRANT ALL ON FUNCTION public.get_restaurant_leaderboard(period_filter text) TO s
 
 
 --
+-- Name: FUNCTION get_restaurant_ratings(p_restaurant_id uuid, p_limit integer, p_offset integer); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.get_restaurant_ratings(p_restaurant_id uuid, p_limit integer, p_offset integer) TO anon;
+GRANT ALL ON FUNCTION public.get_restaurant_ratings(p_restaurant_id uuid, p_limit integer, p_offset integer) TO authenticated;
+GRANT ALL ON FUNCTION public.get_restaurant_ratings(p_restaurant_id uuid, p_limit integer, p_offset integer) TO service_role;
+
+
+--
 -- Name: FUNCTION handle_address_deletion(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4892,6 +6721,15 @@ GRANT ALL ON FUNCTION public.increment_meal_quantity(meal_id uuid, qty integer) 
 
 
 --
+-- Name: FUNCTION initialize_user_loyalty(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.initialize_user_loyalty() TO anon;
+GRANT ALL ON FUNCTION public.initialize_user_loyalty() TO authenticated;
+GRANT ALL ON FUNCTION public.initialize_user_loyalty() TO service_role;
+
+
+--
 -- Name: FUNCTION is_admin(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4916,6 +6754,15 @@ GRANT ALL ON FUNCTION public.log_order_status_change() TO service_role;
 GRANT ALL ON FUNCTION public.notify_category_subscribers() TO anon;
 GRANT ALL ON FUNCTION public.notify_category_subscribers() TO authenticated;
 GRANT ALL ON FUNCTION public.notify_category_subscribers() TO service_role;
+
+
+--
+-- Name: FUNCTION notify_restaurant_of_issue(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.notify_restaurant_of_issue() TO anon;
+GRANT ALL ON FUNCTION public.notify_restaurant_of_issue() TO authenticated;
+GRANT ALL ON FUNCTION public.notify_restaurant_of_issue() TO service_role;
 
 
 --
@@ -4955,6 +6802,24 @@ GRANT ALL ON FUNCTION public.queue_order_emails() TO service_role;
 
 
 --
+-- Name: FUNCTION redeem_reward(p_user_id uuid, p_reward_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.redeem_reward(p_user_id uuid, p_reward_id uuid) TO anon;
+GRANT ALL ON FUNCTION public.redeem_reward(p_user_id uuid, p_reward_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.redeem_reward(p_user_id uuid, p_reward_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION safe_delete_meal(p_meal_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.safe_delete_meal(p_meal_id uuid) TO anon;
+GRANT ALL ON FUNCTION public.safe_delete_meal(p_meal_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.safe_delete_meal(p_meal_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION set_rush_hour_settings(p_is_active boolean, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_discount_percentage integer); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4970,6 +6835,24 @@ GRANT ALL ON FUNCTION public.set_rush_hour_settings(p_is_active boolean, p_start
 GRANT ALL ON FUNCTION public.set_updated_at() TO anon;
 GRANT ALL ON FUNCTION public.set_updated_at() TO authenticated;
 GRANT ALL ON FUNCTION public.set_updated_at() TO service_role;
+
+
+--
+-- Name: FUNCTION submit_restaurant_rating(p_order_id uuid, p_rating integer, p_review_text text); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.submit_restaurant_rating(p_order_id uuid, p_rating integer, p_review_text text) TO anon;
+GRANT ALL ON FUNCTION public.submit_restaurant_rating(p_order_id uuid, p_rating integer, p_review_text text) TO authenticated;
+GRANT ALL ON FUNCTION public.submit_restaurant_rating(p_order_id uuid, p_rating integer, p_review_text text) TO service_role;
+
+
+--
+-- Name: FUNCTION sync_profile_emails(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.sync_profile_emails() TO anon;
+GRANT ALL ON FUNCTION public.sync_profile_emails() TO authenticated;
+GRANT ALL ON FUNCTION public.sync_profile_emails() TO service_role;
 
 
 --
@@ -5000,12 +6883,30 @@ GRANT ALL ON FUNCTION public.update_conversation_last_message() TO service_role;
 
 
 --
+-- Name: FUNCTION update_order_issue_timestamp(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.update_order_issue_timestamp() TO anon;
+GRANT ALL ON FUNCTION public.update_order_issue_timestamp() TO authenticated;
+GRANT ALL ON FUNCTION public.update_order_issue_timestamp() TO service_role;
+
+
+--
 -- Name: FUNCTION update_profile_default_location(); Type: ACL; Schema: public; Owner: postgres
 --
 
 GRANT ALL ON FUNCTION public.update_profile_default_location() TO anon;
 GRANT ALL ON FUNCTION public.update_profile_default_location() TO authenticated;
 GRANT ALL ON FUNCTION public.update_profile_default_location() TO service_role;
+
+
+--
+-- Name: FUNCTION update_restaurant_rating(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.update_restaurant_rating() TO anon;
+GRANT ALL ON FUNCTION public.update_restaurant_rating() TO authenticated;
+GRANT ALL ON FUNCTION public.update_restaurant_rating() TO service_role;
 
 
 --
@@ -5024,6 +6925,15 @@ GRANT ALL ON FUNCTION public.update_restaurant_rush_hour_flag() TO service_role;
 GRANT ALL ON FUNCTION public.update_updated_at_column() TO anon;
 GRANT ALL ON FUNCTION public.update_updated_at_column() TO authenticated;
 GRANT ALL ON FUNCTION public.update_updated_at_column() TO service_role;
+
+
+--
+-- Name: FUNCTION update_user_tier(p_user_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.update_user_tier(p_user_id uuid) TO anon;
+GRANT ALL ON FUNCTION public.update_user_tier(p_user_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.update_user_tier(p_user_id uuid) TO service_role;
 
 
 --
@@ -5108,6 +7018,15 @@ GRANT ALL ON TABLE public.conversation_details TO service_role;
 
 
 --
+-- Name: TABLE email_logs; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.email_logs TO anon;
+GRANT ALL ON TABLE public.email_logs TO authenticated;
+GRANT ALL ON TABLE public.email_logs TO service_role;
+
+
+--
 -- Name: TABLE email_queue; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -5150,6 +7069,15 @@ GRANT ALL ON TABLE public.free_meal_notifications TO service_role;
 GRANT ALL ON TABLE public.free_meal_user_notifications TO anon;
 GRANT ALL ON TABLE public.free_meal_user_notifications TO authenticated;
 GRANT ALL ON TABLE public.free_meal_user_notifications TO service_role;
+
+
+--
+-- Name: TABLE loyalty_transactions; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.loyalty_transactions TO anon;
+GRANT ALL ON TABLE public.loyalty_transactions TO authenticated;
+GRANT ALL ON TABLE public.loyalty_transactions TO service_role;
 
 
 --
@@ -5207,6 +7135,15 @@ GRANT ALL ON TABLE public.ngos TO service_role;
 
 
 --
+-- Name: TABLE order_issues; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.order_issues TO anon;
+GRANT ALL ON TABLE public.order_issues TO authenticated;
+GRANT ALL ON TABLE public.order_issues TO service_role;
+
+
+--
 -- Name: TABLE order_items; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -5252,12 +7189,39 @@ GRANT ALL ON TABLE public.payments TO service_role;
 
 
 --
+-- Name: TABLE restaurant_ratings; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.restaurant_ratings TO anon;
+GRANT ALL ON TABLE public.restaurant_ratings TO authenticated;
+GRANT ALL ON TABLE public.restaurant_ratings TO service_role;
+
+
+--
+-- Name: TABLE rewards_catalog; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.rewards_catalog TO anon;
+GRANT ALL ON TABLE public.rewards_catalog TO authenticated;
+GRANT ALL ON TABLE public.rewards_catalog TO service_role;
+
+
+--
 -- Name: TABLE user_addresses; Type: ACL; Schema: public; Owner: postgres
 --
 
 GRANT ALL ON TABLE public.user_addresses TO anon;
 GRANT ALL ON TABLE public.user_addresses TO authenticated;
 GRANT ALL ON TABLE public.user_addresses TO service_role;
+
+
+--
+-- Name: TABLE user_badges; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.user_badges TO anon;
+GRANT ALL ON TABLE public.user_badges TO authenticated;
+GRANT ALL ON TABLE public.user_badges TO service_role;
 
 
 --
@@ -5270,12 +7234,30 @@ GRANT ALL ON TABLE public.user_category_preferences TO service_role;
 
 
 --
+-- Name: TABLE user_loyalty; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.user_loyalty TO anon;
+GRANT ALL ON TABLE public.user_loyalty TO authenticated;
+GRANT ALL ON TABLE public.user_loyalty TO service_role;
+
+
+--
 -- Name: TABLE user_notifications_summary; Type: ACL; Schema: public; Owner: postgres
 --
 
 GRANT ALL ON TABLE public.user_notifications_summary TO anon;
 GRANT ALL ON TABLE public.user_notifications_summary TO authenticated;
 GRANT ALL ON TABLE public.user_notifications_summary TO service_role;
+
+
+--
+-- Name: TABLE user_rewards; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.user_rewards TO anon;
+GRANT ALL ON TABLE public.user_rewards TO authenticated;
+GRANT ALL ON TABLE public.user_rewards TO service_role;
 
 
 --
@@ -5342,5 +7324,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON T
 -- PostgreSQL database dump complete
 --
 
-\unrestrict aJz7PJwFRxTNzhgJl7sv6iZOnikmqodQ7XgEWpnRbYjRhZIhuzZxHCkomf57p2e
+\unrestrict ntn6h8dTTI7vnJDI6o1WJMqijqg9Zfr7gxicuaCcy2JxK4Z6znsHyZzXHFD7Fqn
 
