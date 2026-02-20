@@ -1,0 +1,513 @@
+{
+  "info": {
+    "name": "Boss Food Ordering API",
+    "description": "Cairo food-ordering assistant — meal search, favorites, and cart management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "test_user_id",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    {
+      "key": "test_meal_id",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has status ok', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql('ok');",
+                  "});",
+                  "",
+                  "pm.test('Response has timestamp', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('timestamp');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Lightweight liveness probe — always returns 200 if the app is running"
+          },
+          "response": []
+        },
+        {
+          "name": "Readiness Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has status ready', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql('ready');",
+                  "});",
+                  "",
+                  "pm.test('Database is connected', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.db).to.eql('connected');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ready",
+              "host": ["{{base_url}}"],
+              "path": ["ready"]
+            },
+            "description": "Readiness probe — verifies connectivity to Supabase"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Meals",
+      "item": [
+        {
+          "name": "Search Meals - Simple",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has results array', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('results');",
+                  "    pm.expect(jsonData.results).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Results contain meal data', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.results.length > 0) {",
+                  "        const meal = jsonData.results[0];",
+                  "        pm.expect(meal).to.have.property('id');",
+                  "        pm.expect(meal).to.have.property('name');",
+                  "        pm.expect(meal).to.have.property('price');",
+                  "        // Save first meal ID for cart tests",
+                  "        pm.collectionVariables.set('test_meal_id', meal.id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/meals/search?query=chicken&limit=5",
+              "host": ["{{base_url}}"],
+              "path": ["meals", "search"],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "chicken"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Search for meals using semantic similarity"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Meals - With Filters",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Results match category filter', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.results.length > 0) {",
+                  "        jsonData.results.forEach(meal => {",
+                  "            pm.expect(meal.category).to.eql('Desserts');",
+                  "        });",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test('Results match price filter', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.results.length > 0) {",
+                  "        jsonData.results.forEach(meal => {",
+                  "            pm.expect(meal.price).to.be.at.most(100);",
+                  "        });",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/meals/search?query=dessert&category=Desserts&max_price=100&limit=3",
+              "host": ["{{base_url}}"],
+              "path": ["meals", "search"],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "dessert"
+                },
+                {
+                  "key": "category",
+                  "value": "Desserts"
+                },
+                {
+                  "key": "max_price",
+                  "value": "100"
+                },
+                {
+                  "key": "limit",
+                  "value": "3"
+                }
+              ]
+            },
+            "description": "Search desserts under 100 EGP"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Meals - Allergen Exclusion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Results exclude gluten allergen', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.results.length > 0) {",
+                  "        jsonData.results.forEach(meal => {",
+                  "            if (meal.allergens) {",
+                  "                pm.expect(meal.allergens).to.not.include('gluten');",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/meals/search?query=pasta&exclude_allergens=gluten&limit=3",
+              "host": ["{{base_url}}"],
+              "path": ["meals", "search"],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "pasta"
+                },
+                {
+                  "key": "exclude_allergens",
+                  "value": "gluten"
+                },
+                {
+                  "key": "limit",
+                  "value": "3"
+                }
+              ]
+            },
+            "description": "Search pasta without gluten"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Favorites",
+      "item": [
+        {
+          "name": "Search Favorites",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 404', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test('Response has results array', function () {",
+                  "        const jsonData = pm.response.json();",
+                  "        pm.expect(jsonData).to.have.property('results');",
+                  "        pm.expect(jsonData.results).to.be.an('array');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/favorites/search?user_id={{test_user_id}}&query=pizza&limit=5",
+              "host": ["{{base_url}}"],
+              "path": ["favorites", "search"],
+              "query": [
+                {
+                  "key": "user_id",
+                  "value": "{{test_user_id}}"
+                },
+                {
+                  "key": "query",
+                  "value": "pizza"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Search within user's favorite meals"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "Get Cart",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has cart structure', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('items');",
+                  "    pm.expect(jsonData).to.have.property('total');",
+                  "    pm.expect(jsonData.items).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/cart/",
+              "host": ["{{base_url}}"],
+              "path": ["cart", ""]
+            },
+            "description": "Retrieve the current cart with itemised details"
+          },
+          "response": []
+        },
+        {
+          "name": "Add to Cart",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 404', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 404, 400]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test('Response confirms addition', function () {",
+                  "        const jsonData = pm.response.json();",
+                  "        pm.expect(jsonData).to.have.property('success');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meal_id\": \"{{test_meal_id}}\",\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/add",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "add"]
+            },
+            "description": "Add or increment a meal in the cart"
+          },
+          "response": []
+        },
+        {
+          "name": "Build Cart - Budget Only",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has suggested cart', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('items');",
+                  "    pm.expect(jsonData).to.have.property('total');",
+                  "    pm.expect(jsonData.items).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Total is within budget', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.total).to.be.at.most(500);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"budget\": 500,\n  \"target_meal_count\": 5,\n  \"max_qty_per_meal\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/build",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "build"]
+            },
+            "description": "Generate a suggested cart within 500 EGP budget"
+          },
+          "response": []
+        },
+        {
+          "name": "Build Cart - With Restaurant Filter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has suggested cart', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('items');",
+                  "    pm.expect(jsonData).to.have.property('total');",
+                  "});",
+                  "",
+                  "pm.test('Total is within budget', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.total).to.be.at.most(300);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"budget\": 300,\n  \"restaurant_name\": \"pizza\",\n  \"target_meal_count\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/build",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "build"]
+            },
+            "description": "Generate cart from pizza restaurants within 300 EGP"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

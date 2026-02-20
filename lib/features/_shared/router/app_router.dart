@@ -53,6 +53,7 @@ import '../../restaurants/routes.dart';
 import '../../user_home/routes.dart';
 import '../../profile/routes.dart';
 import '../../authentication/routes.dart';
+import '../../boss_chat/routes.dart';
 
 class RouteNames {
   static const onboarding = 'onboarding';
@@ -551,6 +552,7 @@ class AppRouter {
       ...profileRoutes(),
       ...authRoutes(),
       ...ordersRoutes(),
+      ...bossChatRoutes(),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(

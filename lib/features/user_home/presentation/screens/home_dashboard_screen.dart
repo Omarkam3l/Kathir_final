@@ -95,6 +95,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 ),
               ),
               SliverToBoxAdapter(
+                child: _buildBossAIChatButton(context),
+              ),
+              SliverToBoxAdapter(
                 child: CategoryChipsWidget(
                   selectedCategory: _category,
                   onCategoryChanged: (c) => setState(() => _category = c),
@@ -119,6 +122,78 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBossAIChatButton(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Material(
+        elevation: 4,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: () => context.push('/boss-chat'),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      '🤖',
+                      style: TextStyle(fontSize: 24),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Boss AI Chat',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'AI-powered food assistant • Natural language search',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ],
+            ),
           ),
         ),
       ),
