@@ -91,9 +91,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               SliverToBoxAdapter(
                 child: SearchBarWidget(
                   onQueryChanged: (q) => setState(() => _query = q),
-                  onFilterTap: () {
-                    // Optional: navigate to advanced search
-                  },
+                  onFilterTap: () => context.push('/restaurant-search'),
                 ),
               ),
               SliverToBoxAdapter(

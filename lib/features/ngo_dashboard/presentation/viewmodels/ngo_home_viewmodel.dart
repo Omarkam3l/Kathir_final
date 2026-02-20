@@ -24,7 +24,7 @@ class NgoHomeViewModel extends ChangeNotifier {
   String searchQuery = '';
   
   // Location
-  String currentLocation = 'Cairo, Egypt';
+  String currentLocation = 'Loading...';
   
   // Stats
   int mealsClaimed = 0;
@@ -35,6 +35,7 @@ class NgoHomeViewModel extends ChangeNotifier {
   // Meals
   List<Meal> meals = [];
   List<Meal> expiringMeals = [];
+  List<String> categories = ['All Items']; // Dynamic categories from database
   
   // Smart loading: TTL tracking
   DateTime? _lastFetchTime;
@@ -84,19 +85,10 @@ class NgoHomeViewModel extends ChangeNotifier {
     }
 
     // Apply category filter
-    switch (selectedFilter) {
-      case 'vegetarian':
-        result = result.where((m) =>
-          m.category.toLowerCase().contains('veg') ||
-          m.title.toLowerCase().contains('veg')
-        ).toList();
-        break;
-      case 'nearby':
-        // TODO: Implement location-based filtering
-        break;
-      case 'large':
-        result = result.where((m) => m.quantity >= 20).toList();
-        break;
+    if (selectedFilter != 'all' && selectedFilter.isNotEmpty) {
+      result = result.where((m) => 
+        m.category.toLowerCase() == selectedFilter.toLowerCase()
+      ).toList();
     }
 
     return result;
@@ -128,8 +120,9 @@ class NgoHomeViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      debugPrint('📊 NGO: Calling Future.wait for stats and meals...');
+      debugPrint('✅ NGO: Calling Future.wait for stats and meals...');
       await Future.wait([
+        _loadLocation(),
         _loadStats(),
         _loadMeals(),
       ]);
@@ -151,6 +144,53 @@ class NgoHomeViewModel extends ChangeNotifier {
     debugPrint('🎉 ========== NGO HOME: loadData END ==========');
   }
 
+  Future<void> _loadLocation() async {
+    debugPrint('📍 NGO: _loadLocation START');
+    final userId = _supabase.auth.currentUser?.id;
+    debugPrint('User ID: $userId');
+    
+    if (userId == null) {
+      debugPrint('❌ NGO: User ID is null in _loadLocation');
+      currentLocation = 'Cairo, Egypt'; // Default fallback
+      return;
+    }
+
+    try {
+      debugPrint('🔍 NGO: Fetching user profile location...');
+      final profileRes = await _supabase
+          .from('profiles')
+          .select('default_location')
+          .eq('id', userId)
+          .maybeSingle();
+      
+      if (profileRes != null && profileRes['default_location'] != null) {
+        currentLocation = profileRes['default_location'] as String;
+        debugPrint('✅ NGO: Location loaded: $currentLocation');
+      } else {
+        // Try to get from NGO table if available
+        debugPrint('🔍 NGO: Trying to get location from NGO table...');
+        final ngoRes = await _supabase
+            .from('ngos')
+            .select('address_text')
+            .eq('profile_id', userId)
+            .maybeSingle();
+        
+        if (ngoRes != null && ngoRes['address_text'] != null) {
+          currentLocation = ngoRes['address_text'] as String;
+          debugPrint('✅ NGO: Location from NGO table: $currentLocation');
+        } else {
+          currentLocation = 'Cairo, Egypt'; // Default fallback
+          debugPrint('ℹ️ NGO: Using default location');
+        }
+      }
+      debugPrint('✅ NGO: _loadLocation COMPLETE');
+    } catch (e, stackTrace) {
+      debugPrint('❌ NGO: Error loading location: $e');
+      debugPrint('Stack trace: $stackTrace');
+      currentLocation = 'Cairo, Egypt'; // Default fallback on error
+    }
+  }
+
   Future<void> _loadStats() async {
     debugPrint('📊 NGO: _loadStats START');
     final userId = _supabase.auth.currentUser?.id;
@@ -163,7 +203,7 @@ class NgoHomeViewModel extends ChangeNotifier {
 
     try {
       debugPrint('🔍 NGO: Fetching active orders...');
-      // Get active orders (removed 'paid' and 'processing' - not valid statuses)
+      // Get active orders
       final ordersRes = await _supabase
           .from('orders')
           .select('id, status')
@@ -173,20 +213,31 @@ class NgoHomeViewModel extends ChangeNotifier {
       activeOrders = (ordersRes as List).length;
       debugPrint('✅ NGO: Active orders: $activeOrders');
 
-      debugPrint('🔍 NGO: Fetching completed orders...');
-      // Get completed orders for stats
+      debugPrint('🔍 NGO: Fetching completed orders with items...');
+      // Get completed orders with order items to count meals
       final completedRes = await _supabase
           .from('orders')
-          .select('id')
+          .select('id, order_items(quantity)')
           .eq('ngo_id', userId)
           .eq('status', 'completed');
       
-      mealsClaimed = (completedRes as List).length;
-      debugPrint('✅ NGO: Meals claimed: $mealsClaimed');
+      // Count total meals from all completed orders
+      int totalMeals = 0;
+      for (final order in (completedRes as List)) {
+        final items = order['order_items'] as List?;
+        if (items != null) {
+          for (final item in items) {
+            totalMeals += (item['quantity'] as int?) ?? 0;
+          }
+        }
+      }
+      
+      mealsClaimed = totalMeals;
+      debugPrint('✅ NGO: Meals claimed: $mealsClaimed (from ${(completedRes as List).length} completed orders)');
 
-      // Calculate carbon savings (simplified)
-      carbonSaved = mealsClaimed * 2.5; // Avg 2.5kg CO2 per meal
-      debugPrint('✅ NGO: Carbon saved: $carbonSaved kg');
+      // Calculate carbon savings (2.5kg CO2 per meal saved)
+      carbonSaved = mealsClaimed * 2.5;
+      debugPrint('✅ NGO: Carbon saved: ${carbonSaved.toStringAsFixed(1)} kg');
       debugPrint('✅ NGO: _loadStats COMPLETE');
     } catch (e, stackTrace) {
       debugPrint('❌ NGO: Error loading stats: $e');
@@ -213,7 +264,8 @@ class NgoHomeViewModel extends ChangeNotifier {
             expiry_date,
             location,
             category,
-            restaurant_id
+            restaurant_id,
+            description
           ''')
           .eq('is_donation_available', true)
           .eq('status', 'active')
@@ -243,11 +295,19 @@ class NgoHomeViewModel extends ChangeNotifier {
       debugPrint('✅ Step 2: Found ${restaurantIds.length} unique restaurants');
       debugPrint('Restaurant IDs: $restaurantIds');
 
-      // Step 3: Fetch restaurants separately
+      // Step 3: Fetch restaurants separately with avatar_url from profiles
       debugPrint('📊 Step 3: Fetching restaurants from database...');
       final restaurantsRes = await _supabase
           .from('restaurants')
-          .select('profile_id, restaurant_name, rating')
+          .select('''
+            profile_id, 
+            restaurant_name, 
+            rating, 
+            latitude, 
+            longitude, 
+            address_text,
+            profiles!inner(avatar_url)
+          ''')
           .inFilter('profile_id', restaurantIds);
 
       debugPrint('✅ Step 3: Got ${(restaurantsRes as List).length} restaurants from database');
@@ -278,21 +338,24 @@ class NgoHomeViewModel extends ChangeNotifier {
           'id': restaurantId ?? '',
           'name': restaurantData?['restaurant_name'] ?? 'Unknown Restaurant',
           'rating': restaurantData?['rating'] ?? 0.0,
-          'logo_url': '',
+          'logo_url': restaurantData?['profiles']?['avatar_url'] ?? '',
           'verified': true,
           'reviews_count': 0,
+          'latitude': restaurantData?['latitude'],
+          'longitude': restaurantData?['longitude'],
+          'address_text': restaurantData?['address_text'],
         };
 
         // Map database fields to model fields
         json['donation_price'] = json['discounted_price'];
         json['quantity'] = json['quantity_available'];
         json['expiry'] = json['expiry_date'];
-        json['description'] = '';
+        json['description'] = json['description'] ?? '';
         json['unit'] = 'portions';
         json['fulfillment_method'] = 'pickup';
         json['is_donation_available'] = true;
         json['status'] = 'active';
-        json['original_price'] = json['discounted_price'];
+        // Keep original_price from database - don't overwrite it!
         json['pickup_deadline'] = null;
         json['pickup_time'] = null;
         json['ingredients'] = [];
@@ -304,12 +367,24 @@ class NgoHomeViewModel extends ChangeNotifier {
 
       debugPrint('✅ Step 5: Transformed ${meals.length} meals successfully');
 
+      // Step 6: Extract unique categories from meals
+      debugPrint('📊 Step 6: Extracting unique categories...');
+      final uniqueCategories = meals
+          .map((m) => m.category)
+          .where((cat) => cat.isNotEmpty)
+          .toSet()
+          .toList()
+        ..sort();
+      
+      categories = ['All Items', ...uniqueCategories];
+      debugPrint('✅ Step 6: Found ${categories.length - 1} unique categories: $uniqueCategories');
+
       // Separate expiring soon (within 2 hours)
-      debugPrint('📊 Step 6: Filtering expiring meals...');
+      debugPrint('📊 Step 7: Filtering expiring meals...');
       final twoHoursFromNow = DateTime.now().add(const Duration(hours: 2));
       expiringMeals = meals.where((m) => m.expiry.isBefore(twoHoursFromNow)).toList();
       
-      debugPrint('✅ Step 6: Found ${expiringMeals.length} expiring meals');
+      debugPrint('✅ Step 7: Found ${expiringMeals.length} expiring meals');
       debugPrint('🎉 ========== NGO: _loadMeals END (success) ==========');
     } catch (e, stackTrace) {
       debugPrint('❌ ========== NGO: _loadMeals ERROR ==========');
@@ -394,7 +469,7 @@ class NgoHomeViewModel extends ChangeNotifier {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Added to cart: ${meal.title}'),
+            content: Text('Added to cart: ${meal.title}'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 2),
             action: SnackBarAction(

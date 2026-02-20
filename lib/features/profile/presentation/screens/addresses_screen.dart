@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/utils/app_colors.dart';
@@ -66,9 +67,8 @@ class _AddressesScreenState extends State<AddressesScreen> {
       return;
     }
 
-    final result = await showDialog<Map<String, String>>(
-      context: context,
-      builder: (context) => const _AddressDialog(),
+    final result = await context.push<Map<String, dynamic>>(
+      '/add-address-map',
     );
 
     if (result == null) return;
@@ -84,6 +84,8 @@ class _AddressesScreenState extends State<AddressesScreen> {
         'user_id': userId,
         'label': result['label'],
         'address_text': result['address'],
+        'latitude': result['latitude'],
+        'longitude': result['longitude'],
         'is_default': isDefault,
       });
 
@@ -123,12 +125,14 @@ class _AddressesScreenState extends State<AddressesScreen> {
   }
 
   Future<void> _editAddress(Map<String, dynamic> address) async {
-    final result = await showDialog<Map<String, String>>(
-      context: context,
-      builder: (context) => _AddressDialog(
-        initialLabel: address['label'],
-        initialAddress: address['address_text'],
-      ),
+    final result = await context.push<Map<String, dynamic>>(
+      '/add-address-map',
+      extra: {
+        'initialLabel': address['label'],
+        'initialAddress': address['address_text'],
+        'initialLatitude': address['latitude'],
+        'initialLongitude': address['longitude'],
+      },
     );
 
     if (result == null) return;
@@ -137,6 +141,8 @@ class _AddressesScreenState extends State<AddressesScreen> {
       await _supabase.from('user_addresses').update({
         'label': result['label'],
         'address_text': result['address'],
+        'latitude': result['latitude'],
+        'longitude': result['longitude'],
       }).eq('id', address['id']);
 
       // If this is the default address, update profile
@@ -518,138 +524,6 @@ class _AddressesScreenState extends State<AddressesScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _AddressDialog extends StatefulWidget {
-  final String? initialLabel;
-  final String? initialAddress;
-
-  const _AddressDialog({
-    this.initialLabel,
-    this.initialAddress,
-  });
-
-  @override
-  State<_AddressDialog> createState() => _AddressDialogState();
-}
-
-class _AddressDialogState extends State<_AddressDialog> {
-  final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _labelController;
-  late final TextEditingController _addressController;
-
-  @override
-  void initState() {
-    super.initState();
-    _labelController = TextEditingController(text: widget.initialLabel);
-    _addressController = TextEditingController(text: widget.initialAddress);
-  }
-
-  @override
-  void dispose() {
-    _labelController.dispose();
-    _addressController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.initialLabel == null ? 'Add Address' : 'Edit Address',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _labelController,
-                decoration: InputDecoration(
-                  labelText: 'Label (e.g., Home, Work)',
-                  prefixIcon: const Icon(Icons.label, color: AppColors.primary),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a label';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _addressController,
-                decoration: InputDecoration(
-                  labelText: 'Address',
-                  prefixIcon: const Icon(Icons.location_on, color: AppColors.primary),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
-                  ),
-                ),
-                maxLines: 3,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter an address';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        Navigator.pop(context, {
-                          'label': _labelController.text.trim(),
-                          'address': _addressController.text.trim(),
-                        });
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(widget.initialLabel == null ? 'Add' : 'Save'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

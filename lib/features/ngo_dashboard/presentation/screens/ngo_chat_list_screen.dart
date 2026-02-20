@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../viewmodels/ngo_chat_list_viewmodel.dart';
-import '../widgets/ngo_bottom_nav.dart';
 
 class NgoChatListScreen extends StatefulWidget {
   const NgoChatListScreen({super.key});
@@ -109,7 +108,6 @@ class _NgoChatListScreenState extends State<NgoChatListScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: const NgoBottomNav(currentIndex: 3),
     );
   }
 
@@ -126,6 +124,16 @@ class _NgoChatListScreenState extends State<NgoChatListScreen> {
       ),
       child: Row(
         children: [
+          IconButton(
+            icon: Icon(
+              Icons.arrow_back,
+              color: isDark ? Colors.white : Colors.black,
+            ),
+            onPressed: () => context.go('/ngo/home'),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: 12),
           Text(
             'Messages',
             style: TextStyle(

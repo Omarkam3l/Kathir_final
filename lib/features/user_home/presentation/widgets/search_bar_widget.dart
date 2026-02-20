@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
 
@@ -72,14 +73,14 @@ class SearchBarWidget extends StatelessWidget {
             color: AppColors.primary,
             borderRadius: BorderRadius.circular(12),
             child: InkWell(
-              onTap: onFilterTap ?? () {},
+              onTap: onFilterTap ?? () => context.push('/restaurant-search'),
               borderRadius: BorderRadius.circular(12),
               child: Container(
                 width: 48,
                 height: 48,
                 alignment: Alignment.center,
                 child: const Icon(
-                  Icons.tune,
+                  Icons.map_outlined,
                   size: 22,
                   color: AppColors.white,
                 ),

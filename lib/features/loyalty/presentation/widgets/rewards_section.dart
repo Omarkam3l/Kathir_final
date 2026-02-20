@@ -128,7 +128,7 @@ class RewardsSection extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.star,
                         size: 12,
                         color: Colors.orange,

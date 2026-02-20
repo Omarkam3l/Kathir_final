@@ -16,13 +16,6 @@ class NgoAllMealsScreen extends StatefulWidget {
 
 class _NgoAllMealsScreenState extends State<NgoAllMealsScreen> {
   String selectedCategory = 'All Items';
-  final List<String> categories = [
-    'All Items',
-    'Bakery',
-    'Fast Food',
-    'Fruits & Veg',
-    'Vegan',
-  ];
 
   @override
   void initState() {
@@ -67,7 +60,7 @@ class _NgoAllMealsScreenState extends State<NgoAllMealsScreen> {
                               const SizedBox(height: 16),
 
                               // Category Chips
-                              _buildCategoryChips(surfaceColor, borderColor, textSub),
+                              _buildCategoryChips(surfaceColor, borderColor, textSub, viewModel),
                               const SizedBox(height: 24),
 
                               // Header Row
@@ -199,7 +192,9 @@ class _NgoAllMealsScreenState extends State<NgoAllMealsScreen> {
     );
   }
 
-  Widget _buildCategoryChips(Color surfaceColor, Color borderColor, Color textSub) {
+  Widget _buildCategoryChips(Color surfaceColor, Color borderColor, Color textSub, NgoHomeViewModel viewModel) {
+    final categories = viewModel.categories;
+    
     return SizedBox(
       height: 40,
       child: ListView.separated(
@@ -213,6 +208,12 @@ class _NgoAllMealsScreenState extends State<NgoAllMealsScreen> {
             onTap: () {
               setState(() {
                 selectedCategory = category;
+                // Update filter in viewmodel
+                if (category == 'All Items') {
+                  viewModel.setFilter('all');
+                } else {
+                  viewModel.setFilter(category);
+                }
               });
             },
             child: Container(
@@ -525,7 +526,7 @@ class _NgoAllMealsScreenState extends State<NgoAllMealsScreen> {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('✅ ${meal.title} added to cart'),
+                                    content: Text('${meal.title} added to cart'),
                                     backgroundColor: AppColors.primaryGreen,
                                     duration: const Duration(seconds: 1),
                                     action: SnackBarAction(

@@ -45,7 +45,7 @@ class _NgoCartScreenState extends State<NgoCartScreen> {
       body: SafeArea(
         child: _buildCartContent(isDark),
       ),
-      bottomNavigationBar: const NgoBottomNav(currentIndex: 2),
+      bottomNavigationBar: const NgoBottomNav(currentIndex: 3),
     );
   }
 

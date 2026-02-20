@@ -42,7 +42,7 @@ class NgoCartViewModel extends ChangeNotifier {
   Future<void> loadCart() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
-      debugPrint('⚠️ No authenticated user');
+      debugPrint(' No authenticated user');
       _cartItems = [];
       notifyListeners();
       return;
@@ -53,7 +53,7 @@ class NgoCartViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      debugPrint('🔄 Loading cart for user: $userId');
+      debugPrint(' Loading cart for user: $userId');
       
       // Fetch cart items with meal details
       final response = await _supabase
@@ -124,15 +124,15 @@ class NgoCartViewModel extends ChangeNotifier {
             quantity: json['quantity'] ?? 1,
           );
         } catch (e) {
-          debugPrint('❌ Error parsing cart item: $e');
+          debugPrint(' Error parsing cart item: $e');
           return null;
         }
       }).whereType<CartItem>().toList();
 
-      debugPrint('✅ Loaded ${_cartItems.length} cart items');
+      debugPrint(' Loaded ${_cartItems.length} cart items');
     } catch (e) {
       _error = e.toString();
-      debugPrint('❌ Error loading cart: $e');
+      debugPrint(' Error loading cart: $e');
       _cartItems = [];
     } finally {
       _isLoading = false;
@@ -144,12 +144,12 @@ class NgoCartViewModel extends ChangeNotifier {
   Future<void> addToCart(Meal meal, {int quantity = 1}) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
-      debugPrint('⚠️ No authenticated user');
+      debugPrint(' No authenticated user');
       return;
     }
 
     try {
-      debugPrint('🔄 Adding to cart: ${meal.title} (qty: $quantity)');
+      debugPrint('Adding to cart: ${meal.title} (qty: $quantity)');
       
       // Check if item already exists
       final existing = await _supabase
@@ -165,7 +165,7 @@ class NgoCartViewModel extends ChangeNotifier {
         
         // Check max quantity
         if (newQty > meal.quantity) {
-          debugPrint('⚠️ Cannot add more - max quantity reached');
+          debugPrint(' Cannot add more - max quantity reached');
           return;
         }
         
@@ -174,7 +174,7 @@ class NgoCartViewModel extends ChangeNotifier {
             .update({'quantity': newQty, 'updated_at': DateTime.now().toIso8601String()})
             .eq('id', existing['id']);
         
-        debugPrint('✅ Updated cart item quantity to $newQty');
+        debugPrint(' Updated cart item quantity to $newQty');
       } else {
         // Insert new item
         await _supabase.from('cart_items').insert({
@@ -185,14 +185,14 @@ class NgoCartViewModel extends ChangeNotifier {
           'updated_at': DateTime.now().toIso8601String(),
         });
         
-        debugPrint('✅ Added new cart item');
+        debugPrint(' Added new cart item');
       }
 
       // Reload cart
       await loadCart();
     } catch (e) {
       _error = e.toString();
-      debugPrint('❌ Error adding to cart: $e');
+      debugPrint(' Error adding to cart: $e');
       notifyListeners();
       rethrow;
     }
@@ -204,7 +204,7 @@ class NgoCartViewModel extends ChangeNotifier {
     if (userId == null) return;
 
     try {
-      debugPrint('🗑️ Removing from cart: $mealId');
+      debugPrint(' Removing from cart: $mealId');
       
       await _supabase
           .from('cart_items')
@@ -212,13 +212,13 @@ class NgoCartViewModel extends ChangeNotifier {
           .eq('user_id', userId)
           .eq('meal_id', mealId);
 
-      debugPrint('✅ Removed from cart');
+      debugPrint('Removed from cart');
       
       // Reload cart
       await loadCart();
     } catch (e) {
       _error = e.toString();
-      debugPrint('❌ Error removing from cart: $e');
+      debugPrint(' Error removing from cart: $e');
       notifyListeners();
     }
   }
@@ -234,7 +234,7 @@ class NgoCartViewModel extends ChangeNotifier {
         return;
       }
 
-      debugPrint('🔄 Updating quantity for $mealId to $newQuantity');
+      debugPrint(' Updating quantity for $mealId to $newQuantity');
       
       await _supabase
           .from('cart_items')
@@ -245,13 +245,13 @@ class NgoCartViewModel extends ChangeNotifier {
           .eq('user_id', userId)
           .eq('meal_id', mealId);
 
-      debugPrint('✅ Updated quantity');
+      debugPrint(' Updated quantity');
       
       // Reload cart
       await loadCart();
     } catch (e) {
       _error = e.toString();
-      debugPrint('❌ Error updating quantity: $e');
+      debugPrint(' Error updating quantity: $e');
       notifyListeners();
     }
   }
@@ -265,7 +265,7 @@ class NgoCartViewModel extends ChangeNotifier {
     if (currentQty < maxQty) {
       await updateQuantity(mealId, currentQty + 1);
     } else {
-      debugPrint('⚠️ Cannot increment - max quantity reached');
+      debugPrint(' Cannot increment - max quantity reached');
     }
   }
 
@@ -281,20 +281,20 @@ class NgoCartViewModel extends ChangeNotifier {
     if (userId == null) return;
 
     try {
-      debugPrint('🗑️ Clearing cart');
+      debugPrint(' Clearing cart');
       
       await _supabase
           .from('cart_items')
           .delete()
           .eq('user_id', userId);
 
-      debugPrint('✅ Cart cleared');
+      debugPrint(' Cart cleared');
       
       _cartItems = [];
       notifyListeners();
     } catch (e) {
       _error = e.toString();
-      debugPrint('❌ Error clearing cart: $e');
+      debugPrint('Error clearing cart: $e');
       notifyListeners();
     }
   }

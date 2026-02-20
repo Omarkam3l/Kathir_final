@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:kathir_final/features/admin_dashboard/presentation/screens/admin_dashboard_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_home_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_all_meals_screen.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_all_meals_list_screen.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_restaurant_meals_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_map_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_profile_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_meal_detail_screen.dart';
@@ -11,6 +13,7 @@ import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_cha
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_notifications_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_cart_screen_full.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_checkout_screen.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_location_selector_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_order_summary_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_orders_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_order_detail_screen.dart';
@@ -208,8 +211,8 @@ class AppRouter {
           return '/ngo/home';
         }
         
-        // User trying to access Restaurant routes
-        if (role == 'user' && (location.startsWith('/restaurant') || location == '/restaurant-dashboard')) {
+        // User trying to access Restaurant dashboard (but allow restaurant-search and restaurant meals)
+        if (role == 'user' && location == '/restaurant-dashboard') {
           return '/home';
         }
         
@@ -399,6 +402,10 @@ class AppRouter {
         },
       ),
       GoRoute(
+        path: '/ngo/select-location',
+        builder: (context, state) => const NgoLocationSelectorScreen(),
+      ),
+      GoRoute(
         path: '/ngo/order-summary',
         builder: (context, state) {
           final orderId = state.extra as String?;
@@ -449,6 +456,45 @@ class AppRouter {
           return const Scaffold(
             body: Center(
               child: Text('Meal not found'),
+            ),
+          );
+        },
+      ),
+      // NGO All Meals List (Free or All)
+      GoRoute(
+        path: '/ngo/meals/free',
+        builder: (context, state) {
+          final meals = state.extra as List<dynamic>? ?? [];
+          return NgoAllMealsListScreen(
+            meals: meals,
+            title: 'Free Meals',
+          );
+        },
+      ),
+      GoRoute(
+        path: '/ngo/meals/all',
+        builder: (context, state) {
+          final meals = state.extra as List<dynamic>? ?? [];
+          return NgoAllMealsListScreen(
+            meals: meals,
+            title: 'All Meals',
+          );
+        },
+      ),
+      // NGO Restaurant Meals
+      GoRoute(
+        path: '/ngo/restaurant/:id',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          if (extra != null) {
+            return NgoRestaurantMealsScreen(
+              restaurant: extra['restaurant'] as Map<String, dynamic>,
+              meals: extra['meals'] as List<dynamic>,
+            );
+          }
+          return const Scaffold(
+            body: Center(
+              child: Text('Restaurant not found'),
             ),
           );
         },

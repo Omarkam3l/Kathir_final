@@ -29,18 +29,39 @@ class TopRestaurantCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
-            child: Text(
-              restaurant.name.isNotEmpty ? restaurant.name[0] : 'R',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-          ),
+          restaurant.logoUrl != null && restaurant.logoUrl!.isNotEmpty
+              ? ClipOval(
+                  child: Image.network(
+                    restaurant.logoUrl!,
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                      child: Text(
+                        restaurant.name.isNotEmpty ? restaurant.name[0] : 'R',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                  child: Text(
+                    restaurant.name.isNotEmpty ? restaurant.name[0] : 'R',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
           const SizedBox(height: 4),
           Text(
             restaurant.name,

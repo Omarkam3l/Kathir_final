@@ -165,153 +165,182 @@ class _NgoOrdersScreenState extends State<NgoOrdersScreen> {
 
   Widget _buildOrderCard(Map<String, dynamic> order, bool isDark) {
     final status = order['status'] as String;
+    final deliveryType = order['delivery_type'] as String?;
     final restaurant = order['restaurants'] as Map<String, dynamic>;
     final restaurantName = restaurant['restaurant_name'] ?? 'Unknown Restaurant';
     final createdAt = DateTime.parse(order['created_at']);
     final orderCode = order['order_code']?.toString() ?? order['id'].toString().substring(0, 8);
 
-    return GestureDetector(
-      onTap: () => context.push('/ngo/order/${order['id']}'),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A2E22) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1A2E22) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.receipt_long,
-                      size: 20,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.receipt_long,
+                    size: 20,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Order #$orderCode',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black,
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Order #$orderCode',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : Colors.black,
-                      ),
-                    ),
-                  ],
+                  ),
+                ],
+              ),
+              _buildStatusBadge(status, isDark),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(
+                Icons.restaurant,
+                size: 16,
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  restaurantName,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark ? Colors.grey[300] : Colors.grey[700],
+                  ),
                 ),
-                _buildStatusBadge(status, isDark),
-              ],
-            ),
-            const SizedBox(height: 12),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(
+                Icons.calendar_today,
+                size: 16,
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _formatDate(createdAt),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+          if (order['delivery_address'] != null) ...[
+            const SizedBox(height: 8),
             Row(
               children: [
                 Icon(
-                  Icons.restaurant,
+                  Icons.location_on,
                   size: 16,
                   color: isDark ? Colors.grey[400] : Colors.grey[600],
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    restaurantName,
+                    order['delivery_address'],
                     style: TextStyle(
-                      fontSize: 14,
-                      color: isDark ? Colors.grey[300] : Colors.grey[700],
+                      fontSize: 12,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.calendar_today,
-                  size: 16,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _formatDate(createdAt),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-            if (order['delivery_address'] != null) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(
-                    Icons.location_on,
-                    size: 16,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      order['delivery_address'],
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark ? Colors.grey[400] : Colors.grey[600],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            const SizedBox(height: 12),
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Donation',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryGreen,
-                  ),
-                ),
-                Row(
-                  children: [
-                    Text(
-                      'View Details',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.primaryGreen,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_ios,
-                      size: 12,
-                      color: AppColors.primaryGreen,
-                    ),
-                  ],
                 ),
               ],
             ),
           ],
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Donation',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryGreen,
+                ),
+              ),
+              _buildActionButton(order['id'], status, deliveryType, isDark),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton(String orderId, String status, String? deliveryType, bool isDark) {
+    // Show "Get Pickup QR Code" for self-pickup orders that are ready
+    if (deliveryType == 'pickup' && status == 'ready_for_pickup') {
+      return ElevatedButton.icon(
+        onPressed: () => context.push('/ngo/order/$orderId'),
+        icon: const Icon(Icons.qr_code, size: 18),
+        label: const Text(
+          'Get Pickup QR',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
         ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryGreen,
+          foregroundColor: Colors.black,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
+        ),
+      );
+    }
+    
+    // Default: Show "Track Order" button
+    return ElevatedButton.icon(
+      onPressed: () => context.push('/ngo/order/$orderId'),
+      icon: const Icon(Icons.location_on, size: 18),
+      label: const Text(
+        'Track Order',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primaryGreen,
+        foregroundColor: Colors.black,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 0,
       ),
     );
   }

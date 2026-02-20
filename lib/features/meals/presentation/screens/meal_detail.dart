@@ -1,8 +1,12 @@
+import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart'; // Assuming google_fonts is available, if not will fallback
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:http/http.dart' as http;
 import '../../../profile/presentation/providers/foodie_state.dart';
 import '../../../user_home/domain/entities/meal_offer.dart';
 import '../../../../core/utils/app_colors.dart';
@@ -420,51 +424,28 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Container(
-                          height: 160,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            color: isDark ? Colors.grey[800] : Colors.grey[200],
-                            image: const DecorationImage(
-                              image: NetworkImage(
-                                  'https://maps.googleapis.com/maps/api/staticmap?center=San+Francisco,CA&zoom=13&size=600x300&maptype=roadmap&key=YOUR_API_KEY_HERE'), // Using placeholder logic
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Container(
-                                  color:
-                                      Colors.black.withValues(alpha: 0.1)), // Dimmer
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                        blurRadius: 10, color: Colors.black26)
-                                  ],
-                                ),
-                                child: const Icon(Icons.location_on,
-                                    color: primaryColor, size: 24),
-                              )
-                            ],
-                          ),
-                        ),
+                        _buildPickupLocation(context, isDark, textColor, subTextColor),
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            Icon(Icons.location_on,
-                                size: 16, color: subTextColor),
+                            Icon(
+                              meal.restaurant.latitude != null && meal.restaurant.longitude != null
+                                  ? Icons.location_on
+                                  : Icons.location_off,
+                              size: 16,
+                              color: subTextColor,
+                            ),
                             const SizedBox(width: 4),
-                            Text(
-                              meal.location,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 14,
-                                color: subTextColor,
+                            Expanded(
+                              child: Text(
+                                meal.restaurant.addressText ?? 
+                                    (meal.restaurant.latitude != null && meal.restaurant.longitude != null
+                                        ? 'Restaurant location'
+                                        : 'Location not available'),
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 14,
+                                  color: subTextColor,
+                                ),
                               ),
                             ),
                           ],
@@ -652,4 +633,568 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       ),
     );
   }
+
+  Widget _buildPickupLocation(BuildContext context, bool isDark, Color textColor, Color subTextColor) {
+    final meal = widget.product;
+    final hasLocation = meal.restaurant.latitude != null && meal.restaurant.longitude != null;
+    final location = hasLocation 
+        ? LatLng(meal.restaurant.latitude!, meal.restaurant.longitude!)
+        : const LatLng(30.0444, 31.2357); // Default Cairo location
+    
+    return GestureDetector(
+      onTap: hasLocation 
+          ? () => _showLocationMapDialog(context, isDark)
+          : null,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          children: [
+            SizedBox(
+              height: 160,
+              width: double.infinity,
+              child: hasLocation
+                  ? FlutterMap(
+                      options: MapOptions(
+                        initialCenter: location,
+                        initialZoom: 15.0,
+                        interactionOptions: const InteractionOptions(
+                          flags: InteractiveFlag.none,
+                        ),
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate: isDark
+                              ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+                              : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          subdomains: const ['a', 'b', 'c'],
+                        ),
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: location,
+                              width: 40,
+                              height: 40,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF1A2E22) : Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.2),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: AppColors.primary,
+                                  size: 24,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    )
+                  : Container(
+                      color: isDark ? Colors.grey[800] : Colors.grey[200],
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.location_off,
+                              size: 40,
+                              color: isDark ? Colors.grey[600] : Colors.grey[400],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Location not set',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                color: isDark ? Colors.grey[500] : Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+            ),
+            if (hasLocation)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.open_in_full, color: Colors.white, size: 12),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Tap to view',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLocationMapDialog(BuildContext context, bool isDark) {
+    final meal = widget.product;
+    final location = LatLng(
+      meal.restaurant.latitude!,
+      meal.restaurant.longitude!,
+    );
+    
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: _LocationMapViewer(
+          location: location,
+          restaurantName: meal.restaurant.name,
+          address: meal.restaurant.addressText,
+          isDark: isDark,
+        ),
+      ),
+    );
+  }
 }
+
+// View-only map viewer widget (reused from meal_detail_new.dart)
+class _LocationMapViewer extends StatefulWidget {
+  final LatLng location;
+  final String restaurantName;
+  final String? address;
+  final bool isDark;
+
+  const _LocationMapViewer({
+    required this.location,
+    required this.restaurantName,
+    this.address,
+    required this.isDark,
+  });
+
+  @override
+  State<_LocationMapViewer> createState() => _LocationMapViewerState();
+}
+
+class _LocationMapViewerState extends State<_LocationMapViewer> {
+  final MapController _mapController = MapController();
+  final TextEditingController _searchController = TextEditingController();
+  List<Map<String, dynamic>> _searchResults = [];
+  bool _isSearching = false;
+  LatLng? _searchedLocation;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _searchLocation(String query) async {
+    if (query.trim().isEmpty) {
+      setState(() {
+        _searchResults = [];
+        _isSearching = false;
+      });
+      return;
+    }
+
+    setState(() => _isSearching = true);
+
+    try {
+      final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/search?'
+        'q=${Uri.encodeComponent(query)}&'
+        'format=json&'
+        'limit=5&'
+        'addressdetails=1',
+      );
+
+      final response = await http.get(
+        url,
+        headers: {'User-Agent': 'KathirApp/1.0'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> results = json.decode(response.body);
+        setState(() {
+          _searchResults = results.map((r) => {
+            'lat': double.parse(r['lat']),
+            'lon': double.parse(r['lon']),
+            'display_name': r['display_name'],
+          }).toList();
+          _isSearching = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Search error: $e');
+      setState(() {
+        _searchResults = [];
+        _isSearching = false;
+      });
+    }
+  }
+
+  void _moveToLocation(LatLng location) {
+    setState(() {
+      _searchedLocation = location;
+      _searchResults = [];
+      _searchController.clear();
+    });
+    _mapController.move(location, 15.0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = widget.isDark ? const Color(0xFF102216) : Colors.white;
+    final textColor = widget.isDark ? Colors.white : const Color(0xFF0D1B12);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: widget.isDark 
+                      ? const Color(0xFF2D4A3A) 
+                      : const Color(0xFFE2E8F0),
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Pickup Location',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.restaurantName,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          color: widget.isDark 
+                              ? const Color(0xFF94A3B8) 
+                              : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(
+                    Icons.close,
+                    color: textColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                if (value.length > 2) {
+                  _searchLocation(value);
+                } else {
+                  setState(() {
+                    _searchResults = [];
+                    _isSearching = false;
+                  });
+                }
+              },
+              decoration: InputDecoration(
+                hintText: 'Search location...',
+                hintStyle: GoogleFonts.plusJakartaSans(
+                  color: Colors.grey[400],
+                ),
+                prefixIcon: const Icon(Icons.search, color: AppColors.primary),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.grey),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchResults = [];
+                            _isSearching = false;
+                          });
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: widget.isDark 
+                    ? const Color(0xFF1A2E22) 
+                    : const Color(0xFFF3F4F6),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: AppColors.primary,
+                    width: 2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Search results
+          if (_isSearching)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.primary,
+                ),
+              ),
+            )
+          else if (_searchResults.isNotEmpty)
+            Container(
+              constraints: const BoxConstraints(maxHeight: 200),
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: widget.isDark 
+                    ? const Color(0xFF1A2E22) 
+                    : const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: widget.isDark 
+                      ? const Color(0xFF2D4A3A) 
+                      : const Color(0xFFE5E7EB),
+                ),
+              ),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: _searchResults.length,
+                separatorBuilder: (_, __) => Divider(
+                  height: 1,
+                  color: widget.isDark 
+                      ? const Color(0xFF2D4A3A) 
+                      : const Color(0xFFE5E7EB),
+                ),
+                itemBuilder: (context, index) {
+                  final result = _searchResults[index];
+                  return ListTile(
+                    leading: const Icon(
+                      Icons.location_on,
+                      color: AppColors.primary,
+                    ),
+                    title: Text(
+                      result['display_name'],
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        color: textColor,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    onTap: () {
+                      _moveToLocation(
+                        LatLng(result['lat'], result['lon']),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+
+          const SizedBox(height: 16),
+
+          // Map
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter: widget.location,
+                    initialZoom: 15.0,
+                    minZoom: 5.0,
+                    maxZoom: 18.0,
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: widget.isDark
+                          ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+                          : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      subdomains: const ['a', 'b', 'c'],
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        // Restaurant location marker
+                        Marker(
+                          point: widget.location,
+                          width: 50,
+                          height: 50,
+                          child: Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: widget.isDark 
+                                      ? const Color(0xFF1A2E22) 
+                                      : Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.restaurant,
+                                  color: AppColors.primary,
+                                  size: 24,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Searched location marker (if any)
+                        if (_searchedLocation != null)
+                          Marker(
+                            point: _searchedLocation!,
+                            width: 40,
+                            height: 40,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.blue,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.location_on,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Address info
+          if (widget.address != null)
+            Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: widget.isDark 
+                    ? const Color(0xFF1A2E22) 
+                    : const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: widget.isDark 
+                      ? const Color(0xFF2D4A3A) 
+                      : const Color(0xFFE5E7EB),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.location_on,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.address!,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        color: textColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // Reset button
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  setState(() => _searchedLocation = null);
+                  _mapController.move(widget.location, 15.0);
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  side: const BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.my_location, size: 20),
+                label: Text(
+                  'Show Restaurant Location',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../user_home/data/models/meal_model.dart';
 import '../../../user_home/domain/entities/meal.dart';
@@ -24,7 +25,9 @@ class NgoMapViewModel extends ChangeNotifier {
   
   // Meals with locations
   List<MealLocation> mealMarkers = [];
+  List<MealLocation> filteredMealMarkers = [];
   Meal? selectedMeal;
+  double currentRadius = 10.0; // km
 
   Future<void> loadMeals() async {
     isLoading = true;
@@ -61,6 +64,8 @@ class NgoMapViewModel extends ChangeNotifier {
               profile_id,
               restaurant_name,
               rating,
+              latitude,
+              longitude,
               address_text
             )
           ''')
@@ -80,6 +85,9 @@ class NgoMapViewModel extends ChangeNotifier {
           'logo_url': '',
           'verified': true,
           'reviews_count': 0,
+          'latitude': restaurantData['latitude'],
+          'longitude': restaurantData['longitude'],
+          'address_text': restaurantData['address_text'],
         };
         // Map database fields to model fields
         json['donation_price'] = json['discounted_price'];
@@ -88,21 +96,17 @@ class NgoMapViewModel extends ChangeNotifier {
         return MealModel.fromJson(json);
       }).toList();
 
-      // Generate random locations around Cairo for demo
-      // In production, you'd get actual restaurant coordinates
-      mealMarkers = meals.asMap().entries.map((entry) {
-        final index = entry.key;
-        final meal = entry.value;
-        
-        // Generate locations in a radius around Cairo
-        final latOffset = (index % 5 - 2) * 0.02;
-        final lngOffset = ((index ~/ 5) % 5 - 2) * 0.02;
-        
+      // Use actual restaurant coordinates from database
+      mealMarkers = meals.where((meal) {
+        // Filter out meals without valid coordinates
+        return meal.restaurant.latitude != null && 
+               meal.restaurant.longitude != null;
+      }).map((meal) {
         return MealLocation(
           meal: meal,
           location: LatLng(
-            currentLocation.latitude + latOffset,
-            currentLocation.longitude + lngOffset,
+            meal.restaurant.latitude!,
+            meal.restaurant.longitude!,
           ),
         );
       }).toList();
@@ -110,6 +114,9 @@ class NgoMapViewModel extends ChangeNotifier {
       if (mealMarkers.isNotEmpty) {
         selectedMeal = mealMarkers.first.meal;
       }
+
+      // Apply initial radius filter
+      filterByRadius(currentRadius);
     } catch (e) {
       debugPrint('Error loading meals: $e');
       error = e.toString();
@@ -117,6 +124,23 @@ class NgoMapViewModel extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  void filterByRadius(double radiusKm) {
+    currentRadius = radiusKm;
+    
+    filteredMealMarkers = mealMarkers.where((mealLocation) {
+      final distance = Geolocator.distanceBetween(
+        currentLocation.latitude,
+        currentLocation.longitude,
+        mealLocation.location.latitude,
+        mealLocation.location.longitude,
+      ) / 1000; // Convert to km
+
+      return distance <= radiusKm;
+    }).toList();
+
+    notifyListeners();
   }
 
   void selectMeal(Meal meal) {
@@ -127,6 +151,14 @@ class NgoMapViewModel extends ChangeNotifier {
   void clearSelection() {
     selectedMeal = null;
     notifyListeners();
+  }
+
+  void updateLocation(LatLng newLocation, String newLocationName) {
+    currentLocation = newLocation;
+    locationName = newLocationName;
+    notifyListeners();
+    // Reload meals and apply radius filter
+    loadMeals();
   }
 
   Future<void> claimMeal(Meal meal, BuildContext context) async {

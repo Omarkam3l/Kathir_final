@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../authentication/presentation/blocs/auth_provider.dart';
+import '../../../_shared/widgets/location_selector_widget.dart';
 import '../widgets/restaurant_bottom_nav.dart';
 import '../../data/services/rush_hour_service.dart';
 import '../../domain/entities/rush_hour_config.dart';
@@ -463,6 +464,12 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                           _buildRushHourCard(surface, isDark),
                           const SizedBox(height: 24),
 
+                          // Location
+                          _buildSectionTitle('Location'),
+                          const SizedBox(height: 12),
+                          _buildLocationCard(surface, isDark),
+                          const SizedBox(height: 24),
+
                           // Leaderboard
                           _buildSectionTitle('Leaderboard'),
                           const SizedBox(height: 12),
@@ -897,5 +904,127 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildLocationCard(Color surface, bool isDark) {
+    final hasLocation = _restaurantData?['latitude'] != null &&
+        _restaurantData?['longitude'] != null;
+    final addressText = _restaurantData?['address_text'] as String?;
+
+    return InkWell(
+      onTap: () => _showLocationSelector(),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: hasLocation
+                ? AppColors.primaryGreen.withValues(alpha: 0.3)
+                : (isDark ? Colors.grey[800]! : Colors.grey[200]!),
+            width: hasLocation ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: hasLocation
+                    ? AppColors.primaryGreen.withValues(alpha: 0.1)
+                    : (isDark ? Colors.grey[800] : Colors.grey[200]),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.location_on,
+                color: hasLocation
+                    ? AppColors.primaryGreen
+                    : (isDark ? Colors.grey[400] : Colors.grey[600]),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Restaurant Location',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    hasLocation
+                        ? addressText ?? 'Location set'
+                        : 'Set your restaurant location',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: isDark ? Colors.grey[600] : Colors.grey[400],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showLocationSelector() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LocationSelectorWidget(
+          initialLatitude: _restaurantData?['latitude'] as double?,
+          initialLongitude: _restaurantData?['longitude'] as double?,
+          initialAddress: _restaurantData?['address_text'] as String?,
+          onLocationSelected: _saveLocation,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveLocation(double lat, double lng, String address) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      await _supabase.from('restaurants').update({
+        'latitude': lat,
+        'longitude': lng,
+        'address_text': address,
+      }).eq('profile_id', userId);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Location updated successfully'),
+            backgroundColor: AppColors.primaryGreen,
+          ),
+        );
+        _loadRestaurantData();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating location: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }

@@ -136,17 +136,21 @@ class NgoMapMealCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                    color: meal.donationPrice == 0 
+                        ? Colors.green.withValues(alpha: 0.1)
+                        : AppColors.primaryGreen.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    meal.donationPrice > 0 
-                        ? 'EGP ${meal.donationPrice.toStringAsFixed(0)}' 
-                        : 'Free',
-                    style: const TextStyle(
+                    meal.donationPrice == 0 
+                        ? 'FREE' 
+                        : 'EGP ${meal.donationPrice.toStringAsFixed(0)}',
+                    style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primaryGreen,
+                      color: meal.donationPrice == 0 
+                          ? Colors.green[700]
+                          : AppColors.primaryGreen,
                     ),
                   ),
                 ),

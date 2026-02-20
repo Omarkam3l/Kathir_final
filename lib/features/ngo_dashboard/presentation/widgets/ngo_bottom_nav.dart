@@ -12,8 +12,8 @@ import '../../../../core/utils/app_colors.dart';
 /// Navigation items:
 /// - Home: /ngo/home (center, elevated)
 /// - Orders: /ngo/orders (left)
-/// - Meals: /ngo/meals (left) - NEW: Replaced Cart
-/// - Chats: /ngo/chats (right)
+/// - Meals: /ngo/meals (left)
+/// - Cart: /ngo/cart (right) - NEW: Replaced Chats
 /// - Profile: /ngo/profile (right)
 class NgoBottomNav extends StatelessWidget {
   final int currentIndex;
@@ -35,7 +35,7 @@ class NgoBottomNav extends StatelessWidget {
         context.go('/ngo/meals');
         break;
       case 3:
-        context.go('/ngo/chats');
+        context.go('/ngo/cart');
         break;
       case 4:
         context.go('/ngo/profile');
@@ -102,13 +102,13 @@ class NgoBottomNav extends StatelessWidget {
                 // Spacer for center button
                 SizedBox(width: screenWidth * 0.2),
                 
-                // Chats
+                // Cart (Replaced Chats)
                 Flexible(
                   child: _buildNavItem(
                     context: context,
-                    icon: Icons.chat_bubble_outline,
-                    activeIcon: Icons.chat_bubble,
-                    label: 'Chats',
+                    icon: Icons.shopping_cart_outlined,
+                    activeIcon: Icons.shopping_cart,
+                    label: 'Cart',
                     index: 3,
                     isActive: currentIndex == 3,
                     color: inactiveColor,
