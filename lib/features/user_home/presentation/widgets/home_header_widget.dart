@@ -97,6 +97,37 @@ class HomeHeaderWidget extends StatelessWidget {
               ],
             ),
           ),
+          // Kathir Agent AI button
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => context.push('/kathir-agent'),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  gradient: AppColors.primaryGradient,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.smart_toy,
+                    size: 22,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
           // Notification button
           Material(
             color: Colors.transparent,

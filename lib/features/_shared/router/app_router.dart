@@ -54,6 +54,7 @@ import '../../user_home/routes.dart';
 import '../../profile/routes.dart';
 import '../../authentication/routes.dart';
 import '../../boss_chat/routes.dart';
+import '../../kathir_agent/presentation/screens/kathir_agent_screen.dart';
 
 class RouteNames {
   static const onboarding = 'onboarding';
@@ -553,6 +554,11 @@ class AppRouter {
       ...authRoutes(),
       ...ordersRoutes(),
       ...bossChatRoutes(),
+      // Kathir Agent Route
+      GoRoute(
+        path: '/kathir-agent',
+        builder: (context, state) => KathirAgentScreen(),
+      ),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(

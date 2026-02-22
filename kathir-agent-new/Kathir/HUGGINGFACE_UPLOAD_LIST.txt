@@ -1,0 +1,81 @@
+FILES TO UPLOAD TO HUGGING FACE SPACES (API ONLY)
+==================================================
+
+ROOT LEVEL FILES:
+-----------------
+✓ Dockerfile
+✓ requirements.txt
+✓ main.py
+✓ app.py
+✓ .dockerignore
+
+FOLDERS TO UPLOAD:
+------------------
+✓ src/
+  ├── api/
+  │   ├── __init__.py
+  │   ├── routes_agent.py
+  │   ├── routes_cart.py
+  │   ├── routes_favorites.py
+  │   ├── routes_health.py
+  │   └── routes_meals.py
+  ├── tools/
+  │   ├── __init__.py
+  │   ├── budget.py
+  │   ├── cart.py
+  │   ├── favorites.py
+  │   └── meals.py
+  ├── utils/
+  │   ├── __init__.py
+  │   ├── auth.py
+  │   ├── db_client.py
+  │   ├── embeddings.py
+  │   ├── filters.py
+  │   ├── formatters.py
+  │   ├── nutrition.py
+  │   └── time_utils.py
+  ├── __init__.py
+  ├── boss_agent.py
+  └── prompts.py
+
+DO NOT UPLOAD:
+--------------
+✗ .env (contains secrets - use Space secrets instead)
+✗ .git/
+✗ .vscode/
+✗ .kiro/
+✗ __pycache__/
+✗ tests/
+✗ docs/
+✗ static/ (removed - API only)
+✗ *.md files (except README.md if you want)
+✗ .postman.json
+✗ start_ui.bat
+✗ docker-compose.yml (optional, for local testing only)
+
+ENVIRONMENT VARIABLES TO SET IN SPACE SECRETS:
+----------------------------------------------
+OPENROUTER_API_KEY=sk-or-v1-...
+HF_TOKEN=hf_...
+SUPABASE_URL=https://....supabase.co
+SUPABASE_KEY=eyJhbGci...
+
+DEPLOYMENT URL:
+---------------
+After deployment, your API will be available at:
+https://YOUR_USERNAME-boss-ai-api.hf.space
+
+ENDPOINTS:
+----------
+/ - API Root (JSON response with endpoints)
+/docs - Interactive API Documentation
+/redoc - Alternative API Documentation
+/health - Health Check
+/ready - Readiness Check (includes DB connectivity)
+/agent/chat - Agent Chat Endpoint (POST)
+/agent/info - Agent Information (GET)
+/meals/search - Meal Search (GET)
+/cart/ - Get Cart (GET)
+/cart/add - Add to Cart (POST)
+/cart/build - Build Budget Cart (POST)
+/favorites/search - Favorites Search (GET)
