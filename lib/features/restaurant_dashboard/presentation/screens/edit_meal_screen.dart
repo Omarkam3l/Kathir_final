@@ -8,7 +8,6 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../../core/utils/auth_logger.dart';
 import '../widgets/image_upload_widget.dart';
-import '../widgets/restaurant_bottom_nav.dart';
 
 /// Screen to edit an existing meal
 class EditMealScreen extends StatefulWidget {
@@ -406,31 +405,6 @@ class _EditMealScreenState extends State<EditMealScreen> {
                 ),
               ),
             ),
-      bottomNavigationBar: RestaurantBottomNav(
-        currentIndex: 0,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              context.go('/restaurant-dashboard');
-              break;
-            case 1:
-              context.go('/restaurant-dashboard/orders');
-              break;
-            case 2:
-              context.go('/restaurant-dashboard/meals');
-              break;
-            case 3:
-              // TODO: Implement chats
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Chats coming soon')),
-              );
-              break;
-            case 4:
-              context.go('/restaurant-dashboard/profile');
-              break;
-          }
-        },
-      ),
     );
   }
 

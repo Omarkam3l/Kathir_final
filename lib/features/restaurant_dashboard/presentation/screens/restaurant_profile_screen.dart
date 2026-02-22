@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -99,28 +100,50 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
             ),
           );
 
-      // Get public URL
+      // Get public URL with timestamp to bust cache
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
       final imageUrl = _supabase.storage
           .from('profile-images')
           .getPublicUrl(filePath);
+      
+      // Add cache-busting parameter
+      final imageUrlWithTimestamp = '$imageUrl?t=$timestamp';
 
       // Update profile with avatar URL
       await _supabase
           .from('profiles')
-          .update({'avatar_url': imageUrl})
+          .update({'avatar_url': imageUrlWithTimestamp})
           .eq('id', userId);
+
+      // Also update restaurants table if it has an image field
+      try {
+        await _supabase
+            .from('restaurants')
+            .update({'restaurant_image': imageUrlWithTimestamp})
+            .eq('profile_id', userId);
+      } catch (e) {
+        // Ignore if restaurant_image column doesn't exist
+        debugPrint('Restaurant image update skipped: $e');
+      }
 
       setState(() => _isUploadingImage = false);
 
       if (mounted) {
+        // Refresh auth provider to get new avatar
+        await Provider.of<AuthProvider>(context, listen: false).refreshUser();
+        
+        // Reload restaurant data
+        await _loadRestaurantData();
+        
+        // Force rebuild to show new image
+        setState(() {});
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profile picture updated successfully'),
             backgroundColor: AppColors.primaryGreen,
           ),
         );
-        // Refresh auth provider
-        Provider.of<AuthProvider>(context, listen: false).refreshUser();
       }
     } catch (e) {
       setState(() => _isUploadingImage = false);
@@ -337,8 +360,25 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                                       ? Image.network(
                                           user!.avatarUrl!,
                                           fit: BoxFit.cover,
+                                          // Add cache headers to force refresh
+                                          headers: const {
+                                            'Cache-Control': 'no-cache',
+                                          },
+                                          // Add unique key to force rebuild
+                                          key: ValueKey(user.avatarUrl),
                                           errorBuilder: (context, error, stackTrace) =>
                                               _buildDefaultAvatar(),
+                                          loadingBuilder: (context, child, loadingProgress) {
+                                            if (loadingProgress == null) return child;
+                                            return Center(
+                                              child: CircularProgressIndicator(
+                                                value: loadingProgress.expectedTotalBytes != null
+                                                    ? loadingProgress.cumulativeBytesLoaded /
+                                                        loadingProgress.expectedTotalBytes!
+                                                    : null,
+                                              ),
+                                            );
+                                          },
                                         )
                                       : _buildDefaultAvatar(),
                                 ),
