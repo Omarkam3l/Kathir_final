@@ -240,28 +240,44 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
   Widget _buildMealsList() {
+    final offers = _visibleOffers;
+    final pages = <List<MealOffer>>[];
+    for (var i = 0; i < offers.length; i += 4) {
+      pages.add(offers.sublist(i, i + 4 > offers.length ? offers.length : i + 4));
+    }
+
     return SliverToBoxAdapter(
       child: SizedBox(
         height: 520,
-        child: ListView.separated(
-          padding: const EdgeInsets.fromLTRB(14, 24, 14, 12),
-          scrollDirection: Axis.horizontal,
-          itemCount: _visibleOffers.length,
-          separatorBuilder: (_, __) => const SizedBox(width: AppDimensions.paddingLarge),
-          itemBuilder: (ctx, i) {
-            final offer = _visibleOffers[i];
-            return MealCardCompact(
-              offer: offer,
-              isSelected: false,
-              onTap: () => _onCardTap(offer),
-              index: i,
+        child: PageView.builder(
+          itemCount: pages.length,
+          controller: PageController(viewportFraction: 1.0),
+          itemBuilder: (ctx, pageIndex) {
+            final chunk = pages[pageIndex];
+            final width = MediaQuery.of(ctx).size.width;
+            const horizontalPadding = 28.0;
+            final cardWidth = (width - horizontalPadding) / 4;
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(14, 24, 14, 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: List.generate(chunk.length, (i) {
+                  final offer = chunk[i];
+                  return SizedBox(
+                    width: cardWidth,
+                    child: MealCardCompact(
+                      offer: offer,
+                      isSelected: false,
+                      onTap: () => _onCardTap(offer),
+                      index: i,
+                      widthOverride: cardWidth,
+                    ),
+                  );
+                }),
+              ),
             );
           },
-=======
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
-            ],
-          ),
->>>>>>> 56f87e16bb79ac3fb1fe1ae2f0ea37bbc4ec224f
         ),
       ),
     );
