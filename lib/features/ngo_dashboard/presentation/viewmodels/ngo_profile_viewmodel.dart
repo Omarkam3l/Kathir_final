@@ -194,18 +194,21 @@ class NgoProfileViewModel extends ChangeNotifier {
         ),
       );
 
-      // Get public URL
+      // Get public URL with timestamp to bust cache
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
       final imageUrl = _supabase.storage.from('profile-images').getPublicUrl(filePath);
-      debugPrint('Image uploaded successfully: $imageUrl');
+      final imageUrlWithTimestamp = '$imageUrl?t=$timestamp';
+      
+      debugPrint('Image uploaded successfully: $imageUrlWithTimestamp');
 
       // Update profiles table with avatar_url column
       await _supabase.from('profiles').update({
-        'avatar_url': imageUrl,
+        'avatar_url': imageUrlWithTimestamp,
       }).eq('id', userId);
 
       debugPrint('Profile table updated with new image URL in avatar_url column');
 
-      profileImageUrl = imageUrl;
+      profileImageUrl = imageUrlWithTimestamp;
       isUpdating = false;
       notifyListeners();
       return true;

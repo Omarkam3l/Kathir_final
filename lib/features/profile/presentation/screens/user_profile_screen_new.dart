@@ -87,28 +87,36 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
             ),
           );
 
-      // Get public URL
+      // Get public URL with timestamp to bust cache
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
       final imageUrl = _supabase.storage
           .from('profile-images')
           .getPublicUrl(filePath);
+      
+      // Add cache-busting parameter
+      final imageUrlWithTimestamp = '$imageUrl?t=$timestamp';
 
       // Update profile with avatar URL
       await _supabase
           .from('profiles')
-          .update({'avatar_url': imageUrl})
+          .update({'avatar_url': imageUrlWithTimestamp})
           .eq('id', userId);
 
       setState(() => _isUploadingImage = false);
 
       if (mounted) {
+        // Refresh auth provider to get new avatar
+        await Provider.of<AuthProvider>(context, listen: false).refreshUser();
+        
+        // Force rebuild to show new image
+        setState(() {});
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profile picture updated successfully'),
             backgroundColor: AppColors.primary,
           ),
         );
-        // Refresh auth provider
-        Provider.of<AuthProvider>(context, listen: false).refreshUser();
       }
     } catch (e) {
       setState(() => _isUploadingImage = false);
@@ -275,8 +283,26 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
                       ? Image.network(
                           avatarUrl,
                           fit: BoxFit.cover,
+                          // Add cache headers to force refresh
+                          headers: const {
+                            'Cache-Control': 'no-cache',
+                          },
+                          // Add unique key to force rebuild
+                          key: ValueKey(avatarUrl),
                           errorBuilder: (context, error, stackTrace) {
                             return _buildDefaultAvatar(user.name);
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                                color: AppColors.primary,
+                              ),
+                            );
                           },
                         )
                       : _buildDefaultAvatar(user.name),

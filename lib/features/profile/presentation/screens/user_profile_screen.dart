@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../authentication/presentation/blocs/auth_provider.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:go_router/go_router.dart';
@@ -16,6 +18,7 @@ class UserProfileScreen extends StatefulWidget {
 }
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
+  final _supabase = Supabase.instance.client;
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -23,6 +26,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   final _addressController = TextEditingController();
   bool _isEditing = false;
   bool _isLoading = false;
+  bool _isUploadingImage = false;
 
   @override
   void didChangeDependencies() {
@@ -117,6 +121,101 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           behavior: SnackBarBehavior.floating,
         ),
       );
+    }
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+      );
+
+      if (image == null) return;
+
+      setState(() => _isUploadingImage = true);
+
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('User not authenticated');
+
+      // Read image as bytes (works on all platforms including web)
+      final bytes = await image.readAsBytes();
+      final fileExt = image.name.split('.').last.toLowerCase();
+      final fileName = 'avatar.$fileExt';
+      final filePath = '$userId/$fileName';
+
+      // Upload using uploadBinary (works on web)
+      await _supabase.storage
+          .from('profile-images')
+          .uploadBinary(
+            filePath,
+            bytes,
+            fileOptions: FileOptions(
+              upsert: true,
+              contentType: _getContentType(fileExt),
+            ),
+          );
+
+      // Get public URL with timestamp to bust cache
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final imageUrl = _supabase.storage
+          .from('profile-images')
+          .getPublicUrl(filePath);
+      
+      // Add cache-busting parameter
+      final imageUrlWithTimestamp = '$imageUrl?t=$timestamp';
+
+      // Update profile with avatar URL
+      await _supabase
+          .from('profiles')
+          .update({'avatar_url': imageUrlWithTimestamp})
+          .eq('id', userId);
+
+      setState(() => _isUploadingImage = false);
+
+      if (mounted) {
+        // Refresh auth provider to get new avatar
+        await Provider.of<AuthProvider>(context, listen: false).refreshUser();
+        
+        // Force rebuild to show new image
+        setState(() {});
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile picture updated successfully'),
+            backgroundColor: AppColors.primaryAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() => _isUploadingImage = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error uploading image: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  String _getContentType(String extension) {
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      default:
+        return 'image/jpeg';
     }
   }
 
@@ -281,27 +380,104 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               ),
               child: Row(
                 children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                color: Theme.of(context).cardColor.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        width: 3,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
+                  Stack(
+                    children: [
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            width: 3,
+                          ),
+                        ),
+                        child: ClipOval(
+                          child: user.avatarUrl != null
+                              ? Image.network(
+                                  user.avatarUrl!,
+                                  fit: BoxFit.cover,
+                                  // Add cache headers to force refresh
+                                  headers: const {
+                                    'Cache-Control': 'no-cache',
+                                  },
+                                  // Add unique key to force rebuild
+                                  key: ValueKey(user.avatarUrl),
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Center(
+                                        child: Text(
+                                          user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Center(
+                                      child: CircularProgressIndicator(
+                                        value: loadingProgress.expectedTotalBytes != null
+                                            ? loadingProgress.cumulativeBytesLoaded /
+                                                loadingProgress.expectedTotalBytes!
+                                            : null,
+                                        color: Colors.white,
+                                      ),
+                                    );
+                                  },
+                                )
+                              : Center(
+                                  child: Text(
+                                    user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
                         ),
                       ),
-                    ),
+                      if (_isUploadingImage)
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.black.withValues(alpha: 0.5),
+                            ),
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: GestureDetector(
+                          onTap: _isUploadingImage ? null : _pickAndUploadImage,
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.primaryAccent,
+                                width: 2,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              size: 16,
+                              color: AppColors.primaryAccent,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(width: 20),
                   Expanded(

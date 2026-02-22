@@ -75,8 +75,25 @@ class _NgoProfileScreenState extends State<NgoProfileScreen> {
                                     ? Image.network(
                                         viewModel.profileImageUrl!,
                                         fit: BoxFit.cover,
+                                        // Add cache headers to force refresh
+                                        headers: const {
+                                          'Cache-Control': 'no-cache',
+                                        },
+                                        // Add unique key to force rebuild
+                                        key: ValueKey(viewModel.profileImageUrl),
                                         errorBuilder: (context, error, stackTrace) =>
                                             _buildDefaultAvatar(),
+                                        loadingBuilder: (context, child, loadingProgress) {
+                                          if (loadingProgress == null) return child;
+                                          return Center(
+                                            child: CircularProgressIndicator(
+                                              value: loadingProgress.expectedTotalBytes != null
+                                                  ? loadingProgress.cumulativeBytesLoaded /
+                                                      loadingProgress.expectedTotalBytes!
+                                                  : null,
+                                            ),
+                                          );
+                                        },
                                       )
                                     : _buildDefaultAvatar(),
                               ),
@@ -103,20 +120,28 @@ class _NgoProfileScreenState extends State<NgoProfileScreen> {
                                     ? null
                                     : () async {
                                         final success = await viewModel.updateProfileImage();
-                                        if (mounted && success) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                              content: Text('Profile photo updated successfully'),
-                                              backgroundColor: AppColors.primaryGreen,
-                                            ),
-                                          );
-                                        } else if (mounted && !success && viewModel.error != null) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text('Failed to update photo: ${viewModel.error}'),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
+                                        if (mounted) {
+                                          // Refresh auth provider to get new avatar
+                                          await Provider.of<AuthProvider>(context, listen: false).refreshUser();
+                                          
+                                          // Reload profile data
+                                          await viewModel.loadProfile();
+                                          
+                                          if (success) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('Profile photo updated successfully'),
+                                                backgroundColor: AppColors.primaryGreen,
+                                              ),
+                                            );
+                                          } else if (viewModel.error != null) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text('Failed to update photo: ${viewModel.error}'),
+                                                backgroundColor: Colors.red,
+                                              ),
+                                            );
+                                          }
                                         }
                                       },
                                 child: Container(
