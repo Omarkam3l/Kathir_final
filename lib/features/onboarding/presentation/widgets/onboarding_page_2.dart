@@ -221,28 +221,33 @@ class OnboardingPage2 extends StatelessWidget {
                   children: [
                     const OnboardingPaginationDots(
                         pageCount: 3, currentPage: 1),
-                    Material(
-                      color: nextBtnBg,
-                      borderRadius: BorderRadius.circular(9999),
-                      child: InkWell(
-                        onTap: onNext,
-                        borderRadius: BorderRadius.circular(9999),
-                        child: Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.3),
-                                blurRadius: 12,
-                              ),
-                            ],
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.4),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
                           ),
-                          child: const Icon(
-                            Icons.arrow_forward,
-                            color: nextBtnIcon,
-                            size: 28,
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(9999),
+                        child: InkWell(
+                          onTap: onNext,
+                          borderRadius: BorderRadius.circular(9999),
+                          child: Container(
+                            width: 64,
+                            height: 64,
+                            alignment: Alignment.center,
+                            child: const Icon(
+                              Icons.arrow_forward,
+                              color: nextBtnIcon,
+                              size: 28,
+                            ),
                           ),
                         ),
                       ),
