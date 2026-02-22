@@ -21,7 +21,7 @@ https://huggingface.co/spaces/omark3405/boss-restaurant-chat/settings
 
 2. **HF_TOKEN**
    - Name: `HF_TOKEN`
-   - Value: `hf_token_value` (or your token)
+   - Value: Your Hugging Face token (get from https://huggingface.co/settings/tokens)
 
 3. **SUPABASE_URL**
    - Name: `SUPABASE_URL`
