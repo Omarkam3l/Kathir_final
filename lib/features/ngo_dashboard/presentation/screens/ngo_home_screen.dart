@@ -4,9 +4,6 @@ import 'package:provider/provider.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../authentication/presentation/blocs/auth_provider.dart';
 import '../viewmodels/ngo_home_viewmodel.dart';
-import '../viewmodels/ngo_cart_viewmodel.dart';
-import '../widgets/ngo_meal_card.dart';
-import '../widgets/ngo_urgent_card.dart';
 import '../widgets/ngo_stat_card.dart';
 import '../widgets/ngo_bottom_nav.dart';
 
@@ -80,34 +77,17 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
                   _buildSearchBar(isDark, viewModel),
                   _buildStatsBar(isDark, viewModel),
                   _buildFilterChips(isDark, viewModel),
-                  if (viewModel.expiringMeals.isNotEmpty)
-                    _buildExpiringSoonSection(isDark, viewModel),
-                  _buildNearbySurplusHeader(isDark),
-                  viewModel.isLoading
-                      ? const SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.all(32),
-                            child: Center(child: CircularProgressIndicator()),
-                          ),
-                        )
-                      : viewModel.filteredMeals.isEmpty
-                          ? _buildEmptyState()
-                          : SliverPadding(
-                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                              sliver: SliverList(
-                                delegate: SliverChildBuilderDelegate(
-                                  (context, index) => NgoMealCard(
-                                    meal: viewModel.filteredMeals[index],
-                                    isDark: isDark,
-                                    onClaim: () => viewModel.claimMeal(
-                                      viewModel.filteredMeals[index],
-                                      context,
-                                    ),
-                                  ),
-                                  childCount: viewModel.filteredMeals.length,
-                                ),
-                              ),
-                            ),
+                  
+                  // Top Rated Restaurants Section
+                  _buildTopRatedRestaurantsSection(isDark, viewModel),
+                  
+                  // Free Meals Section (Donated meals only)
+                  _buildFreeMealsSection(isDark, viewModel),
+                  
+                  // Top Meals Section (Sorted by price)
+                  _buildTopMealsSection(isDark, viewModel),
+                  
+                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
                 ],
               ),
             );
@@ -131,48 +111,50 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on, size: 14, color: AppColors.primaryGreen),
-                        const SizedBox(width: 4),
-                        Text(
-                          'CURRENT LOCATION',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDark ? Colors.grey[400] : Colors.grey[600],
-                            letterSpacing: 0.5,
-                            fontWeight: FontWeight.w500,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on, size: 14, color: AppColors.primaryGreen),
+                          const SizedBox(width: 4),
+                          Text(
+                            'CURRENT LOCATION',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark ? Colors.grey[400] : Colors.grey[600],
+                              letterSpacing: 0.5,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          viewModel.currentLocation,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Colors.black,
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              viewModel.currentLocation,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : Colors.black,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                        const Icon(Icons.expand_more, size: 20),
-                      ],
-                    ),
-                  ],
+                          const Icon(Icons.expand_more, size: 20),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                Row(
-                  children: [
-                    _buildNotificationButton(isDark, viewModel),
-                    const SizedBox(width: 12),
-                    _buildMapButton(isDark),
-                  ],
-                ),
+                const SizedBox(width: 12),
+                _buildNotificationButton(isDark, viewModel),
               ],
             ),
             const SizedBox(height: 16),
@@ -199,10 +181,22 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
   }
 
   Widget _buildNotificationButton(bool isDark, NgoHomeViewModel viewModel) {
-    final cart = context.watch<NgoCartViewModel>();
-    
     return Row(
       children: [
+        // Chat button
+        GestureDetector(
+          onTap: () => context.go('/ngo/chats'),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1A2E22) : Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+            ),
+            child: const Icon(Icons.chat_bubble_outline, size: 20),
+          ),
+        ),
+        const SizedBox(width: 12),
         // Notification button
         GestureDetector(
           onTap: () => context.go('/ngo-notifications'),
@@ -237,66 +231,7 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
             ],
           ),
         ),
-        const SizedBox(width: 12),
-        // Cart button with badge
-        GestureDetector(
-          onTap: () => context.go('/ngo/cart'),
-          child: Stack(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1A2E22) : Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
-                ),
-                child: const Icon(Icons.shopping_cart_outlined, size: 20),
-              ),
-              if (cart.cartCount > 0)
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: AppColors.primaryGreen,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 18,
-                      minHeight: 18,
-                    ),
-                    child: Text(
-                      '${cart.cartCount}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
       ],
-    );
-  }
-
-  Widget _buildMapButton(bool isDark) {
-    return GestureDetector(
-      onTap: () => context.go('/ngo/map'),
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: isDark ? const Color(0xFF1A2E22) : Colors.white,
-          border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
-        ),
-        child: const Icon(Icons.map, color: AppColors.primaryGreen, size: 20),
-      ),
     );
   }
 
@@ -304,39 +239,81 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1A2E22) : Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
-          ),
-          child: Row(
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(12),
-                child: Icon(Icons.search, color: Colors.grey),
-              ),
-              Expanded(
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: viewModel.setSearchQuery,
-                  decoration: const InputDecoration(
-                    hintText: 'Search rice, bread, or nearby donors...',
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Expanded(
+              child: Container(
                 decoration: BoxDecoration(
-                  border: Border(
-                    left: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
-                  ),
+                  color: isDark ? const Color(0xFF1A2E22) : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                child: const Icon(Icons.tune, color: AppColors.primaryGreen),
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Icon(
+                        Icons.search,
+                        color: isDark ? Colors.grey[400] : Colors.grey[500],
+                        size: 24,
+                      ),
+                    ),
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: viewModel.setSearchQuery,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Search for meals...',
+                          hintStyle: TextStyle(
+                            fontSize: 16,
+                            color: isDark ? Colors.grey[500] : Colors.grey[400],
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryGreen.withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                onPressed: () => context.go('/ngo/map'),
+                icon: const Icon(
+                  Icons.map,
+                  color: Colors.white,
+                  size: 24,
+                ),
+                tooltip: 'Map View',
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -426,7 +403,309 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
     );
   }
 
-  Widget _buildExpiringSoonSection(bool isDark, NgoHomeViewModel viewModel) {
+  // Widget _buildExpiringSoonSection(bool isDark, NgoHomeViewModel viewModel) {
+  //   return SliverToBoxAdapter(
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Padding(
+  //           padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+  //           child: Row(
+  //             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //             children: [
+  //               Row(
+  //                 children: [
+  //                   const Icon(Icons.timer, color: Colors.orange, size: 20),
+  //                   const SizedBox(width: 8),
+  //                   Text(
+  //                     'Expiring Soon',
+  //                     style: TextStyle(
+  //                       fontSize: 16,
+  //                       fontWeight: FontWeight.bold,
+  //                       color: isDark ? Colors.white : Colors.black,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //               GestureDetector(
+  //                 onTap: () {
+  //                   // Show all expiring meals
+  //                   viewModel.setFilter('expiring');
+  //                 },
+  //                 child: const Text(
+  //                   'See All',
+  //                   style: TextStyle(
+  //                     color: AppColors.primaryGreen,
+  //                     fontWeight: FontWeight.bold,
+  //                     fontSize: 13,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         SizedBox(
+  //           height: 200,
+  //           child: ListView.builder(
+  //             scrollDirection: Axis.horizontal,
+  //             padding: const EdgeInsets.symmetric(horizontal: 16),
+  //             itemCount: viewModel.expiringMeals.take(5).length,
+  //             itemBuilder: (context, index) => NgoUrgentCard(
+  //               meal: viewModel.expiringMeals[index],
+  //               isDark: isDark,
+  //               onClaim: () => viewModel.claimMeal(
+  //                 viewModel.expiringMeals[index],
+  //                 context,
+  //               ),
+  //               onViewDetails: () {
+  //                 context.push('/ngo/meal/${viewModel.expiringMeals[index].id}', 
+  //                   extra: viewModel.expiringMeals[index]);
+  //               },
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  // Widget _buildNearbySurplusHeader(bool isDark) {
+  //   return SliverToBoxAdapter(
+  //     child: Padding(
+  //       padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+  //       child: Row(
+  //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //         children: [
+  //           Text(
+  //             'Nearby Surplus',
+  //             style: TextStyle(
+  //               fontSize: 16,
+  //               fontWeight: FontWeight.bold,
+  //               color: isDark ? Colors.white : Colors.black,
+  //             ),
+  //           ),
+  //           const Icon(Icons.sort, color: Colors.grey),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  // Widget _buildEmptyState() {
+  //   return SliverToBoxAdapter(
+  //     child: Padding(
+  //       padding: const EdgeInsets.all(32),
+  //       child: Center(
+  //         child: Column(
+  //           children: [
+  //             Icon(Icons.no_food, size: 64, color: Colors.grey[400]),
+  //             const SizedBox(height: 16),
+  //             Text(
+  //               'No surplus meals available',
+  //               style: TextStyle(color: Colors.grey[600]),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }
+
+  // ========== NEW SECTIONS ==========
+
+  Widget _buildTopRatedRestaurantsSection(bool isDark, NgoHomeViewModel viewModel) {
+    if (viewModel.isLoading) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+
+    // Get unique restaurants from meals and sort by rating
+    final restaurantMap = <String, Map<String, dynamic>>{};
+    for (final meal in viewModel.meals) {
+      final restaurantId = meal.restaurant.id;
+      if (!restaurantMap.containsKey(restaurantId)) {
+        restaurantMap[restaurantId] = {
+          'id': meal.restaurant.id,
+          'name': meal.restaurant.name,
+          'rating': meal.restaurant.rating,
+          'logo_url': meal.restaurant.logoUrl,
+          'verified': meal.restaurant.verified,
+        };
+      }
+    }
+
+    final restaurants = restaurantMap.values.toList()
+      ..sort((a, b) => (b['rating'] as double).compareTo(a['rating'] as double));
+
+    if (restaurants.isEmpty) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+
+    return SliverToBoxAdapter(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+            child: Text(
+              'Top Rated Restaurants',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black,
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 118,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: restaurants.take(6).length,
+              separatorBuilder: (_, __) => const SizedBox(width: 16),
+              itemBuilder: (_, i) {
+                final restaurant = restaurants[i];
+                return _buildRestaurantChip(restaurant, isDark, i == 0);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRestaurantChip(Map<String, dynamic> restaurant, bool isDark, bool isFeatured) {
+    final logoUrl = restaurant['logo_url'] as String?;
+    
+    return GestureDetector(
+      onTap: () => _showRestaurantMeals(context, restaurant),
+      child: SizedBox(
+        width: 72,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isDark ? const Color(0xFF1A2E22) : Colors.white,
+                border: Border.all(
+                  color: isFeatured ? AppColors.primaryGreen : (isDark ? Colors.grey[800]! : Colors.grey[200]!),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(2),
+              child: logoUrl != null && logoUrl.isNotEmpty
+                  ? ClipOval(
+                      child: Image.network(
+                        logoUrl,
+                        width: 68,
+                        height: 68,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => CircleAvatar(
+                          radius: 32,
+                          backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.12),
+                          child: Text(
+                            restaurant['name'].toString().isNotEmpty
+                                ? restaurant['name'].toString()[0].toUpperCase()
+                                : 'R',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primaryGreen,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : CircleAvatar(
+                      radius: 32,
+                      backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.12),
+                      child: Text(
+                        restaurant['name'].toString().isNotEmpty
+                            ? restaurant['name'].toString()[0].toUpperCase()
+                            : 'R',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryGreen,
+                        ),
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              restaurant['name'].toString(),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: isDark ? Colors.white : Colors.black,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1A2E22) : Colors.white,
+                borderRadius: BorderRadius.circular(999),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.star, size: 10, color: Colors.amber),
+                  const SizedBox(width: 2),
+                  Text(
+                    (restaurant['rating'] as double).toStringAsFixed(1),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFreeMealsSection(bool isDark, NgoHomeViewModel viewModel) {
+    if (viewModel.isLoading) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+
+    // Filter meals where donationPrice == 0 (actually donated by restaurant)
+    final freeMeals = viewModel.meals.where((m) => m.donationPrice == 0).toList();
+
+    if (freeMeals.isEmpty) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+
     return SliverToBoxAdapter(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -438,12 +717,12 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.timer, color: Colors.orange, size: 20),
+                    const Icon(Icons.volunteer_activism, color: AppColors.primaryGreen, size: 20),
                     const SizedBox(width: 8),
                     Text(
-                      'Expiring Soon',
+                      'Free Meals',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: isDark ? Colors.white : Colors.black,
                       ),
@@ -451,12 +730,9 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
                   ],
                 ),
                 GestureDetector(
-                  onTap: () {
-                    // Show all expiring meals
-                    viewModel.setFilter('expiring');
-                  },
+                  onTap: () => context.push('/ngo/meals/free', extra: freeMeals),
                   child: const Text(
-                    'See All',
+                    'View All',
                     style: TextStyle(
                       color: AppColors.primaryGreen,
                       fontWeight: FontWeight.bold,
@@ -469,22 +745,12 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
           ),
           SizedBox(
             height: 200,
-            child: ListView.builder(
+            child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: viewModel.expiringMeals.take(5).length,
-              itemBuilder: (context, index) => NgoUrgentCard(
-                meal: viewModel.expiringMeals[index],
-                isDark: isDark,
-                onClaim: () => viewModel.claimMeal(
-                  viewModel.expiringMeals[index],
-                  context,
-                ),
-                onViewDetails: () {
-                  context.push('/ngo/meal/${viewModel.expiringMeals[index].id}', 
-                    extra: viewModel.expiringMeals[index]);
-                },
-              ),
+              itemCount: freeMeals.take(6).length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (_, i) => _buildMealSliderCard(freeMeals[i], isDark, viewModel),
             ),
           ),
         ],
@@ -492,52 +758,232 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
     );
   }
 
-  Widget _buildNearbySurplusHeader(bool isDark) {
+  Widget _buildTopMealsSection(bool isDark, NgoHomeViewModel viewModel) {
+    if (viewModel.isLoading) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+
+    // Sort meals by price (lowest first, excluding free meals)
+    final paidMeals = viewModel.meals.where((m) => m.donationPrice > 0).toList()
+      ..sort((a, b) => a.donationPrice.compareTo(b.donationPrice));
+
+    if (paidMeals.isEmpty) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+
     return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.local_offer, color: AppColors.primaryGreen, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Top Meals',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+                GestureDetector(
+                  onTap: () => context.push('/ngo/meals/all', extra: paidMeals),
+                  child: const Text(
+                    'View All',
+                    style: TextStyle(
+                      color: AppColors.primaryGreen,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 200,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: paidMeals.take(6).length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (_, i) => _buildMealSliderCard(paidMeals[i], isDark, viewModel),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMealSliderCard(dynamic meal, bool isDark, NgoHomeViewModel viewModel) {
+    final discount = meal.originalPrice > 0
+        ? ((meal.originalPrice - meal.donationPrice) / meal.originalPrice)
+        : 0.0;
+    final badgeLabel = meal.donationPrice == 0
+        ? 'FREE'
+        : '${(discount * 100).round()}% OFF';
+
+    return GestureDetector(
+      onTap: () => context.push('/ngo/meal/${meal.id}', extra: meal),
+      child: Container(
+        width: 280,
+        height: 200,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            Text(
-              'Nearby Surplus',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.network(
+                meal.imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: AppColors.primaryGreen.withValues(alpha: 0.15),
+                  child: const Icon(
+                    Icons.restaurant,
+                    size: 48,
+                    color: AppColors.primaryGreen,
+                  ),
+                ),
               ),
             ),
-            const Icon(Icons.sort, color: Colors.grey),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.2),
+                    Colors.black.withValues(alpha: 0.8),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: meal.donationPrice == 0
+                          ? Colors.green
+                          : AppColors.primaryGreen,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      badgeLabel,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    meal.title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      height: 1.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.store, size: 14, color: Colors.white),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          meal.restaurant.name,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        meal.donationPrice == 0
+                            ? 'FREE'
+                            : 'EGP ${meal.donationPrice.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => viewModel.claimMeal(meal, context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'Add',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildEmptyState() {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Center(
-          child: Column(
-            children: [
-              Icon(Icons.no_food, size: 64, color: Colors.grey[400]),
-              const SizedBox(height: 16),
-              Text(
-                'No surplus meals available',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  void _showRestaurantMeals(BuildContext context, Map<String, dynamic> restaurant) {
+    final viewModel = context.read<NgoHomeViewModel>();
+    final restaurantMeals = viewModel.meals
+        .where((m) => m.restaurant.id == restaurant['id'])
+        .toList();
 
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
+    context.push('/ngo/restaurant/${restaurant['id']}', extra: {
+      'restaurant': restaurant,
+      'meals': restaurantMeals,
+    });
   }
 }

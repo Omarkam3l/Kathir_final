@@ -8,6 +8,9 @@ class RestaurantModel extends Restaurant {
     super.logoUrl,
     super.verified,
     super.reviewsCount,
+    super.latitude,
+    super.longitude,
+    super.addressText,
   });
 
   factory RestaurantModel.fromJson(Map<String, dynamic> json) {
@@ -18,6 +21,9 @@ class RestaurantModel extends Restaurant {
       logoUrl: json['logo_url'],
       verified: json['verified'] ?? false,
       reviewsCount: (json['reviews_count'] as num?)?.toInt() ?? 0,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      addressText: json['address_text'] as String?,
     );
   }
 
@@ -28,6 +34,8 @@ class RestaurantModel extends Restaurant {
         'logo_url': logoUrl,
         'verified': verified,
         'reviews_count': reviewsCount,
+        'latitude': latitude,
+        'longitude': longitude,
+        'address_text': addressText,
       };
 }
-

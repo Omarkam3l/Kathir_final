@@ -819,7 +819,10 @@ class _NgoNotificationsScreenState extends State<NgoNotificationsScreen> {
                   restaurants:restaurant_id (
                     restaurant_name,
                     rating,
-                    profile_id
+                    profile_id,
+                    latitude,
+                    longitude,
+                    address_text
                   )
                 ''')
                 .eq('id', notification.mealId)
@@ -1039,7 +1042,10 @@ class _NgoNotificationsScreenState extends State<NgoNotificationsScreen> {
                                     restaurants:restaurant_id (
                                       restaurant_name,
                                       rating,
-                                      profile_id
+                                      profile_id,
+                                      latitude,
+                                      longitude,
+                                      address_text
                                     )
                                   ''')
                                   .eq('id', notification.mealId)

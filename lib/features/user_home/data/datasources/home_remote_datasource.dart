@@ -65,7 +65,7 @@ class SupabaseHomeRemoteDataSource implements HomeRemoteDataSource {
       return _cachedMeals!;
     }
 
-    // OPTIMIZED: Fetch only essential columns (10 columns vs 20+ before)
+    // OPTIMIZED: Fetch only essential columns including restaurant location
     final res = await client.from('meals').select('''
       id,
       title,
@@ -77,10 +77,14 @@ class SupabaseHomeRemoteDataSource implements HomeRemoteDataSource {
       location,
       category,
       restaurant_id,
+      description,
       restaurants!inner(
         profile_id,
         restaurant_name,
-        rating
+        rating,
+        latitude,
+        longitude,
+        address_text
       )
     ''').eq('status', 'active')
       .gt('quantity_available', 0)
@@ -101,7 +105,7 @@ class SupabaseHomeRemoteDataSource implements HomeRemoteDataSource {
         'donation_price': e['discounted_price'], // Map discounted_price to donation_price
         'quantity': e['quantity_available'], // Map quantity_available to quantity
         'expiry': e['expiry_date'], // Map expiry_date to expiry
-        'description': '', // Not fetched for performance
+        'description': e['description'] ?? '',
         'category': e['category'] ?? 'Meals',
         'status': 'active', // Always active due to filter
         'unit': 'portions', // Default value
@@ -116,6 +120,9 @@ class SupabaseHomeRemoteDataSource implements HomeRemoteDataSource {
           'id': restaurant?['profile_id'] ?? e['restaurant_id'],
           'name': restaurant?['restaurant_name'] ?? 'Unknown Restaurant',
           'rating': restaurant?['rating'] ?? 0.0,
+          'latitude': restaurant?['latitude'],
+          'longitude': restaurant?['longitude'],
+          'address_text': restaurant?['address_text'],
         },
       });
     }).toList();

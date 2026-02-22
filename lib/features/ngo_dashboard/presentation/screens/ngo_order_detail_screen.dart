@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../core/utils/app_colors.dart';
 
 class NgoOrderDetailScreen extends StatefulWidget {
@@ -22,6 +23,32 @@ class _NgoOrderDetailScreenState extends State<NgoOrderDetailScreen> {
   void initState() {
     super.initState();
     _loadOrderDetails();
+    _setupRealtimeSubscription();
+  }
+
+  void _setupRealtimeSubscription() {
+    _supabase
+        .channel('ngo_order_${widget.orderId}')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'orders',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'id',
+            value: widget.orderId,
+          ),
+          callback: (payload) {
+            _loadOrderDetails();
+          },
+        )
+        .subscribe();
+  }
+
+  @override
+  void dispose() {
+    _supabase.removeChannel(_supabase.channel('ngo_order_${widget.orderId}'));
+    super.dispose();
   }
 
   Future<void> _loadOrderDetails() async {
@@ -40,6 +67,9 @@ class _NgoOrderDetailScreenState extends State<NgoOrderDetailScreen> {
             subtotal,
             delivery_address,
             created_at,
+            pickup_code,
+            qr_code,
+            estimated_ready_time,
             restaurants!inner(
               profile_id,
               restaurant_name,
@@ -49,6 +79,31 @@ class _NgoOrderDetailScreenState extends State<NgoOrderDetailScreen> {
           ''')
           .eq('id', widget.orderId)
           .single();
+
+      // If order is ready for pickup and QR/OTP is missing, generate them
+      if (orderResult['status'] == 'ready_for_pickup') {
+        bool needsUpdate = false;
+        
+        if (orderResult['pickup_code'] == null) {
+          orderResult['pickup_code'] = _generatePickupCode();
+          needsUpdate = true;
+        }
+        
+        if (orderResult['qr_code'] == null) {
+          orderResult['qr_code'] = _generateQRCodeData(orderResult);
+          needsUpdate = true;
+        }
+        
+        if (needsUpdate) {
+          await _supabase
+              .from('orders')
+              .update({
+                'pickup_code': orderResult['pickup_code'],
+                'qr_code': orderResult['qr_code'],
+              })
+              .eq('id', widget.orderId);
+        }
+      }
 
       // Load order items
       final itemsResult = await _supabase
@@ -77,6 +132,25 @@ class _NgoOrderDetailScreenState extends State<NgoOrderDetailScreen> {
       debugPrint('❌ Error loading order details: $e');
       setState(() => _isLoading = false);
     }
+  }
+
+  String _generatePickupCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = DateTime.now().millisecondsSinceEpoch;
+    return List.generate(6, (index) => chars[(random + index) % chars.length]).join();
+  }
+
+  String _generateQRCodeData(Map<String, dynamic> order) {
+    return '''
+{
+  "order_id": "${order['id']}",
+  "pickup_code": "${order['pickup_code']}",
+  "ngo_id": "${order['ngo_id'] ?? ''}",
+  "restaurant_id": "${order['restaurant_id']}",
+  "total": ${order['total_amount']},
+  "created_at": "${order['created_at']}"
+}
+''';
   }
 
   @override
@@ -117,6 +191,12 @@ class _NgoOrderDetailScreenState extends State<NgoOrderDetailScreen> {
                       children: [
                         _buildOrderHeader(isDark),
                         const SizedBox(height: 24),
+                        // Show QR Code and OTP when ready for pickup
+                        if (_order!['status'] == 'ready_for_pickup')
+                          ...[
+                            _buildPickupQRSection(isDark),
+                            const SizedBox(height: 24),
+                          ],
                         _buildStatusTimeline(isDark),
                         const SizedBox(height: 24),
                         _buildOrderItems(isDark),
@@ -183,6 +263,215 @@ class _NgoOrderDetailScreenState extends State<NgoOrderDetailScreen> {
     );
   }
 
+  Widget _buildPickupQRSection(bool isDark) {
+    final pickupCode = _order!['pickup_code'] as String?;
+    final qrData = _order!['qr_code'] as String?;
+    final estimatedTime = _order!['estimated_ready_time'] != null
+        ? DateTime.parse(_order!['estimated_ready_time'] as String)
+        : null;
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primaryGreen.withValues(alpha: 0.1),
+            AppColors.primaryGreen.withValues(alpha: 0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.primaryGreen.withValues(alpha: 0.3),
+          width: 2,
+        ),
+      ),
+      child: Column(
+        children: [
+          // Success Icon
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              color: AppColors.primaryGreen.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.check_circle,
+              size: 40,
+              color: AppColors.primaryGreen,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Title
+          Text(
+            'Order Ready for Pickup!',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Colors.black,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Show this QR code or OTP at the restaurant',
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          
+          if (estimatedTime != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1A2E22) : Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.access_time, size: 18, color: AppColors.primaryGreen),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Ready by ${_formatTime(estimatedTime)}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          
+          const SizedBox(height: 24),
+
+          // QR Code
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 15,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                if (qrData != null)
+                  QrImageView(
+                    data: qrData,
+                    version: QrVersions.auto,
+                    size: 220,
+                    backgroundColor: Colors.white,
+                  )
+                else
+                  Container(
+                    width: 220,
+                    height: 220,
+                    color: Colors.grey[200],
+                    child: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+                const SizedBox(height: 20),
+
+                // Pickup Code (OTP)
+                Text(
+                  'Pickup Code (OTP)',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.primaryGreen.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Text(
+                    pickupCode ?? 'GENERATING...',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryGreen,
+                      letterSpacing: 6,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 20),
+
+          // Instructions
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark 
+                  ? Colors.blue[900]!.withValues(alpha: 0.3)
+                  : Colors.blue[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark 
+                    ? Colors.blue[700]!.withValues(alpha: 0.5)
+                    : Colors.blue[200]!,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: isDark ? Colors.blue[300] : Colors.blue[700],
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Present this QR code or OTP to the restaurant staff to collect your order.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.blue[200] : Colors.blue[900],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTime(DateTime time) {
+    final hour = time.hour > 12 ? time.hour - 12 : time.hour;
+    final period = time.hour >= 12 ? 'PM' : 'AM';
+    final minute = time.minute.toString().padLeft(2, '0');
+    return '$hour:$minute $period';
+  }
+
   Widget _buildStatusTimeline(bool isDark) {
     final status = _order!['status'] as String;
     final steps = [
@@ -230,13 +519,13 @@ class _NgoOrderDetailScreenState extends State<NgoOrderDetailScreen> {
                       height: 40,
                       decoration: BoxDecoration(
                         color: isCompleted
-                            ? AppColors.primaryGreen
+                            ? (isActive ? AppColors.primaryGreen : AppColors.primaryGreen.withValues(alpha: 0.7))
                             : (isDark ? Colors.grey[800] : Colors.grey[200]),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         step['icon'] as IconData,
-                        color: isCompleted ? Colors.white : Colors.grey,
+                        color: isCompleted ? Colors.white : (isDark ? Colors.grey[600] : Colors.grey[400]),
                         size: 20,
                       ),
                     ),
@@ -244,7 +533,7 @@ class _NgoOrderDetailScreenState extends State<NgoOrderDetailScreen> {
                       Container(
                         width: 2,
                         height: 40,
-                        color: isCompleted
+                        color: index < currentIndex
                             ? AppColors.primaryGreen
                             : (isDark ? Colors.grey[800] : Colors.grey[300]),
                       ),
@@ -352,12 +641,14 @@ class _NgoOrderDetailScreenState extends State<NgoOrderDetailScreen> {
                       ],
                     ),
                   ),
-                  const Text(
-                    'Free',
+                  Text(
+                    item['unit_price'] == 0 
+                        ? 'Free' 
+                        : 'EGP ${(item['unit_price'] * item['quantity']).toStringAsFixed(2)}',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primaryGreen,
+                      color: item['unit_price'] == 0 ? AppColors.primaryGreen : Colors.orange,
                     ),
                   ),
                 ],
@@ -511,6 +802,13 @@ class _NgoOrderDetailScreenState extends State<NgoOrderDetailScreen> {
       0,
       (sum, item) => sum + (item['quantity'] as int),
     );
+    
+    final subtotal = _orderItems.fold<double>(
+      0.0,
+      (sum, item) => sum + ((item['unit_price'] ?? 0) * (item['quantity'] ?? 0)),
+    );
+    
+    final totalAmount = _order!['total_amount'] ?? subtotal;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -535,7 +833,12 @@ class _NgoOrderDetailScreenState extends State<NgoOrderDetailScreen> {
           const SizedBox(height: 16),
           _summaryRow('Total Items', '$totalItems meals', isDark),
           const SizedBox(height: 8),
-          _summaryRow('Subtotal', 'Free', isDark, valueColor: AppColors.primaryGreen),
+          _summaryRow(
+            'Subtotal', 
+            subtotal == 0 ? 'FREE' : 'EGP ${subtotal.toStringAsFixed(2)}', 
+            isDark, 
+            valueColor: subtotal == 0 ? AppColors.primaryGreen : null,
+          ),
           const SizedBox(height: 8),
           _summaryRow('Delivery Fee', 'Free', isDark, valueColor: AppColors.primaryGreen),
           const SizedBox(height: 8),
@@ -555,12 +858,14 @@ class _NgoOrderDetailScreenState extends State<NgoOrderDetailScreen> {
                   color: isDark ? Colors.white : Colors.black,
                 ),
               ),
-              const Text(
-                'Free (Donation)',
+              Text(
+                totalAmount == 0 
+                    ? 'Free (Donation)' 
+                    : 'EGP ${totalAmount.toStringAsFixed(2)}',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.primaryGreen,
+                  color: totalAmount == 0 ? AppColors.primaryGreen : Colors.orange,
                 ),
               ),
             ],

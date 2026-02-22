@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../viewmodels/ngo_cart_viewmodel.dart';
+import '../widgets/ngo_bottom_nav.dart';
 
 /// NGO Cart Screen - Full Implementation
 /// Displays claimed meals pending pickup with checkout functionality
@@ -77,7 +78,7 @@ class _NgoCartScreenFullState extends State<NgoCartScreenFull> {
           },
         ),
       ),
-      // No bottom navigation on cart screen
+      bottomNavigationBar: const NgoBottomNav(currentIndex: 3),
     );
   }
 
@@ -261,12 +262,14 @@ class _NgoCartScreenFullState extends State<NgoCartScreenFull> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Free (Donation)',
+                Text(
+                  meal.donationPrice == 0 
+                      ? 'Free (Donation)' 
+                      : 'EGP ${meal.donationPrice.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primaryGreen,
+                    color: meal.donationPrice == 0 ? AppColors.primaryGreen : Colors.orange,
                   ),
                 ),
               ],
@@ -418,9 +421,11 @@ class _NgoCartScreenFullState extends State<NgoCartScreenFull> {
           const SizedBox(height: 8),
           _summaryRow(
             'Subtotal',
-            'Free',
+            cart.subtotal == 0 
+                ? 'FREE' 
+                : 'EGP ${cart.subtotal.toStringAsFixed(2)}',
             isDark,
-            valueColor: AppColors.primaryGreen,
+            valueColor: cart.subtotal == 0 ? AppColors.primaryGreen : null,
           ),
           const SizedBox(height: 8),
           _summaryRow(

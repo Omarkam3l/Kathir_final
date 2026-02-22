@@ -18,6 +18,9 @@ class NgoProfileViewModel extends ChangeNotifier {
   int mealsClaimed = 0;
   double carbonSaved = 0;
   bool isVerified = true;
+  double? latitude;
+  double? longitude;
+  String? addressText;
 
   Future<void> loadProfile() async {
     isLoading = true;
@@ -59,6 +62,9 @@ class NgoProfileViewModel extends ChangeNotifier {
       } else {
         organizationName = profileRes['organization_name'] ?? 'Unnamed Organization';
         location = profileRes['address_text'] ?? 'Cairo, Egypt';
+        latitude = profileRes['latitude'] as double?;
+        longitude = profileRes['longitude'] as double?;
+        addressText = profileRes['address_text'] as String?;
       }
 
       // Get profile image from profiles table (using avatar_url column)
@@ -233,6 +239,40 @@ class NgoProfileViewModel extends ChangeNotifier {
       await _supabase.auth.signOut();
     } catch (e) {
       debugPrint('Error logging out: $e');
+    }
+  }
+
+  Future<bool> updateLocation(double lat, double lng, String address) async {
+    isUpdating = true;
+    error = null;
+    notifyListeners();
+
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      await _supabase.from('ngos').update({
+        'latitude': lat,
+        'longitude': lng,
+        'address_text': address,
+      }).eq('profile_id', userId);
+
+      latitude = lat;
+      longitude = lng;
+      addressText = address;
+      location = address;
+
+      isUpdating = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Error updating location: $e');
+      error = e.toString();
+      isUpdating = false;
+      notifyListeners();
+      return false;
     }
   }
 }

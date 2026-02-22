@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ntn6h8dTTI7vnJDI6o1WJMqijqg9Zfr7gxicuaCcy2JxK4Z6znsHyZzXHFD7Fqn
+\restrict OX3h9F17ex0GpisyGnJkbKsfB46kdU8gB6lvXad96w4z9PcOUt3Qj9FHv9XB4fX
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.1
@@ -778,6 +778,77 @@ $$;
 ALTER FUNCTION public.ensure_restaurant_details_on_profile() OWNER TO postgres;
 
 --
+-- Name: find_nearby_ngos(double precision, double precision, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.find_nearby_ngos(user_lat double precision, user_lng double precision, radius_meters integer DEFAULT 5000, limit_count integer DEFAULT 20) RETURNS TABLE(profile_id uuid, organization_name text, address_text text, latitude double precision, longitude double precision, distance_meters double precision)
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    n.profile_id,
+    n.organization_name,
+    n.address_text,
+    n.latitude,
+    n.longitude,
+    ST_Distance(
+      n.location,
+      ST_SetSRID(ST_MakePoint(user_lng, user_lat), 4326)::geography
+    ) AS distance_meters
+  FROM public.ngos n
+  WHERE n.location IS NOT NULL
+    AND ST_DWithin(
+      n.location,
+      ST_SetSRID(ST_MakePoint(user_lng, user_lat), 4326)::geography,
+      radius_meters
+    )
+  ORDER BY distance_meters ASC
+  LIMIT limit_count;
+END;
+$$;
+
+
+ALTER FUNCTION public.find_nearby_ngos(user_lat double precision, user_lng double precision, radius_meters integer, limit_count integer) OWNER TO postgres;
+
+--
+-- Name: find_nearby_restaurants(double precision, double precision, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.find_nearby_restaurants(user_lat double precision, user_lng double precision, radius_meters integer DEFAULT 5000, limit_count integer DEFAULT 20) RETURNS TABLE(profile_id uuid, restaurant_name text, address text, address_text text, latitude double precision, longitude double precision, distance_meters double precision, rating double precision, rating_count integer)
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    r.profile_id,
+    r.restaurant_name,
+    r.address,
+    r.address_text,
+    r.latitude,
+    r.longitude,
+    ST_Distance(
+      r.location,
+      ST_SetSRID(ST_MakePoint(user_lng, user_lat), 4326)::geography
+    ) AS distance_meters,
+    r.rating,
+    r.rating_count
+  FROM public.restaurants r
+  WHERE r.location IS NOT NULL
+    AND ST_DWithin(
+      r.location,
+      ST_SetSRID(ST_MakePoint(user_lng, user_lat), 4326)::geography,
+      radius_meters
+    )
+  ORDER BY distance_meters ASC
+  LIMIT limit_count;
+END;
+$$;
+
+
+ALTER FUNCTION public.find_nearby_restaurants(user_lat double precision, user_lng double precision, radius_meters integer, limit_count integer) OWNER TO postgres;
+
+--
 -- Name: generate_order_number(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1110,6 +1181,40 @@ including whether it is currently active (active_now).';
 
 
 --
+-- Name: get_ngo_orders_with_pickup(uuid, integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_ngo_orders_with_pickup(p_ngo_id uuid, p_limit integer DEFAULT 50) RETURNS TABLE(order_id uuid, order_number text, order_code integer, status text, delivery_type text, total_amount numeric, created_at timestamp with time zone, pickup_latitude double precision, pickup_longitude double precision, pickup_address_text text, restaurant_name text, restaurant_latitude double precision, restaurant_longitude double precision)
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    o.id AS order_id,
+    o.order_number,
+    o.order_code,
+    o.status::TEXT,
+    o.delivery_type,
+    o.total_amount,
+    o.created_at,
+    o.pickup_latitude,
+    o.pickup_longitude,
+    o.pickup_address_text,
+    r.restaurant_name,
+    r.latitude AS restaurant_latitude,
+    r.longitude AS restaurant_longitude
+  FROM orders o
+  LEFT JOIN restaurants r ON o.restaurant_id = r.profile_id
+  WHERE o.ngo_id = p_ngo_id
+  ORDER BY o.created_at DESC
+  LIMIT p_limit;
+END;
+$$;
+
+
+ALTER FUNCTION public.get_ngo_orders_with_pickup(p_ngo_id uuid, p_limit integer) OWNER TO postgres;
+
+--
 -- Name: get_pending_emails(integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1129,7 +1234,7 @@ BEGIN
     eq.attempts
   FROM email_queue eq
   WHERE eq.status = 'pending'
-    AND eq.attempts < 3
+    AND eq.attempts < 3  -- Max 3 attempts
   ORDER BY eq.created_at ASC
   LIMIT p_limit;
 END;
@@ -1213,6 +1318,39 @@ Safe for public access - only exposes approved restaurant data.';
 
 
 --
+-- Name: get_restaurant_orders_with_pickup(uuid, integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_restaurant_orders_with_pickup(p_restaurant_id uuid, p_limit integer DEFAULT 50) RETURNS TABLE(order_id uuid, order_number text, order_code integer, status text, delivery_type text, total_amount numeric, created_at timestamp with time zone, pickup_latitude double precision, pickup_longitude double precision, pickup_address_text text, delivery_address text, customer_name text)
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    o.id AS order_id,
+    o.order_number,
+    o.order_code,
+    o.status::TEXT,
+    o.delivery_type,
+    o.total_amount,
+    o.created_at,
+    o.pickup_latitude,
+    o.pickup_longitude,
+    o.pickup_address_text,
+    o.delivery_address,
+    p.full_name AS customer_name
+  FROM orders o
+  LEFT JOIN profiles p ON o.user_id = p.id
+  WHERE o.restaurant_id = p_restaurant_id
+  ORDER BY o.created_at DESC
+  LIMIT p_limit;
+END;
+$$;
+
+
+ALTER FUNCTION public.get_restaurant_orders_with_pickup(p_restaurant_id uuid, p_limit integer) OWNER TO postgres;
+
+--
 -- Name: get_restaurant_ratings(uuid, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1248,6 +1386,41 @@ ALTER FUNCTION public.get_restaurant_ratings(p_restaurant_id uuid, p_limit integ
 
 COMMENT ON FUNCTION public.get_restaurant_ratings(p_restaurant_id uuid, p_limit integer, p_offset integer) IS 'Get all ratings for a restaurant with user details';
 
+
+--
+-- Name: get_user_orders_with_pickup(uuid, integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_user_orders_with_pickup(p_user_id uuid, p_limit integer DEFAULT 50) RETURNS TABLE(order_id uuid, order_number text, order_code integer, status text, delivery_type text, total_amount numeric, created_at timestamp with time zone, pickup_latitude double precision, pickup_longitude double precision, pickup_address_text text, delivery_address text, restaurant_name text, restaurant_latitude double precision, restaurant_longitude double precision)
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    o.id AS order_id,
+    o.order_number,
+    o.order_code,
+    o.status::TEXT,
+    o.delivery_type,
+    o.total_amount,
+    o.created_at,
+    o.pickup_latitude,
+    o.pickup_longitude,
+    o.pickup_address_text,
+    o.delivery_address,
+    r.restaurant_name,
+    r.latitude AS restaurant_latitude,
+    r.longitude AS restaurant_longitude
+  FROM orders o
+  LEFT JOIN restaurants r ON o.restaurant_id = r.profile_id
+  WHERE o.user_id = p_user_id
+  ORDER BY o.created_at DESC
+  LIMIT p_limit;
+END;
+$$;
+
+
+ALTER FUNCTION public.get_user_orders_with_pickup(p_user_id uuid, p_limit integer) OWNER TO postgres;
 
 --
 -- Name: handle_address_deletion(); Type: FUNCTION; Schema: public; Owner: postgres
@@ -1613,39 +1786,23 @@ CREATE FUNCTION public.process_email_queue_item(p_email_id uuid, p_success boole
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
-DECLARE
-  v_order_id uuid;
-  v_recipient_email text;
-  v_email_type text;
 BEGIN
-  SELECT order_id, recipient_email, email_type
-  INTO v_order_id, v_recipient_email, v_email_type
-  FROM email_queue
-  WHERE id = p_email_id;
-  
   IF p_success THEN
     UPDATE email_queue
-    SET status = 'sent', sent_at = NOW()
+    SET 
+      status = 'sent',
+      sent_at = NOW(),
+      updated_at = NOW()
     WHERE id = p_email_id;
-    
-    INSERT INTO email_logs (
-      email_queue_id, order_id, recipient_email, email_type, status
-    ) VALUES (
-      p_email_id, v_order_id, v_recipient_email, v_email_type, 'sent'
-    );
   ELSE
     UPDATE email_queue
     SET 
+      status = 'failed',
       attempts = attempts + 1,
-      last_error = p_error_message,
-      status = CASE WHEN attempts + 1 >= 3 THEN 'failed' ELSE 'pending' END
+      last_attempt_at = NOW(),
+      error_message = p_error_message,
+      updated_at = NOW()
     WHERE id = p_email_id;
-    
-    INSERT INTO email_logs (
-      email_queue_id, order_id, recipient_email, email_type, status, error_message
-    ) VALUES (
-      p_email_id, v_order_id, v_recipient_email, v_email_type, 'failed', p_error_message
-    );
   END IF;
 END;
 $$;
@@ -1784,52 +1941,27 @@ CREATE FUNCTION public.queue_order_emails() RETURNS trigger
     SET search_path TO 'public'
     AS $$
 DECLARE
-  v_user_email text;
-  v_user_name text;
-  v_restaurant_email text;
-  v_restaurant_name text;
-  v_ngo_email text;
-  v_ngo_name text;
   v_order_data jsonb;
-  v_email_id uuid;
-  v_buyer_type text;
 BEGIN
-  -- Get user details
-  SELECT email, full_name, role
-  INTO v_user_email, v_user_name, v_buyer_type
-  FROM profiles
-  WHERE id = NEW.user_id;
+  -- Small delay to ensure order_items are inserted
+  -- (order_items are inserted in same transaction, but after order)
+  PERFORM pg_sleep(0.99);  -- 100ms delay
   
-  -- Get restaurant details
-  SELECT p.email, r.restaurant_name 
-  INTO v_restaurant_email, v_restaurant_name
-  FROM restaurants r
-  JOIN profiles p ON p.id = r.profile_id
-  WHERE r.profile_id = NEW.restaurant_id;
-  
-  -- Get NGO details if donation order
-  -- ✅ CRITICAL FIX: Use organization_name NOT ngo_name!
-  IF NEW.delivery_type = 'donation' AND NEW.ngo_id IS NOT NULL THEN
-    SELECT p.email, n.organization_name 
-    INTO v_ngo_email, v_ngo_name
-    FROM ngos n
-    JOIN profiles p ON p.id = n.profile_id
-    WHERE n.profile_id = NEW.ngo_id;
-  END IF;
-  
-  -- Build order data with items
-  -- ✅ CRITICAL FIX: Use COALESCE to handle empty items array
+  -- Get ALL data in ONE query
   SELECT jsonb_build_object(
     'order_id', NEW.id,
     'order_number', NEW.order_number,
-    'buyer_name', v_user_name,
-    'buyer_type', v_buyer_type,
-    'restaurant_name', v_restaurant_name,
-    'ngo_name', v_ngo_name,
+    'total_amount', NEW.total_amount,
     'delivery_type', NEW.delivery_type,
     'delivery_address', NEW.delivery_address,
-    'total_amount', NEW.total_amount,
     'created_at', NEW.created_at,
+    'buyer_email', u.email,
+    'buyer_name', u.full_name,
+    'buyer_type', u.role,
+    'restaurant_email', rp.email,
+    'restaurant_name', r.restaurant_name,
+    'ngo_email', np.email,
+    'ngo_name', np.full_name,
     'items', COALESCE(
       (
         SELECT jsonb_agg(
@@ -1845,102 +1977,86 @@ BEGIN
       ),
       '[]'::jsonb
     )
-  ) INTO v_order_data;
-  
-  -- SCENARIO 1 & 2: User purchases (delivery/pickup or donate to NGO)
-  IF v_buyer_type = 'user' THEN
+  )
+  INTO v_order_data
+  FROM profiles u
+  LEFT JOIN restaurants r ON r.profile_id = NEW.restaurant_id
+  LEFT JOIN profiles rp ON rp.id = r.profile_id
+  LEFT JOIN profiles np ON np.id = NEW.ngo_id
+  WHERE u.id = NEW.user_id;
+
+  -- Debug: Log the items count
+  RAISE NOTICE 'Order % has % items', 
+    NEW.id, 
+    jsonb_array_length(COALESCE(v_order_data->'items', '[]'::jsonb));
+
+  -- Queue emails based on buyer type
+  IF (v_order_data->>'buyer_type') = 'user' THEN
     
     -- Email 1: Invoice to user
-    IF v_user_email IS NOT NULL THEN
-      INSERT INTO email_queue (
-        order_id, recipient_email, recipient_type, email_type, email_data
-      ) VALUES (
-        NEW.id, 
-        v_user_email, 
-        'user', 
-        CASE WHEN NEW.delivery_type = 'donation' THEN 'ngo_confirmation' ELSE 'invoice' END,
+    IF v_order_data->>'buyer_email' IS NOT NULL THEN
+      INSERT INTO email_queue (order_id, recipient_email, recipient_type, email_type, email_data)
+      VALUES (
+        NEW.id,
+        v_order_data->>'buyer_email',
+        'user',
+        'invoice',
         v_order_data
-      )
-      RETURNING id INTO v_email_id;
-      
-      INSERT INTO email_logs (
-        email_queue_id, order_id, recipient_email, email_type, status
-      ) VALUES (
-        v_email_id, NEW.id, v_user_email,
-        CASE WHEN NEW.delivery_type = 'donation' THEN 'ngo_confirmation' ELSE 'invoice' END,
-        'queued'
-      );
-    END IF;
-    
-    -- Email 2: New order notification to restaurant
-    IF v_restaurant_email IS NOT NULL THEN
-      INSERT INTO email_queue (
-        order_id, recipient_email, recipient_type, email_type, email_data
-      ) VALUES (
-        NEW.id, v_restaurant_email, 'restaurant', 'new_order', v_order_data
-      )
-      RETURNING id INTO v_email_id;
-      
-      INSERT INTO email_logs (
-        email_queue_id, order_id, recipient_email, email_type, status
-      ) VALUES (
-        v_email_id, NEW.id, v_restaurant_email, 'new_order', 'queued'
-      );
-    END IF;
-    
-    -- Email 3: If donation, notify NGO
-    IF NEW.delivery_type = 'donation' AND v_ngo_email IS NOT NULL THEN
-      INSERT INTO email_queue (
-        order_id, recipient_email, recipient_type, email_type, email_data
-      ) VALUES (
-        NEW.id, v_ngo_email, 'ngo', 'ngo_pickup', v_order_data
-      )
-      RETURNING id INTO v_email_id;
-      
-      INSERT INTO email_logs (
-        email_queue_id, order_id, recipient_email, email_type, status
-      ) VALUES (
-        v_email_id, NEW.id, v_ngo_email, 'ngo_pickup', 'queued'
       );
     END IF;
 
-  -- SCENARIO 3: NGO purchases
-  ELSIF v_buyer_type = 'ngo' THEN
-    
-    -- Email 1: New order notification to restaurant
-    IF v_restaurant_email IS NOT NULL THEN
-      INSERT INTO email_queue (
-        order_id, recipient_email, recipient_type, email_type, email_data
-      ) VALUES (
-        NEW.id, v_restaurant_email, 'restaurant', 'new_order', v_order_data
-      )
-      RETURNING id INTO v_email_id;
-      
-      INSERT INTO email_logs (
-        email_queue_id, order_id, recipient_email, email_type, status
-      ) VALUES (
-        v_email_id, NEW.id, v_restaurant_email, 'new_order', 'queued'
+    -- Email 2: New order to restaurant
+    IF v_order_data->>'restaurant_email' IS NOT NULL THEN
+      INSERT INTO email_queue (order_id, recipient_email, recipient_type, email_type, email_data)
+      VALUES (
+        NEW.id,
+        v_order_data->>'restaurant_email',
+        'restaurant',
+        'new_order',
+        v_order_data
       );
     END IF;
+
+    -- Email 3: NGO pickup notification (if donation)
+    IF NEW.ngo_id IS NOT NULL AND v_order_data->>'ngo_email' IS NOT NULL THEN
+      INSERT INTO email_queue (order_id, recipient_email, recipient_type, email_type, email_data)
+      VALUES (
+        NEW.id,
+        v_order_data->>'ngo_email',
+        'ngo',
+        'ngo_pickup',
+        v_order_data
+      );
+    END IF;
+
+  ELSIF (v_order_data->>'buyer_type') = 'ngo' THEN
     
+    -- Email 1: New order to restaurant
+    IF v_order_data->>'restaurant_email' IS NOT NULL THEN
+      INSERT INTO email_queue (order_id, recipient_email, recipient_type, email_type, email_data)
+      VALUES (
+        NEW.id,
+        v_order_data->>'restaurant_email',
+        'restaurant',
+        'new_order',
+        v_order_data
+      );
+    END IF;
+
     -- Email 2: Confirmation to NGO
-    IF v_user_email IS NOT NULL THEN
-      INSERT INTO email_queue (
-        order_id, recipient_email, recipient_type, email_type, email_data
-      ) VALUES (
-        NEW.id, v_user_email, 'ngo', 'ngo_confirmation', v_order_data
-      )
-      RETURNING id INTO v_email_id;
-      
-      INSERT INTO email_logs (
-        email_queue_id, order_id, recipient_email, email_type, status
-      ) VALUES (
-        v_email_id, NEW.id, v_user_email, 'ngo_confirmation', 'queued'
+    IF v_order_data->>'buyer_email' IS NOT NULL THEN
+      INSERT INTO email_queue (order_id, recipient_email, recipient_type, email_type, email_data)
+      VALUES (
+        NEW.id,
+        v_order_data->>'buyer_email',
+        'ngo',
+        'ngo_confirmation',
+        v_order_data
       );
     END IF;
 
   END IF;
-  
+
   RETURN NEW;
 END;
 $$;
@@ -2091,6 +2207,74 @@ ALTER FUNCTION public.safe_delete_meal(p_meal_id uuid) OWNER TO postgres;
 
 COMMENT ON FUNCTION public.safe_delete_meal(p_meal_id uuid) IS 'Safely deletes a meal only if it is not in any orders. Otherwise suggests marking as inactive.';
 
+
+--
+-- Name: set_order_pickup_location(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.set_order_pickup_location() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  restaurant_lat DOUBLE PRECISION;
+  restaurant_lng DOUBLE PRECISION;
+  restaurant_address TEXT;
+  ngo_lat DOUBLE PRECISION;
+  ngo_lng DOUBLE PRECISION;
+  ngo_address TEXT;
+BEGIN
+  -- For PICKUP orders: pickup location = restaurant location
+  IF NEW.delivery_type = 'pickup' THEN
+    -- Get restaurant location
+    SELECT latitude, longitude, address_text
+    INTO restaurant_lat, restaurant_lng, restaurant_address
+    FROM restaurants
+    WHERE profile_id = NEW.restaurant_id;
+    
+    IF restaurant_lat IS NOT NULL AND restaurant_lng IS NOT NULL THEN
+      NEW.pickup_latitude := restaurant_lat;
+      NEW.pickup_longitude := restaurant_lng;
+      NEW.pickup_address_text := COALESCE(restaurant_address, 'Restaurant Location');
+      NEW.pickup_location := ST_SetSRID(ST_MakePoint(restaurant_lng, restaurant_lat), 4326)::geography;
+    END IF;
+  
+  -- For DELIVERY orders: pickup location = restaurant location (where food is picked up from)
+  ELSIF NEW.delivery_type = 'delivery' THEN
+    -- Get restaurant location
+    SELECT latitude, longitude, address_text
+    INTO restaurant_lat, restaurant_lng, restaurant_address
+    FROM restaurants
+    WHERE profile_id = NEW.restaurant_id;
+    
+    IF restaurant_lat IS NOT NULL AND restaurant_lng IS NOT NULL THEN
+      NEW.pickup_latitude := restaurant_lat;
+      NEW.pickup_longitude := restaurant_lng;
+      NEW.pickup_address_text := COALESCE(restaurant_address, 'Restaurant Location');
+      NEW.pickup_location := ST_SetSRID(ST_MakePoint(restaurant_lng, restaurant_lat), 4326)::geography;
+    END IF;
+  
+  -- For DONATION orders: pickup location = NGO location (where NGO picks up from restaurant)
+  ELSIF NEW.delivery_type = 'donation' THEN
+    -- Get restaurant location (NGO picks up from restaurant)
+    SELECT latitude, longitude, address_text
+    INTO restaurant_lat, restaurant_lng, restaurant_address
+    FROM restaurants
+    WHERE profile_id = NEW.restaurant_id;
+    
+    IF restaurant_lat IS NOT NULL AND restaurant_lng IS NOT NULL THEN
+      NEW.pickup_latitude := restaurant_lat;
+      NEW.pickup_longitude := restaurant_lng;
+      NEW.pickup_address_text := COALESCE(restaurant_address, 'Restaurant Location');
+      NEW.pickup_location := ST_SetSRID(ST_MakePoint(restaurant_lng, restaurant_lat), 4326)::geography;
+    END IF;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.set_order_pickup_location() OWNER TO postgres;
 
 --
 -- Name: set_rush_hour_settings(boolean, timestamp with time zone, timestamp with time zone, integer); Type: FUNCTION; Schema: public; Owner: postgres
@@ -2490,6 +2674,25 @@ $$;
 ALTER FUNCTION public.update_conversation_last_message() OWNER TO postgres;
 
 --
+-- Name: update_location_from_coordinates(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.update_location_from_coordinates() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  IF NEW.latitude IS NOT NULL AND NEW.longitude IS NOT NULL THEN
+    NEW.location := ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326)::geography;
+    NEW.location_updated_at := NOW();
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_location_from_coordinates() OWNER TO postgres;
+
+--
 -- Name: update_order_issue_timestamp(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -2878,7 +3081,11 @@ CREATE TABLE public.restaurants (
     address text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    rating_count integer DEFAULT 0
+    rating_count integer DEFAULT 0,
+    latitude double precision,
+    longitude double precision,
+    location public.geography(Point,4326),
+    location_updated_at timestamp with time zone DEFAULT now()
 );
 
 
@@ -2896,6 +3103,34 @@ COMMENT ON COLUMN public.restaurants.rating IS 'Average rating (0-5 stars) calcu
 --
 
 COMMENT ON COLUMN public.restaurants.rating_count IS 'Total number of ratings received';
+
+
+--
+-- Name: COLUMN restaurants.latitude; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.restaurants.latitude IS 'Latitude coordinate for restaurant location';
+
+
+--
+-- Name: COLUMN restaurants.longitude; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.restaurants.longitude IS 'Longitude coordinate for restaurant location';
+
+
+--
+-- Name: COLUMN restaurants.location; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.restaurants.location IS 'PostGIS geography point for spatial queries';
+
+
+--
+-- Name: COLUMN restaurants.location_updated_at; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.restaurants.location_updated_at IS 'Timestamp when location was last updated';
 
 
 --
@@ -2946,25 +3181,6 @@ CREATE VIEW public.conversation_details AS
 ALTER VIEW public.conversation_details OWNER TO postgres;
 
 --
--- Name: email_logs; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.email_logs (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    email_queue_id uuid,
-    order_id uuid,
-    recipient_email text NOT NULL,
-    email_type text NOT NULL,
-    status text NOT NULL,
-    error_message text,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT email_logs_status_check CHECK ((status = ANY (ARRAY['queued'::text, 'sent'::text, 'failed'::text])))
-);
-
-
-ALTER TABLE public.email_logs OWNER TO postgres;
-
---
 -- Name: email_queue; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -2977,10 +3193,11 @@ CREATE TABLE public.email_queue (
     email_data jsonb NOT NULL,
     status text DEFAULT 'pending'::text NOT NULL,
     attempts integer DEFAULT 0 NOT NULL,
-    last_error text,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_attempt_at timestamp with time zone,
     sent_at timestamp with time zone,
-    CONSTRAINT email_queue_attempts_check CHECK ((attempts <= 3)),
+    error_message text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT email_queue_email_type_check CHECK ((email_type = ANY (ARRAY['invoice'::text, 'new_order'::text, 'ngo_pickup'::text, 'ngo_confirmation'::text]))),
     CONSTRAINT email_queue_recipient_type_check CHECK ((recipient_type = ANY (ARRAY['user'::text, 'restaurant'::text, 'ngo'::text]))),
     CONSTRAINT email_queue_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'sent'::text, 'failed'::text])))
@@ -3244,11 +3461,43 @@ CREATE TABLE public.ngos (
     address_text text,
     legal_docs_urls text[] DEFAULT ARRAY[]::text[],
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    latitude double precision,
+    longitude double precision,
+    location public.geography(Point,4326),
+    location_updated_at timestamp with time zone DEFAULT now()
 );
 
 
 ALTER TABLE public.ngos OWNER TO postgres;
+
+--
+-- Name: COLUMN ngos.latitude; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.ngos.latitude IS 'Latitude coordinate for NGO location';
+
+
+--
+-- Name: COLUMN ngos.longitude; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.ngos.longitude IS 'Longitude coordinate for NGO location';
+
+
+--
+-- Name: COLUMN ngos.location; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.ngos.location IS 'PostGIS geography point for spatial queries';
+
+
+--
+-- Name: COLUMN ngos.location_updated_at; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.ngos.location_updated_at IS 'Timestamp when location was last updated';
+
 
 --
 -- Name: order_issues; Type: TABLE; Schema: public; Owner: postgres
@@ -3395,6 +3644,10 @@ CREATE TABLE public.orders (
     review_text text,
     reviewed_at timestamp with time zone,
     status public.order_status DEFAULT 'pending'::public.order_status NOT NULL,
+    pickup_latitude double precision,
+    pickup_longitude double precision,
+    pickup_location public.geography(Point,4326),
+    pickup_address_text text,
     CONSTRAINT orders_delivery_type_check CHECK ((delivery_type = ANY (ARRAY['pickup'::text, 'delivery'::text, 'donation'::text]))),
     CONSTRAINT orders_payment_method_check CHECK ((payment_method = ANY (ARRAY['card'::text, 'wallet'::text, 'cod'::text, 'cash'::text]))),
     CONSTRAINT orders_payment_status_check CHECK ((payment_status = ANY (ARRAY['pending'::text, 'paid'::text, 'failed'::text, 'refunded'::text]))),
@@ -3479,6 +3732,34 @@ COMMENT ON COLUMN public.orders.rating IS 'Customer rating (1-5 stars)';
 --
 
 COMMENT ON COLUMN public.orders.status IS 'Order status: pending, confirmed, preparing, ready_for_pickup, out_for_delivery, delivered, completed, cancelled';
+
+
+--
+-- Name: COLUMN orders.pickup_latitude; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.orders.pickup_latitude IS 'Latitude of pickup location (restaurant for all order types)';
+
+
+--
+-- Name: COLUMN orders.pickup_longitude; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.orders.pickup_longitude IS 'Longitude of pickup location (restaurant for all order types)';
+
+
+--
+-- Name: COLUMN orders.pickup_location; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.orders.pickup_location IS 'PostGIS geography point for pickup location';
+
+
+--
+-- Name: COLUMN orders.pickup_address_text; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.orders.pickup_address_text IS 'Human-readable pickup address';
 
 
 --
@@ -3786,14 +4067,6 @@ ALTER TABLE ONLY public.conversations
 
 ALTER TABLE ONLY public.conversations
     ADD CONSTRAINT conversations_unique_pair UNIQUE (ngo_id, restaurant_id);
-
-
---
--- Name: email_logs email_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.email_logs
-    ADD CONSTRAINT email_logs_pkey PRIMARY KEY (id);
 
 
 --
@@ -4137,17 +4410,10 @@ CREATE INDEX idx_conversations_restaurant_id ON public.conversations USING btree
 
 
 --
--- Name: idx_email_logs_order; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_email_queue_order_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX idx_email_logs_order ON public.email_logs USING btree (order_id, created_at DESC);
-
-
---
--- Name: idx_email_queue_order; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX idx_email_queue_order ON public.email_queue USING btree (order_id);
+CREATE INDEX idx_email_queue_order_id ON public.email_queue USING btree (order_id);
 
 
 --
@@ -4417,6 +4683,20 @@ CREATE INDEX idx_messages_sender_id ON public.messages USING btree (sender_id);
 
 
 --
+-- Name: idx_ngos_lat_lng; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_ngos_lat_lng ON public.ngos USING btree (latitude, longitude);
+
+
+--
+-- Name: idx_ngos_location; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_ngos_location ON public.ngos USING gist (location);
+
+
+--
 -- Name: idx_order_issues_order; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -4491,6 +4771,13 @@ CREATE INDEX idx_orders_order_number ON public.orders USING btree (order_number)
 --
 
 CREATE INDEX idx_orders_payment_status ON public.orders USING btree (payment_status);
+
+
+--
+-- Name: idx_orders_pickup_location; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_orders_pickup_location ON public.orders USING gist (pickup_location);
 
 
 --
@@ -4592,6 +4879,20 @@ CREATE INDEX idx_restaurant_ratings_user ON public.restaurant_ratings USING btre
 
 
 --
+-- Name: idx_restaurants_lat_lng; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_restaurants_lat_lng ON public.restaurants USING btree (latitude, longitude);
+
+
+--
+-- Name: idx_restaurants_location; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_restaurants_location ON public.restaurants USING gist (location);
+
+
+--
 -- Name: idx_rewards_catalog_active; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -4680,6 +4981,27 @@ CREATE INDEX idx_user_rewards_status ON public.user_rewards USING btree (status,
 --
 
 CREATE INDEX idx_user_rewards_user ON public.user_rewards USING btree (user_id, status, expires_at);
+
+
+--
+-- Name: ngos ngos_location_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER ngos_location_trigger BEFORE INSERT OR UPDATE OF latitude, longitude ON public.ngos FOR EACH ROW EXECUTE FUNCTION public.update_location_from_coordinates();
+
+
+--
+-- Name: orders orders_pickup_location_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER orders_pickup_location_trigger BEFORE INSERT OR UPDATE OF delivery_type, restaurant_id, ngo_id ON public.orders FOR EACH ROW EXECUTE FUNCTION public.set_order_pickup_location();
+
+
+--
+-- Name: restaurants restaurants_location_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER restaurants_location_trigger BEFORE INSERT OR UPDATE OF latitude, longitude ON public.restaurants FOR EACH ROW EXECUTE FUNCTION public.update_location_from_coordinates();
 
 
 --
@@ -4890,22 +5212,6 @@ ALTER TABLE ONLY public.conversations
 
 ALTER TABLE ONLY public.conversations
     ADD CONSTRAINT conversations_restaurant_id_fkey FOREIGN KEY (restaurant_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
-
-
---
--- Name: email_logs email_logs_email_queue_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.email_logs
-    ADD CONSTRAINT email_logs_email_queue_id_fkey FOREIGN KEY (email_queue_id) REFERENCES public.email_queue(id) ON DELETE SET NULL;
-
-
---
--- Name: email_logs email_logs_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.email_logs
-    ADD CONSTRAINT email_logs_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
 
 
 --
@@ -5375,6 +5681,20 @@ CREATE POLICY "Anonymous can view active meals" ON public.meals FOR SELECT TO an
 
 
 --
+-- Name: ngos Anyone can read NGO locations; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Anyone can read NGO locations" ON public.ngos FOR SELECT USING (true);
+
+
+--
+-- Name: restaurants Anyone can read restaurant locations; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Anyone can read restaurant locations" ON public.restaurants FOR SELECT USING (true);
+
+
+--
 -- Name: rewards_catalog Anyone can view active rewards; Type: POLICY; Schema: public; Owner: postgres
 --
 
@@ -5414,6 +5734,13 @@ CREATE POLICY "Authenticated users can update own cart items" ON public.cart_ite
 --
 
 CREATE POLICY "Authenticated users can view own cart items" ON public.cart_items FOR SELECT TO authenticated USING ((auth.uid() = profile_id));
+
+
+--
+-- Name: ngos NGO users can update their location; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "NGO users can update their location" ON public.ngos FOR UPDATE USING ((profile_id = auth.uid())) WITH CHECK ((profile_id = auth.uid()));
 
 
 --
@@ -5491,6 +5818,13 @@ CREATE POLICY "Restaurant owners can update own details" ON public.restaurants F
 --
 
 CREATE POLICY "Restaurant owners can update own record" ON public.restaurants FOR UPDATE TO authenticated USING (((auth.uid() = profile_id) OR public.is_admin())) WITH CHECK (((auth.uid() = profile_id) OR public.is_admin()));
+
+
+--
+-- Name: restaurants Restaurant owners can update their location; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Restaurant owners can update their location" ON public.restaurants FOR UPDATE USING ((profile_id = auth.uid())) WITH CHECK ((profile_id = auth.uid()));
 
 
 --
@@ -5671,17 +6005,10 @@ CREATE POLICY "Service role can insert restaurants" ON public.restaurants FOR IN
 
 
 --
--- Name: email_logs Service role full access; Type: POLICY; Schema: public; Owner: postgres
+-- Name: email_queue Service role can manage email queue; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Service role full access" ON public.email_logs TO service_role USING (true) WITH CHECK (true);
-
-
---
--- Name: email_queue Service role full access; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Service role full access" ON public.email_queue TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "Service role can manage email queue" ON public.email_queue TO service_role USING (true) WITH CHECK (true);
 
 
 --
@@ -6119,15 +6446,6 @@ CREATE POLICY "Users can view their own reports" ON public.meal_reports FOR SELE
 
 
 --
--- Name: email_logs Users view own logs; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Users view own logs" ON public.email_logs FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.orders o
-  WHERE ((o.id = email_logs.order_id) AND (o.user_id = auth.uid())))));
-
-
---
 -- Name: cart_items; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
@@ -6144,12 +6462,6 @@ ALTER TABLE public.category_notifications ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
-
---
--- Name: email_logs; Type: ROW SECURITY; Schema: public; Owner: postgres
---
-
-ALTER TABLE public.email_logs ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: email_queue; Type: ROW SECURITY; Schema: public; Owner: postgres
@@ -6204,6 +6516,12 @@ ALTER TABLE public.meals ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: ngos; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.ngos ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: ngos ngos_select_owner; Type: POLICY; Schema: public; Owner: postgres
@@ -6426,6 +6744,12 @@ COMMENT ON POLICY profiles_update_own ON public.profiles IS 'Users can update th
 ALTER TABLE public.restaurant_ratings ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: restaurants; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.restaurants ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: rewards_catalog; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
@@ -6595,6 +6919,24 @@ GRANT ALL ON FUNCTION public.ensure_restaurant_details_on_profile() TO service_r
 
 
 --
+-- Name: FUNCTION find_nearby_ngos(user_lat double precision, user_lng double precision, radius_meters integer, limit_count integer); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.find_nearby_ngos(user_lat double precision, user_lng double precision, radius_meters integer, limit_count integer) TO anon;
+GRANT ALL ON FUNCTION public.find_nearby_ngos(user_lat double precision, user_lng double precision, radius_meters integer, limit_count integer) TO authenticated;
+GRANT ALL ON FUNCTION public.find_nearby_ngos(user_lat double precision, user_lng double precision, radius_meters integer, limit_count integer) TO service_role;
+
+
+--
+-- Name: FUNCTION find_nearby_restaurants(user_lat double precision, user_lng double precision, radius_meters integer, limit_count integer); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.find_nearby_restaurants(user_lat double precision, user_lng double precision, radius_meters integer, limit_count integer) TO anon;
+GRANT ALL ON FUNCTION public.find_nearby_restaurants(user_lat double precision, user_lng double precision, radius_meters integer, limit_count integer) TO authenticated;
+GRANT ALL ON FUNCTION public.find_nearby_restaurants(user_lat double precision, user_lng double precision, radius_meters integer, limit_count integer) TO service_role;
+
+
+--
 -- Name: FUNCTION generate_order_number(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -6667,6 +7009,15 @@ GRANT ALL ON FUNCTION public.get_my_rush_hour() TO service_role;
 
 
 --
+-- Name: FUNCTION get_ngo_orders_with_pickup(p_ngo_id uuid, p_limit integer); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.get_ngo_orders_with_pickup(p_ngo_id uuid, p_limit integer) TO anon;
+GRANT ALL ON FUNCTION public.get_ngo_orders_with_pickup(p_ngo_id uuid, p_limit integer) TO authenticated;
+GRANT ALL ON FUNCTION public.get_ngo_orders_with_pickup(p_ngo_id uuid, p_limit integer) TO service_role;
+
+
+--
 -- Name: FUNCTION get_pending_emails(p_limit integer); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -6685,12 +7036,30 @@ GRANT ALL ON FUNCTION public.get_restaurant_leaderboard(period_filter text) TO s
 
 
 --
+-- Name: FUNCTION get_restaurant_orders_with_pickup(p_restaurant_id uuid, p_limit integer); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.get_restaurant_orders_with_pickup(p_restaurant_id uuid, p_limit integer) TO anon;
+GRANT ALL ON FUNCTION public.get_restaurant_orders_with_pickup(p_restaurant_id uuid, p_limit integer) TO authenticated;
+GRANT ALL ON FUNCTION public.get_restaurant_orders_with_pickup(p_restaurant_id uuid, p_limit integer) TO service_role;
+
+
+--
 -- Name: FUNCTION get_restaurant_ratings(p_restaurant_id uuid, p_limit integer, p_offset integer); Type: ACL; Schema: public; Owner: postgres
 --
 
 GRANT ALL ON FUNCTION public.get_restaurant_ratings(p_restaurant_id uuid, p_limit integer, p_offset integer) TO anon;
 GRANT ALL ON FUNCTION public.get_restaurant_ratings(p_restaurant_id uuid, p_limit integer, p_offset integer) TO authenticated;
 GRANT ALL ON FUNCTION public.get_restaurant_ratings(p_restaurant_id uuid, p_limit integer, p_offset integer) TO service_role;
+
+
+--
+-- Name: FUNCTION get_user_orders_with_pickup(p_user_id uuid, p_limit integer); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.get_user_orders_with_pickup(p_user_id uuid, p_limit integer) TO anon;
+GRANT ALL ON FUNCTION public.get_user_orders_with_pickup(p_user_id uuid, p_limit integer) TO authenticated;
+GRANT ALL ON FUNCTION public.get_user_orders_with_pickup(p_user_id uuid, p_limit integer) TO service_role;
 
 
 --
@@ -6820,6 +7189,15 @@ GRANT ALL ON FUNCTION public.safe_delete_meal(p_meal_id uuid) TO service_role;
 
 
 --
+-- Name: FUNCTION set_order_pickup_location(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.set_order_pickup_location() TO anon;
+GRANT ALL ON FUNCTION public.set_order_pickup_location() TO authenticated;
+GRANT ALL ON FUNCTION public.set_order_pickup_location() TO service_role;
+
+
+--
 -- Name: FUNCTION set_rush_hour_settings(p_is_active boolean, p_start_time timestamp with time zone, p_end_time timestamp with time zone, p_discount_percentage integer); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -6880,6 +7258,15 @@ GRANT ALL ON FUNCTION public.update_cart_items_updated_at() TO service_role;
 GRANT ALL ON FUNCTION public.update_conversation_last_message() TO anon;
 GRANT ALL ON FUNCTION public.update_conversation_last_message() TO authenticated;
 GRANT ALL ON FUNCTION public.update_conversation_last_message() TO service_role;
+
+
+--
+-- Name: FUNCTION update_location_from_coordinates(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.update_location_from_coordinates() TO anon;
+GRANT ALL ON FUNCTION public.update_location_from_coordinates() TO authenticated;
+GRANT ALL ON FUNCTION public.update_location_from_coordinates() TO service_role;
 
 
 --
@@ -7015,15 +7402,6 @@ GRANT ALL ON TABLE public.restaurants TO service_role;
 GRANT ALL ON TABLE public.conversation_details TO anon;
 GRANT ALL ON TABLE public.conversation_details TO authenticated;
 GRANT ALL ON TABLE public.conversation_details TO service_role;
-
-
---
--- Name: TABLE email_logs; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.email_logs TO anon;
-GRANT ALL ON TABLE public.email_logs TO authenticated;
-GRANT ALL ON TABLE public.email_logs TO service_role;
 
 
 --
@@ -7324,5 +7702,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON T
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ntn6h8dTTI7vnJDI6o1WJMqijqg9Zfr7gxicuaCcy2JxK4Z6znsHyZzXHFD7Fqn
+\unrestrict OX3h9F17ex0GpisyGnJkbKsfB46kdU8gB6lvXad96w4z9PcOUt3Qj9FHv9XB4fX
 

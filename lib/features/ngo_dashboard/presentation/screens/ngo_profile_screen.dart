@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../authentication/presentation/blocs/auth_provider.dart';
+import '../../../_shared/widgets/location_selector_widget.dart';
 import '../viewmodels/ngo_profile_viewmodel.dart';
 import '../widgets/ngo_bottom_nav.dart';
 
@@ -235,6 +236,12 @@ class _NgoProfileScreenState extends State<NgoProfileScreen> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 24),
+
+                        // Location
+                        _buildSectionTitle('Location'),
+                        const SizedBox(height: 12),
+                        _buildLocationCard(surface, isDark, viewModel),
                         const SizedBox(height: 24),
 
                         // Account Information
@@ -616,5 +623,113 @@ class _NgoProfileScreenState extends State<NgoProfileScreen> {
         context.go('/login');
       }
     }
+  }
+
+  Widget _buildLocationCard(Color surface, bool isDark, NgoProfileViewModel viewModel) {
+    final hasLocation = viewModel.latitude != null && viewModel.longitude != null;
+    final addressText = viewModel.addressText;
+
+    return InkWell(
+      onTap: () => _showLocationSelector(viewModel),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: hasLocation
+                ? AppColors.primaryGreen.withValues(alpha: 0.3)
+                : (isDark ? Colors.grey[800]! : Colors.grey[200]!),
+            width: hasLocation ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: hasLocation
+                    ? AppColors.primaryGreen.withValues(alpha: 0.1)
+                    : (isDark ? Colors.grey[800] : Colors.grey[200]),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.location_on,
+                color: hasLocation
+                    ? AppColors.primaryGreen
+                    : (isDark ? Colors.grey[400] : Colors.grey[600]),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Organization Location',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    hasLocation
+                        ? addressText ?? 'Location set'
+                        : 'Set your organization location',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: isDark ? Colors.grey[600] : Colors.grey[400],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showLocationSelector(NgoProfileViewModel viewModel) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LocationSelectorWidget(
+          initialLatitude: viewModel.latitude,
+          initialLongitude: viewModel.longitude,
+          initialAddress: viewModel.addressText,
+          onLocationSelected: (lat, lng, address) async {
+            final success = await viewModel.updateLocation(lat, lng, address);
+            if (context.mounted) {
+              if (success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Location updated successfully'),
+                    backgroundColor: AppColors.primaryGreen,
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Failed to update location'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
+        ),
+      ),
+    );
   }
 }

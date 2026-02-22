@@ -5,6 +5,9 @@ class Restaurant {
   final String? logoUrl;
   final bool verified;
   final int reviewsCount;
+  final double? latitude;
+  final double? longitude;
+  final String? addressText;
 
   const Restaurant({
     required this.id,
@@ -13,6 +16,9 @@ class Restaurant {
     this.logoUrl,
     this.verified = false,
     this.reviewsCount = 0,
+    this.latitude,
+    this.longitude,
+    this.addressText,
   });
 }
 

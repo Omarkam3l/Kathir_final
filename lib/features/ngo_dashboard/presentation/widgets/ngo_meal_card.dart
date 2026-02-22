@@ -140,39 +140,72 @@ class NgoMealCard extends StatelessWidget {
             _buildTag('${meal.quantity}${meal.unit.substring(0, 2)}', Icons.scale),
             const SizedBox(width: 8),
             _buildTag('~${(meal.quantity * 3).clamp(10, 100)}', Icons.group),
+            const SizedBox(width: 8),
+            // Price badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: meal.donationPrice == 0 
+                    ? (isDark ? Colors.green.withValues(alpha: 0.2) : Colors.green.shade100)
+                    : (isDark ? Colors.orange.withValues(alpha: 0.2) : Colors.orange.shade100),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                meal.donationPrice == 0 
+                    ? 'FREE' 
+                    : 'EGP ${meal.donationPrice.toStringAsFixed(0)}',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: meal.donationPrice == 0 
+                      ? (isDark ? Colors.green[300] : Colors.green[700])
+                      : (isDark ? Colors.orange[300] : Colors.orange[700]),
+                ),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Icon(Icons.schedule, size: 12, color: Colors.grey[500]),
-                const SizedBox(width: 4),
-                Text(
-                  'Pickup by ${_formatTime(meal.pickupDeadline ?? meal.expiry)}',
-                  style: TextStyle(fontSize: 11, color: Colors.grey[500]),
-                ),
-              ],
+            Expanded(
+              child: Row(
+                children: [
+                  Icon(Icons.schedule, size: 12, color: Colors.grey[500]),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      'Pickup by ${_formatTime(meal.pickupDeadline ?? meal.expiry)}',
+                      style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
             if (!isReserved)
-              GestureDetector(
-                onTap: () {
-                  onClaim();
-                },
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white : Colors.black,
-                    shape: BoxShape.circle,
+              ElevatedButton.icon(
+                onPressed: onClaim,
+                icon: const Icon(Icons.shopping_cart, size: 16),
+                label: const Text(
+                  'Add to Cart',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
                   ),
-                  child: Icon(
-                    Icons.add,
-                    color: isDark ? Colors.black : Colors.white,
-                    size: 18,
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDark ? Colors.white : Colors.black,
+                  foregroundColor: isDark ? Colors.black : Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
+                  elevation: 0,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
           ],
