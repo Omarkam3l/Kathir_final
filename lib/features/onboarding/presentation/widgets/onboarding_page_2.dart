@@ -234,7 +234,7 @@ class OnboardingPage2 extends StatelessWidget {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primary,
+                                color: AppColors.primary.withValues(alpha: 0.3),
                                 blurRadius: 12,
                               ),
                             ],

@@ -137,4 +137,88 @@ class AppColors {
   // Divider
   static const Color dividerDark = Colors.white12;
   static const Color dividerLight = Colors.black12;
+
+  // ========================================
+  // GRADIENT DEFINITIONS
+  // ========================================
+  
+  /// Primary gradient (vibrant lime to darker green)
+  static const LinearGradient primaryGradient = LinearGradient(
+    colors: [
+      Color(0xFF13EC5B),  // primary
+      Color(0xFF007354),  // primaryDark
+    ],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+  
+  /// Vertical primary gradient
+  static const LinearGradient primaryGradientVertical = LinearGradient(
+    colors: [
+      Color(0xFF13EC5B),  // primary
+      Color(0xFF007354),  // primaryDark
+    ],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+  
+  /// Horizontal primary gradient
+  static const LinearGradient primaryGradientHorizontal = LinearGradient(
+    colors: [
+      Color(0xFF13EC5B),  // primary
+      Color(0xFF0FB847),  // primaryDark
+    ],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
+  
+  /// Soft primary gradient (vibrant lime to soft mint)
+  static const LinearGradient primaryGradientSoft = LinearGradient(
+    colors: [
+      Color(0xFF13EC5B),  // primary
+      Color(0xFF7FEDD9),  // primarySoft
+    ],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+  
+  /// Subtle gradient for backgrounds
+  static const LinearGradient backgroundGradient = LinearGradient(
+    colors: [
+      Color(0xFFF6F8F6),  // backgroundLight
+      Color(0xFFFFFFFF),  // white
+    ],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+  
+  /// Dark mode gradient
+  static const LinearGradient darkGradient = LinearGradient(
+    colors: [
+      Color(0xFF102216),  // backgroundDark
+      Color(0xFF1A2C20),  // surfaceDark
+    ],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+  
+  /// Success gradient (for completed actions)
+  static const LinearGradient successGradient = LinearGradient(
+    colors: [
+      Color(0xFF43A047),  // success
+      Color(0xFF2E7D32),  // darker green
+    ],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+  
+  /// Warning gradient
+  static const LinearGradient warningGradient = LinearGradient(
+    colors: [
+      Color(0xFFFB8C00),  // warning
+      Color(0xFFF57C00),  // darker orange
+    ],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 }
