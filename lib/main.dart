@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:kathir_final/core/utils/app_colors.dart';
+import 'package:kathir_final/core/utils/page_transitions.dart';
 import 'app/bootstrap/di_bootstrap.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
@@ -16,6 +19,11 @@ import 'core/supabase/supabase_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    // Ignore error
+  }
   final hasConfig = supabaseUrl.isNotEmpty && supabaseKey.isNotEmpty;
   if (hasConfig) {
     await Supabase.initialize(url: supabaseUrl, anonKey: supabaseKey);
@@ -37,7 +45,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => AppLocator.I.get<AuthViewModel>()),
+        ChangeNotifierProvider(
+            create: (_) => AppLocator.I.get<AuthViewModel>()),
         ChangeNotifierProvider(create: (_) => OrdersController()),
         ChangeNotifierProvider(create: (_) => FoodieState()),
       ],
@@ -51,6 +60,7 @@ class MyApp extends StatelessWidget {
             cardColor: Colors.white,
             dividerColor: Colors.black12,
             colorScheme: lightBase.colorScheme.copyWith(
+<<<<<<< HEAD
               primary: const Color(0xFF4DD0E1),
               secondary: const Color(0xFF005F7B),
               surface: Colors.white,
@@ -108,38 +118,52 @@ class MyApp extends StatelessWidget {
               ),
               labelStyle: TextStyle(color: const Color(0xFF08314A).withOpacity(0.7)),
               hintStyle: TextStyle(color: const Color(0xFF08314A).withOpacity(0.5)),
+=======
+              primary: AppColors.primary,
+>>>>>>> 56f87e16bb79ac3fb1fe1ae2f0ea37bbc4ec224f
             ),
           );
 
           final darkBase = ThemeData.dark(useMaterial3: true);
           final darkTheme = darkBase.copyWith(
-            scaffoldBackgroundColor: const Color(0xFF121212),
-            cardColor: const Color(0xFF1E1E1E),
-            dividerColor: Colors.white12,
+            scaffoldBackgroundColor: AppColors.backgroundDark,
+            cardColor: AppColors.surfaceDark,
+            dividerColor: AppColors.dividerDark,
             colorScheme: darkBase.colorScheme.copyWith(
-              primary: const Color(0xFF4DD0E1),
-              surface: const Color(0xFF1E1E1E),
-              onSurface: Colors.white,
-              onPrimary: Colors.white,
+              primary: AppColors.primary,
+              surface: AppColors.surfaceDark,
+              onSurface: AppColors.white,
+              onPrimary: AppColors.white,
             ),
-            textTheme: darkBase.textTheme.apply(
-              bodyColor: Colors.white,
-              displayColor: Colors.white,
-            ).copyWith(
-              bodyMedium: const TextStyle(color: Colors.white70),
-              bodySmall: const TextStyle(color: Colors.white60),
-              titleSmall: const TextStyle(color: Colors.white70),
-            ),
+            textTheme: darkBase.textTheme
+                .apply(
+                  bodyColor: AppColors.white,
+                  displayColor: AppColors.white,
+                )
+                .copyWith(
+                  bodyMedium: const TextStyle(color: Colors.white70),
+                  bodySmall: const TextStyle(color: Colors.white60),
+                  titleSmall: const TextStyle(color: Colors.white70),
+                ),
             iconTheme: const IconThemeData(color: Colors.white70),
             appBarTheme: const AppBarTheme(
-              backgroundColor: Color(0xFF121212),
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.backgroundDark,
+              foregroundColor: AppColors.white,
               elevation: 0,
+            ),
+            pageTransitionsTheme: const PageTransitionsTheme(
+              builders: {
+                TargetPlatform.android: SlidePushPageTransitionsBuilder(),
+                TargetPlatform.iOS: SlidePushPageTransitionsBuilder(),
+                TargetPlatform.windows: SlidePushPageTransitionsBuilder(),
+                TargetPlatform.macOS: SlidePushPageTransitionsBuilder(),
+                TargetPlatform.linux: SlidePushPageTransitionsBuilder(),
+              },
             ),
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4DD0E1),
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
                 ),
@@ -147,8 +171,8 @@ class MyApp extends StatelessWidget {
             ),
             outlinedButtonTheme: OutlinedButtonThemeData(
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF4DD0E1),
-                side: const BorderSide(color: Color(0xFF4DD0E1)),
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
                 ),
@@ -156,12 +180,12 @@ class MyApp extends StatelessWidget {
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF4DD0E1),
+                foregroundColor: AppColors.primary,
               ),
             ),
             inputDecorationTheme: const InputDecorationTheme(
               filled: true,
-              fillColor: Color(0xFF1E1E1E),
+              fillColor: AppColors.surfaceDark,
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
@@ -242,17 +266,12 @@ class MissingConfigScreen extends StatelessWidget {
               ),
               SizedBox(height: 12),
               Text(
-                'Run with --dart-define SUPABASE_URL=YOUR_URL and SUPABASE_ANON_KEY=YOUR_KEY',
+                'Please create a .env file in the project root with SUPABASE_URL and SUPABASE_ANON_KEY',
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 8),
               Text(
-                'Example (web-server): flutter run -d web-server --no-devtools --dart-define SUPABASE_URL=YOUR_URL --dart-define SUPABASE_ANON_KEY=XXXX',
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Example (windows): flutter run -d windows --dart-define SUPABASE_URL=YOUR_URL --dart-define SUPABASE_ANON_KEY=XXXX',
+                'SUPABASE_URL=...\nSUPABASE_ANON_KEY=...',
                 textAlign: TextAlign.center,
               ),
             ],

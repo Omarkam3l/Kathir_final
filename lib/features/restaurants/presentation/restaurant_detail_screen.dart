@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:go_router/go_router.dart';
+<<<<<<< HEAD
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+=======
+import 'package:kathir_final/features/restaurants/models/figma_models.dart';
+>>>>>>> 56f87e16bb79ac3fb1fe1ae2f0ea37bbc4ec224f
 
-import '../models/figma_models.dart';
 import 'foodie_product_detail_screen.dart';
 
 class RestaurantDetailScreen extends StatelessWidget {
@@ -29,6 +32,7 @@ class RestaurantDetailScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     _diamondButton(
+                      context: context,
                       icon: Icons.arrow_back_ios_new,
                       onTap: () {
                         final router = GoRouter.of(context);
@@ -73,9 +77,19 @@ class RestaurantDetailScreen extends StatelessWidget {
                           data.heroImage,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
+<<<<<<< HEAD
                             color: AppColors.lightBackground,
                             child: const Icon(Icons.restaurant,
                                 size: 48, color: AppColors.primaryAccent),
+=======
+                            color: Theme.of(context)
+                                    .inputDecorationTheme
+                                    .fillColor ??
+                                AppColors.inputFillDark,
+                            child: Icon(Icons.restaurant,
+                                size: 48,
+                                color: Theme.of(context).colorScheme.primary),
+>>>>>>> 56f87e16bb79ac3fb1fe1ae2f0ea37bbc4ec224f
                           ),
                         ),
                       ),
@@ -102,7 +116,7 @@ class RestaurantDetailScreen extends StatelessWidget {
                     Text(
                       '${data.location} • ${data.rating.toStringAsFixed(1)} ★',
                       style: const TextStyle(
-                        color: Colors.grey,
+                        color: AppColors.grey,
                         fontSize: 15,
                       ),
                     ),
@@ -139,7 +153,7 @@ class RestaurantDetailScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: AppColors.black.withOpacity(0.05),
                             blurRadius: 16,
                             offset: const Offset(0, 10),
                           ),
@@ -175,11 +189,23 @@ class RestaurantDetailScreen extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
+<<<<<<< HEAD
                         color: AppColors.darkText,
                       ),
                     ),
                     const Spacer(),
                     const Icon(Icons.tune, color: AppColors.darkText),
+=======
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(Icons.tune,
+                        color: Theme.of(context)
+                            .iconTheme
+                            .color
+                            ?.withOpacity(0.7)),
+>>>>>>> 56f87e16bb79ac3fb1fe1ae2f0ea37bbc4ec224f
                   ],
                 ),
               ),
@@ -204,7 +230,7 @@ class RestaurantDetailScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
+                            color: AppColors.black.withOpacity(0.04),
                             blurRadius: 16,
                             offset: const Offset(0, 8),
                           ),
@@ -224,9 +250,20 @@ class RestaurantDetailScreen extends StatelessWidget {
                                 errorBuilder: (_, __, ___) => Container(
                                   width: 90,
                                   height: 90,
+<<<<<<< HEAD
                                   color: AppColors.lightBackground,
                                   child: const Icon(Icons.fastfood,
                                       color: AppColors.primaryAccent),
+=======
+                                  color: Theme.of(context)
+                                          .inputDecorationTheme
+                                          .fillColor ??
+                                      AppColors.inputFillDark,
+                                  child: Icon(Icons.fastfood,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary),
+>>>>>>> 56f87e16bb79ac3fb1fe1ae2f0ea37bbc4ec224f
                                 ),
                               ),
                             ),
@@ -237,29 +274,47 @@ class RestaurantDetailScreen extends StatelessWidget {
                                 children: [
                                   Text(
                                     item.title,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 18,
+<<<<<<< HEAD
                                       color: AppColors.darkText,
+=======
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.color,
+>>>>>>> 56f87e16bb79ac3fb1fe1ae2f0ea37bbc4ec224f
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     item.subtitle,
                                     style: const TextStyle(
-                                        color: Colors.grey, fontSize: 13),
+                                        color: AppColors.grey, fontSize: 13),
                                   ),
                                   const SizedBox(height: 8),
                                   Row(
                                     children: [
                                       const Icon(Icons.star,
+<<<<<<< HEAD
                                           size: 16, color: Colors.amber),
+=======
+                                          size: 16, color: AppColors.rating),
+>>>>>>> 56f87e16bb79ac3fb1fe1ae2f0ea37bbc4ec224f
                                       const SizedBox(width: 4),
                                       Text(
                                         item.rating.toStringAsFixed(1),
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w600,
+<<<<<<< HEAD
                                           color: AppColors.darkText,
+=======
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge
+                                              ?.color,
+>>>>>>> 56f87e16bb79ac3fb1fe1ae2f0ea37bbc4ec224f
                                         ),
                                       ),
                                     ],
@@ -271,8 +326,15 @@ class RestaurantDetailScreen extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 10),
                               decoration: BoxDecoration(
+<<<<<<< HEAD
                                 color:
                                     AppColors.primaryAccent.withOpacity(0.12),
+=======
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withOpacity(0.12),
+>>>>>>> 56f87e16bb79ac3fb1fe1ae2f0ea37bbc4ec224f
                                 borderRadius: BorderRadius.circular(18),
                               ),
                               child: Text(
@@ -300,7 +362,10 @@ class RestaurantDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _diamondButton({required IconData icon, required VoidCallback onTap}) {
+  Widget _diamondButton(
+      {required BuildContext context,
+      required IconData icon,
+      required VoidCallback onTap}) {
     return Transform.rotate(
       angle: 0.78,
       child: InkWell(
@@ -310,11 +375,11 @@ class RestaurantDetailScreen extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: AppColors.black.withOpacity(0.08),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -322,7 +387,7 @@ class RestaurantDetailScreen extends StatelessWidget {
           ),
           child: Transform.rotate(
             angle: -0.78,
-            child: Icon(icon, color: AppColors.darkText),
+            child: Icon(icon, color: Theme.of(context).iconTheme.color),
           ),
         ),
       ),
@@ -342,16 +407,16 @@ class _InfoStat extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: AppColors.darkText,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(color: Colors.grey),
+          style: const TextStyle(color: AppColors.grey),
         ),
       ],
     );

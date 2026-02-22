@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kathir_final/features/admin_dashboard/presentation/screens/admin_dashboard_screen.dart';
+import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_dashboard_screen.dart';
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_dashboard_screen.dart';
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/meals_list_screen.dart';
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_orders_screen.dart';
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/add_meal_screen.dart';
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/meal_details_screen.dart';
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/edit_meal_screen.dart';
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_profile_screen.dart';
+import 'package:kathir_final/features/onboarding/presentation/screens/onboarding_flow_screen.dart';
 import 'package:provider/provider.dart';
 import '../../authentication/presentation/blocs/auth_provider.dart';
-import '../screens/splash_screen.dart';
+import '../../authentication/presentation/screens/pending_approval_screen.dart';
+import '../../authentication/presentation/screens/auth_splash_screen.dart';
 import '../../meals/presentation/screens/meal_detail.dart';
 import '../../user_home/domain/entities/meal_offer.dart';
 import '../../user_home/domain/entities/restaurant.dart';
@@ -14,16 +25,21 @@ import '../../profile/routes.dart';
 import '../../authentication/routes.dart';
 
 class RouteNames {
-  static const splash = 'splash';
+  static const onboarding = 'onboarding';
   static const auth = 'auth';
   static const role = 'role';
   static const home = 'home';
+  static const restaurantDashboard = 'restaurant_dashboard';
+  static const ngoDashboard = 'ngo_dashboard';
+  static const adminDashboard = 'admin_dashboard';
+  static const pendingApproval = 'pending_approval';
   static const product = 'product';
   static const cart = 'cart';
   static const checkout = 'checkout';
   static const settings = 'settings';
   static const profile = 'profile';
 }
+
 
 class AppRouter {
   final AuthProvider auth;
@@ -35,33 +51,156 @@ class AppRouter {
     refreshListenable: auth,
     observers: [observer],
     redirect: (context, state) {
-      if (auth.isPasswordRecovery && state.matchedLocation != '/new-password') {
+      final location = state.matchedLocation;
+      final isInitialized = auth.isInitialized;
+      final isLoggedIn = auth.isLoggedIn;
+      final user = auth.user;
+      
+      // Define route categories for cleaner logic
+      final isAuthSplash = location == '/auth-splash';
+      final isOnboarding = location == '/';
+      final isAuthFlow = location == '/role' ||
+          location == '/auth' ||
+          location == '/login' ||
+          location == '/forgot-password' ||
+          location == '/verify-otp' ||
+          location == '/new-password';
+      final isPendingApproval = location == '/pending-approval';
+      
+      // RULE 1: Password recovery takes precedence
+      if (auth.isPasswordRecovery && location != '/new-password') {
         return '/new-password';
       }
-      final loggedIn = auth.isLoggedIn;
-      final signingFlow = state.matchedLocation == '/role' ||
-          state.matchedLocation == '/auth' ||
-          state.matchedLocation == '/login' ||
-          state.matchedLocation == '/forgot-password' ||
-          state.matchedLocation == '/verify-otp' ||
-          state.matchedLocation == '/new-password';
-      if (!loggedIn && state.matchedLocation == '/') {
+      
+      // RULE 2: Show splash screen while initializing (only if logged in)
+      // This prevents redirect loops on logout
+      if (!isInitialized && isLoggedIn && !isAuthSplash) {
+        return '/auth-splash';
+      }
+      
+      // RULE 3: Not logged in - allow onboarding and auth flows
+      if (!isLoggedIn) {
+        // Allow onboarding screen
+        if (isOnboarding) return null;
+        
+        // Allow auth flow screens
+        if (isAuthFlow) return null;
+        
+        // Redirect everything else to auth
         return '/auth';
       }
-      if (!loggedIn && state.matchedLocation != '/' && !signingFlow) {
-        return '/auth';
+      
+      // RULE 4: Logged in and initialized - route based on user state
+      if (isLoggedIn && isInitialized) {
+        // If on auth flow or onboarding, redirect to appropriate dashboard
+        if (isAuthFlow || isOnboarding) {
+          final role = user?.role;
+          
+          // Check approval status (now guaranteed to be accurate)
+          if (user != null && user.needsApproval) {
+            // If approval status is still unknown, stay on splash
+            if (user.isApprovalStatusUnknown) {
+              return '/auth-splash';
+            }
+            
+            // If not approved, go to pending screen
+            if (!user.isApproved) {
+              return '/pending-approval';
+            }
+          }
+          
+          // Approved users or users who don't need approval - go to dashboard
+          if (role == 'restaurant') {
+            return '/restaurant-dashboard';
+          } else if (role == 'ngo') {
+            return '/ngo-dashboard';
+          } else if (role == 'admin') {
+            return '/admin-dashboard';
+          }
+          return '/home';
+        }
+        
+        // If trying to access pending approval but actually approved, redirect
+        if (isPendingApproval && user != null) {
+          if (!user.needsApproval || user.isApproved) {
+            final role = user.role;
+            if (role == 'restaurant') {
+              return '/restaurant-dashboard';
+            } else if (role == 'ngo') {
+              return '/ngo-dashboard';
+            } else if (role == 'admin') {
+              return '/admin-dashboard';
+            }
+            return '/home';
+          }
+        }
       }
-      if (loggedIn && (signingFlow || state.matchedLocation == '/')) {
-        return '/home';
-      }
+      
+      // Allow navigation to current location
       return null;
     },
+
     routes: [
       GoRoute(
-        name: RouteNames.splash,
+        name: RouteNames.onboarding,
         path: '/',
-        builder: (context, state) => const SplashScreen(),
+        builder: (context, state) => const OnboardingFlowScreen(),
       ),
+      GoRoute(
+        path: '/auth-splash',
+        builder: (context, state) => const AuthSplashScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.restaurantDashboard,
+        path: '/restaurant-dashboard',
+        builder: (context, state) => const RestaurantDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/restaurant-dashboard/meals',
+        builder: (context, state) => const MealsListScreen(),
+      ),
+      GoRoute(
+        path: '/restaurant-dashboard/orders',
+        builder: (context, state) => const RestaurantOrdersScreen(),
+      ),
+      GoRoute(
+        path: '/restaurant-dashboard/add-meal',
+        builder: (context, state) => const AddMealScreen(),
+      ),
+      GoRoute(
+        path: '/restaurant-dashboard/meal/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return MealDetailsScreen(mealId: id);
+        },
+      ),
+      GoRoute(
+        path: '/restaurant-dashboard/edit-meal/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return EditMealScreen(mealId: id);
+        },
+      ),
+      GoRoute(
+        path: '/restaurant-dashboard/profile',
+        builder: (context, state) => const RestaurantProfileScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.ngoDashboard,
+        path: '/ngo-dashboard',
+        builder: (context, state) => const NgoDashboardScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.adminDashboard,
+        path: '/admin-dashboard',
+        builder: (context, state) => const AdminDashboardScreen(),
+      ),
+      GoRoute(
+        name: RouteNames.pendingApproval,
+        path: '/pending-approval',
+        builder: (context, state) => const PendingApprovalScreen(),
+      ),
+
       GoRoute(
         name: RouteNames.product,
         path: '/meal/:id',

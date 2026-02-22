@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>All Available Meals - Kathir</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#58cc02",
+                        "primary-dark": "#46a302",
+                        "background-light": "#f7f8f6",
+                        "background-dark": "#1a2111",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#262f1d",
+                        "text-main-light": "#151b0e",
+                        "text-main-dark": "#eef3e7",
+                        "text-sub-light": "#5c6f47",
+                        "text-sub-dark": "#aebfa0",
+                        "border-light": "#dde7d0",
+                        "border-dark": "#3a452d",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+        body { min-height: max(884px, 100dvh); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark antialiased transition-colors duration-200">
+<div class="relative flex h-full min-h-screen w-full max-w-md mx-auto flex-col overflow-x-hidden bg-background-light dark:bg-background-dark shadow-xl">
+<header class="sticky top-0 z-20 flex items-center justify-between bg-surface-light/80 dark:bg-surface-dark/80 px-4 py-3 backdrop-blur-md border-b border-border-light dark:border-border-dark">
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-text-main-light dark:text-text-main-dark">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="text-lg font-bold leading-tight tracking-tight text-center">Available Meals</h1>
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-text-main-light dark:text-text-main-dark relative">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-surface-light dark:border-surface-dark"></span>
+</button>
+</header>
+<main class="flex-1 flex flex-col p-4 gap-6 pb-28">
+<div class="space-y-4">
+<div class="relative">
+<input class="w-full pl-11 pr-12 py-3.5 bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl text-text-main-light dark:text-text-main-dark focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder:text-text-sub-light/50 shadow-sm text-sm" placeholder="Search for meals, restaurants..." type="text"/>
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-text-sub-light dark:text-text-sub-dark">search</span>
+<button class="absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined text-[20px] text-primary">tune</span>
+</button>
+</div>
+<div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1 -mx-4 px-4">
+<button class="px-5 py-2 rounded-full bg-primary text-white text-sm font-bold whitespace-nowrap shadow-sm shadow-primary/30">
+                        All Items
+                    </button>
+<button class="px-5 py-2 rounded-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-sub-light dark:text-text-sub-dark text-sm font-semibold whitespace-nowrap hover:border-primary hover:text-primary transition-colors">
+                        Bakery
+                    </button>
+<button class="px-5 py-2 rounded-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-sub-light dark:text-text-sub-dark text-sm font-semibold whitespace-nowrap hover:border-primary hover:text-primary transition-colors">
+                        Fast Food
+                    </button>
+<button class="px-5 py-2 rounded-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-sub-light dark:text-text-sub-dark text-sm font-semibold whitespace-nowrap hover:border-primary hover:text-primary transition-colors">
+                        Fruits &amp; Veg
+                    </button>
+<button class="px-5 py-2 rounded-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-sub-light dark:text-text-sub-dark text-sm font-semibold whitespace-nowrap hover:border-primary hover:text-primary transition-colors">
+                        Vegan
+                    </button>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<h2 class="text-lg font-bold text-text-main-light dark:text-text-main-dark">Nearby Surplus</h2>
+<button class="text-xs font-semibold text-primary hover:text-primary-dark flex items-center gap-1">
+                    Sort by: Distance <span class="material-symbols-outlined text-[14px]">expand_more</span>
+</button>
+</div>
+<div class="grid grid-cols-1 gap-5">
+<div class="group bg-surface-light dark:bg-surface-dark rounded-2xl border border-border-light dark:border-border-dark shadow-soft overflow-hidden hover:border-primary/50 transition-all duration-300">
+<div class="relative h-44 w-full overflow-hidden">
+<img alt="Bowl of salad" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvjq7rtJmwMKhI3nDm5Tc-enakjg1MYbuHUMRdpYfnKd96jO-h5ynkFRrPOSsZfRWJqbReUHNbFl8ytgY-ickipZ1htqJxa3G_CfwtFzkuS1xgB1Xv_qRoPOMvgtqlEUoQj4wJV6dAGbP6OH8h1NtOoCQZI0q6wg4nvSkYoIssr_2NUtBbPHjChgEk48EcX28oehT5fI9C6hEwPTtMVI4yVbKpOw_UkkUf9fr8OVWpy0p2R3sgoB0NtMy0p9NRy-9KlQbtVMRLbFw"/>
+<div class="absolute top-3 left-3 bg-white/90 dark:bg-black/80 backdrop-blur-sm px-2.5 py-1 rounded-lg flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-orange-500 fill-1">star</span>
+<span class="text-xs font-bold text-text-main-light dark:text-text-main-dark">4.8</span>
+</div>
+<div class="absolute top-3 right-3 bg-red-500 text-white px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm">
+                            Only 3 left
+                        </div>
+</div>
+<div class="p-4">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h3 class="font-bold text-lg text-text-main-light dark:text-text-main-dark">Green Salad Bowl</h3>
+<div class="flex items-center gap-1 text-text-sub-light dark:text-text-sub-dark mt-0.5">
+<span class="material-symbols-outlined text-[16px]">storefront</span>
+<span class="text-xs font-medium">Healthy Harvest</span>
+<span class="text-[10px] mx-1 opacity-50">•</span>
+<span class="text-xs">0.8 km</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 mb-4">
+<span class="px-2 py-1 rounded-md bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-[10px] font-semibold text-text-sub-light tracking-wide uppercase">Vegetarian</span>
+<span class="px-2 py-1 rounded-md bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-[10px] font-semibold text-text-sub-light tracking-wide uppercase">Pickup: 7-9 PM</span>
+</div>
+<div class="flex items-center justify-between pt-3 border-t border-border-light dark:border-border-dark">
+<div class="flex flex-col">
+<span class="text-xs text-text-sub-light line-through decoration-red-400">120 EGP</span>
+<span class="text-xl font-bold text-primary">60 EGP</span>
+</div>
+<button class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/30 active:scale-95 transition-transform hover:bg-primary-dark">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+</div>
+<div class="group bg-surface-light dark:bg-surface-dark rounded-2xl border border-border-light dark:border-border-dark shadow-soft overflow-hidden hover:border-primary/50 transition-all duration-300">
+<div class="relative h-44 w-full overflow-hidden">
+<img alt="Pastries" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8avE2GUhVI7CMsX1_9xx2zvtSu7jbMYEa9qRBL0C6gcDFb098USTweKxYm97QfVIL_oq9R70b3ZFsGFE4Y3WEgrqanwZvCWTcS0R02pCoLQd5jAVu8v-CyY2tp9IaPP_ruy7nkhCY-pYGb5PNLGrNjRFTnXU144Hyr7Syd4XJUh6yj5J1HKwuvCdc-kSQugtBZjhpcxOenKxx1ZHOnOTu8WIyQ0wdcOMOlHnb8oiJYwQQN8wWgWXNNfQ1Df9JEVfv8cpwCL7Ryes"/>
+<div class="absolute top-3 left-3 bg-white/90 dark:bg-black/80 backdrop-blur-sm px-2.5 py-1 rounded-lg flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-orange-500 fill-1">star</span>
+<span class="text-xs font-bold text-text-main-light dark:text-text-main-dark">4.5</span>
+</div>
+</div>
+<div class="p-4">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h3 class="font-bold text-lg text-text-main-light dark:text-text-main-dark">Assorted Croissants</h3>
+<div class="flex items-center gap-1 text-text-sub-light dark:text-text-sub-dark mt-0.5">
+<span class="material-symbols-outlined text-[16px]">bakery_dining</span>
+<span class="text-xs font-medium">Le Matin Bakery</span>
+<span class="text-[10px] mx-1 opacity-50">•</span>
+<span class="text-xs">1.2 km</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 mb-4">
+<span class="px-2 py-1 rounded-md bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-[10px] font-semibold text-text-sub-light tracking-wide uppercase">Surplus Box</span>
+<span class="px-2 py-1 rounded-md bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-[10px] font-semibold text-text-sub-light tracking-wide uppercase">Pickup: 8-10 PM</span>
+</div>
+<div class="flex items-center justify-between pt-3 border-t border-border-light dark:border-border-dark">
+<div class="flex flex-col">
+<span class="text-xs text-text-sub-light line-through decoration-red-400">180 EGP</span>
+<span class="text-xl font-bold text-primary">85 EGP</span>
+</div>
+<button class="w-10 h-10 rounded-full bg-surface-light border-2 border-primary text-primary hover:bg-primary hover:text-white flex items-center justify-center transition-colors active:scale-95">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+</div>
+<div class="group bg-surface-light dark:bg-surface-dark rounded-2xl border border-border-light dark:border-border-dark shadow-soft overflow-hidden hover:border-primary/50 transition-all duration-300 opacity-60 grayscale-[0.5]">
+<div class="relative h-44 w-full overflow-hidden">
+<img alt="Pizza" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAx_ZHcb6HRIqoGuKM1k8xkeMYgqtKyIzoP-FliZBtbxGdXIK0aUet_phfKjUlUq_MeT2cJH0LvJSCc26pB1GpBdO7p3sWclbYLdRhhfL1worItUQ0iDt-oeWdLTj2QvaZr80ZHR0mVNOO84_g6ZC-Kc6J4dM7nYwIJUcDIGqdOQ2adsuHp21Tme-qzl6HyNhC6Yd2WjuQs-cBeRVZviEGLJs4fnGlsbvR7R9gcgqA4piL7qCHXK-__4c43A4ceWQoXDxP5e1BxX5E"/>
+<div class="absolute inset-0 bg-background-dark/50 flex items-center justify-center">
+<span class="bg-black/70 text-white px-3 py-1.5 rounded-lg text-sm font-bold backdrop-blur-sm">Sold Out</span>
+</div>
+</div>
+<div class="p-4">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h3 class="font-bold text-lg text-text-main-light dark:text-text-main-dark">Margherita Pizza</h3>
+<div class="flex items-center gap-1 text-text-sub-light dark:text-text-sub-dark mt-0.5">
+<span class="material-symbols-outlined text-[16px]">local_pizza</span>
+<span class="text-xs font-medium">Roma Pizza</span>
+<span class="text-[10px] mx-1 opacity-50">•</span>
+<span class="text-xs">2.5 km</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 border-t border-border-light dark:border-border-dark">
+<div class="flex flex-col">
+<span class="text-xs text-text-sub-light line-through decoration-red-400">150 EGP</span>
+<span class="text-xl font-bold text-text-sub-light">75 EGP</span>
+</div>
+<button class="w-10 h-10 rounded-full bg-border-light dark:bg-border-dark text-text-sub-light flex items-center justify-center cursor-not-allowed" disabled="">
+<span class="material-symbols-outlined">block</span>
+</button>
+</div>
+</div>
+</div>
+<div class="group bg-surface-light dark:bg-surface-dark rounded-2xl border border-border-light dark:border-border-dark shadow-soft overflow-hidden hover:border-primary/50 transition-all duration-300">
+<div class="relative h-44 w-full overflow-hidden">
+<img alt="Chicken Meal" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPYlnLH1nnHvwWT6-mDZr1NGAtKnhiFgaCMwQfCpzukeWHmakevn6UIAo8CDnQGf7cec11hfx6C6hosEU2-ANmtu7GP79qdcrZYyUFuRQAzi4ExZ6VpgF9hPbvtTkzeRj2Im34ksE_B-eOGSRl9xojh4V-RAYa-gn-ynNHYXElazRm8i0pmDBw5J-SoyzC6FeLzIA2quHyl36J999Epul7r80bi0Fy6w0DKlFzqBr9Q0wODBuR5cxB5369zxEuLkjrMEmh2guRJxc"/>
+<div class="absolute top-3 left-3 bg-white/90 dark:bg-black/80 backdrop-blur-sm px-2.5 py-1 rounded-lg flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-orange-500 fill-1">star</span>
+<span class="text-xs font-bold text-text-main-light dark:text-text-main-dark">4.9</span>
+</div>
+<div class="absolute top-3 right-3 bg-primary text-white px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm">
+                            New
+                        </div>
+</div>
+<div class="p-4">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h3 class="font-bold text-lg text-text-main-light dark:text-text-main-dark">Grilled Chicken Meal</h3>
+<div class="flex items-center gap-1 text-text-sub-light dark:text-text-sub-dark mt-0.5">
+<span class="material-symbols-outlined text-[16px]">restaurant</span>
+<span class="text-xs font-medium">Chef's Corner</span>
+<span class="text-[10px] mx-1 opacity-50">•</span>
+<span class="text-xs">1.5 km</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 mb-4">
+<span class="px-2 py-1 rounded-md bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-[10px] font-semibold text-text-sub-light tracking-wide uppercase">High Protein</span>
+<span class="px-2 py-1 rounded-md bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-[10px] font-semibold text-text-sub-light tracking-wide uppercase">Pickup: 6-8 PM</span>
+</div>
+<div class="flex items-center justify-between pt-3 border-t border-border-light dark:border-border-dark">
+<div class="flex flex-col">
+<span class="text-xs text-text-sub-light line-through decoration-red-400">140 EGP</span>
+<span class="text-xl font-bold text-primary">70 EGP</span>
+</div>
+<button class="w-10 h-10 rounded-full bg-surface-light border-2 border-primary text-primary hover:bg-primary hover:text-white flex items-center justify-center transition-colors active:scale-95">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<button class="w-full py-4 rounded-xl border border-border-light dark:border-border-dark text-text-sub-light font-bold hover:bg-surface-light dark:hover:bg-surface-dark transition-colors text-sm uppercase tracking-wide">
+                Show more results
+            </button>
+</main>
+<div class="fixed bottom-6 w-full max-w-md px-4 z-20 pointer-events-none">
+<button class="w-full pointer-events-auto bg-primary text-white p-4 rounded-2xl shadow-xl shadow-primary/30 flex items-center justify-between group active:scale-[0.98] transition-all">
+<div class="flex items-center gap-3">
+<div class="bg-white/20 px-3 py-1.5 rounded-lg text-sm font-bold backdrop-blur-sm">1</div>
+<div class="flex flex-col items-start">
+<span class="text-sm font-bold">View Cart</span>
+<span class="text-xs text-white/80">Green Salad Bowl added</span>
+</div>
+</div>
+<div class="flex items-center gap-2 font-bold">
+<span>60 EGP</span>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</div>
+</button>
+</div>
+</div>
+
+</body></html>

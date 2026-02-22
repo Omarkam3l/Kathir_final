@@ -1,12 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:typed_data';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'supabase_helper_exception.dart';
 
-const supabaseUrl = String.fromEnvironment(
-  'SUPABASE_URL',
-  defaultValue: 'https://vpxghgwfswotlwtulqrz.supabase.co',
-);
-const supabaseKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? 'https://vpxghgwfswotlwtulqrz.supabase.co';
+String get supabaseKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 class SupabaseHelper {
   SupabaseClient get client => Supabase.instance.client;
 
@@ -110,7 +108,7 @@ class SupabaseHelper {
           );
       return client.storage.from(bucket).getPublicUrl(fp);
     } catch (e) {
-      throw SupabaseHelperException('uploadDocument failed');
+      throw SupabaseHelperException('uploadDocument failed: $e');
     }
   }
 

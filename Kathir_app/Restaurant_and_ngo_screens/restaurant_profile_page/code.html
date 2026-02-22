@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kathir - Restaurant Profile</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Noto+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#54cf17",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#162111",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#23331c",
+                        "text-primary-light": "#121b0e",
+                        "text-primary-dark": "#f0f5ee",
+                        "text-secondary-light": "#67974e",
+                        "text-secondary-dark": "#a3cc8f",
+                        "border-light": "#d7e7d0",
+                        "border-dark": "#3a4f32",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-primary-light dark:text-text-primary-dark min-h-screen flex justify-center">
+<div class="relative flex h-full min-h-screen w-full max-w-md flex-col bg-background-light dark:bg-background-dark overflow-x-hidden shadow-2xl">
+<!-- Top App Bar -->
+<div class="sticky top-0 z-50 flex items-center bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md px-4 py-3 justify-between border-b border-border-light dark:border-border-dark">
+<div class="flex items-center gap-3">
+<button class="flex items-center justify-center text-text-primary-light dark:text-text-primary-dark hover:text-primary transition-colors">
+<span class="material-symbols-outlined">arrow_back_ios_new</span>
+</button>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">Edit Profile</h2>
+</div>
+<button class="flex items-center justify-center rounded-full bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 px-4 py-1.5 transition-colors">
+<p class="text-primary text-sm font-bold leading-normal tracking-[0.015em]">Save</p>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto pb-24">
+<!-- Profile Header -->
+<div class="flex flex-col items-center pt-8 pb-6 px-4">
+<div class="relative group cursor-pointer">
+<div class="h-32 w-32 rounded-full border-4 border-surface-light dark:border-surface-dark shadow-lg bg-cover bg-center overflow-hidden" data-alt="Restaurant storefront with warm lighting and plants" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAGMgrLvqvOUdR0MME_nqiocVVYd-rwbwdpcbVfnmCaAuNNl1eA_7crJ9nYeg7zpawPEyKBnVav_CY2NBlU635qKu6pYXZUUrK75iycowaDzHMvedjP7Rd42fVGGoryNYRntvX7ZkzkR-6Kwel7s339N7SDcl3eduVaDpE5cjKKclNpZlxkI8Wbuo0XF_pdgmyLFX10kS1ezv_36uFGv-kVwlAtcZZxu_wTmkHoDF8M8szSsDjcwJTAPSv_Ces1Ph13s8pUFscB9sw");'>
+</div>
+<div class="absolute bottom-0 right-0 bg-primary h-10 w-10 rounded-full flex items-center justify-center border-2 border-surface-light dark:border-surface-dark shadow-md">
+<span class="material-symbols-outlined text-white text-[20px]">photo_camera</span>
+</div>
+</div>
+<div class="mt-4 text-center">
+<h1 class="text-2xl font-bold text-text-primary-light dark:text-text-primary-dark">The Green Bowl</h1>
+<p class="text-text-secondary-light dark:text-text-secondary-dark text-sm mt-1">Tap photo to update logo</p>
+</div>
+</div>
+<div class="h-2 bg-border-light/30 dark:bg-border-dark/30"></div>
+<!-- Business Details Section -->
+<div class="flex flex-col px-4 pt-6">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary">storefront</span>
+<h3 class="text-lg font-bold leading-tight">Business Details</h3>
+</div>
+<div class="flex flex-col gap-5">
+<!-- Restaurant Name -->
+<label class="flex flex-col w-full">
+<p class="text-text-primary-light dark:text-text-primary-dark text-sm font-semibold mb-2 ml-1">Restaurant Name</p>
+<input class="w-full rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark text-text-primary-light dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary h-12 px-4 placeholder:text-text-secondary-light/50 dark:placeholder:text-text-secondary-dark/50 transition-all text-base" placeholder="Enter restaurant name" type="text" value="The Green Bowl"/>
+</label>
+<!-- Cuisine Type -->
+<label class="flex flex-col w-full">
+<p class="text-text-primary-light dark:text-text-primary-dark text-sm font-semibold mb-2 ml-1">Cuisine Type</p>
+<div class="relative">
+<select class="w-full appearance-none rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark text-text-primary-light dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary h-12 px-4 pr-10 text-base transition-all">
+<option disabled="" value="">Select Cuisine</option>
+<option selected="" value="vegan">Vegan &amp; Vegetarian</option>
+<option value="italian">Italian</option>
+<option value="asian">Asian Fusion</option>
+<option value="mediterranean">Mediterranean</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-primary">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</div>
+</label>
+<!-- Contact Number -->
+<label class="flex flex-col w-full">
+<p class="text-text-primary-light dark:text-text-primary-dark text-sm font-semibold mb-2 ml-1">Contact Number</p>
+<div class="relative">
+<input class="w-full rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark text-text-primary-light dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary h-12 pl-12 pr-4 placeholder:text-text-secondary-light/50 dark:placeholder:text-text-secondary-dark/50 transition-all text-base" placeholder="(555) 000-0000" type="tel" value="+1 (555) 123-4567"/>
+<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-text-secondary-light dark:text-text-secondary-dark">
+<span class="material-symbols-outlined text-[20px]">call</span>
+</div>
+</div>
+</label>
+</div>
+</div>
+<div class="h-2 bg-border-light/30 dark:bg-border-dark/30 mt-8 mb-6"></div>
+<!-- Location Section -->
+<div class="flex flex-col px-4">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">location_on</span>
+<h3 class="text-lg font-bold leading-tight">Location</h3>
+</div>
+<button class="text-primary text-sm font-semibold hover:underline">Edit on map</button>
+</div>
+<div class="relative w-full h-40 rounded-xl overflow-hidden mb-4 shadow-sm border border-border-light dark:border-border-dark group">
+<!-- Map Placeholder Image -->
+<img alt="Map view of city streets" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" data-location="San Francisco" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCazQbbZtO-7SJSbVf1sh3XXS34skJxLaT9O0dQYoZ7kZHxaGjIKJAtC3aV-whnvGk7jUY2WevXpDwKQLYJrPE02QlzmNph0EXG5FbxbrXY2fkfC8n7wV6xWr9FwfPy0h8dT4kOVVJpij2GsMtMtLld9PhZ3Qlkwi1dDQ11Sm4yXC2ProqXNBGkATGmYzMOpe0BR0MwGTOEBgHa54RgQe_v3pub0NYbfrWNYMQpMqPgbXtd7DtNYZQl2TQ4IPfWo2VcjTAwKFJnXtg"/>
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<span class="material-symbols-outlined text-primary text-4xl drop-shadow-md">location_on</span>
+</div>
+</div>
+<label class="flex flex-col w-full">
+<p class="text-text-primary-light dark:text-text-primary-dark text-sm font-semibold mb-2 ml-1">Full Address</p>
+<textarea class="w-full rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark text-text-primary-light dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary p-4 h-24 resize-none placeholder:text-text-secondary-light/50 dark:placeholder:text-text-secondary-dark/50 transition-all text-base" placeholder="Enter street address, city, and zip code">123 Market Street, San Francisco, CA 94103</textarea>
+</label>
+</div>
+<div class="h-2 bg-border-light/30 dark:bg-border-dark/30 mt-8 mb-6"></div>
+<!-- Surplus Settings Section -->
+<div class="flex flex-col px-4">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary">schedule</span>
+<h3 class="text-lg font-bold leading-tight">Surplus Settings</h3>
+</div>
+<!-- Rush Hour Selector -->
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-5 border border-border-light dark:border-border-dark shadow-sm mb-5">
+<div class="flex justify-between items-center mb-4">
+<div>
+<p class="font-bold text-text-primary-light dark:text-text-primary-dark">Rush Hour</p>
+<p class="text-xs text-text-secondary-light dark:text-text-secondary-dark">High discount period</p>
+</div>
+<div class="flex items-center gap-2 bg-primary/10 dark:bg-primary/20 px-3 py-1 rounded-full">
+<span class="text-primary text-sm font-bold">ON</span>
+<div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex-1">
+<label class="text-xs text-text-secondary-light dark:text-text-secondary-dark font-medium mb-1 block ml-1">Start Time</label>
+<div class="relative">
+<input class="w-full bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-lg px-3 py-2 text-sm font-semibold text-text-primary-light dark:text-text-primary-dark focus:ring-1 focus:ring-primary focus:border-primary outline-none" type="time" value="21:00"/>
+</div>
+</div>
+<span class="text-text-secondary-light dark:text-text-secondary-dark pt-5">-</span>
+<div class="flex-1">
+<label class="text-xs text-text-secondary-light dark:text-text-secondary-dark font-medium mb-1 block ml-1">End Time</label>
+<div class="relative">
+<input class="w-full bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-lg px-3 py-2 text-sm font-semibold text-text-primary-light dark:text-text-primary-dark focus:ring-1 focus:ring-primary focus:border-primary outline-none" type="time" value="23:00"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Discount Slider -->
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-5 border border-border-light dark:border-border-dark shadow-sm">
+<div class="flex justify-between items-center mb-6">
+<div>
+<p class="font-bold text-text-primary-light dark:text-text-primary-dark">Default Discount</p>
+<p class="text-xs text-text-secondary-light dark:text-text-secondary-dark">Applied during rush hours</p>
+</div>
+<span class="text-2xl font-bold text-primary">50%</span>
+</div>
+<div class="relative w-full h-2 bg-border-light dark:bg-border-dark rounded-full">
+<div class="absolute h-full bg-primary rounded-full" style="width: 50%"></div>
+<div class="absolute h-6 w-6 bg-white dark:bg-surface-dark border-2 border-primary rounded-full shadow-md top-1/2 transform -translate-y-1/2 -ml-3 cursor-pointer" style="left: 50%"></div>
+</div>
+<div class="flex justify-between mt-2 text-xs text-text-secondary-light dark:text-text-secondary-dark font-medium">
+<span>10%</span>
+<span>80%</span>
+</div>
+</div>
+</div>
+<!-- Delete Account (Secondary Action) -->
+<div class="px-4 mt-10 mb-8">
+<button class="w-full py-3 rounded-xl border border-red-200 dark:border-red-900 text-red-500 dark:text-red-400 font-semibold text-sm hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                    Log Out
+                </button>
+</div>
+</div>
+<!-- Sticky Bottom Button (Optional if Save is in header, but user requested 'Save Changes' at bottom) -->
+<div class="sticky bottom-0 bg-background-light dark:bg-background-dark border-t border-border-light dark:border-border-dark p-4 z-40">
+<button class="w-full bg-primary hover:bg-green-600 text-white font-bold text-lg py-4 rounded-xl shadow-lg shadow-primary/30 transition-all active:scale-[0.98]">
+                Save Changes
+            </button>
+</div>
+</div>
+</body></html>

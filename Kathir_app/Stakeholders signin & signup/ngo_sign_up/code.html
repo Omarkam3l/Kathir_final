@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NGO Sign Up - Kathir</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2c20",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display antialiased">
+<div class="relative flex h-full min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden transition-colors duration-200">
+<!-- TopAppBar -->
+<div class="sticky top-0 z-10 flex items-center bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm p-4 pb-2 justify-between border-b border-gray-100 dark:border-gray-800">
+<div class="text-[#0d1b12] dark:text-white flex size-12 shrink-0 items-center justify-start cursor-pointer hover:opacity-70">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</div>
+<h2 class="text-[#0d1b12] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12">Partner Sign Up</h2>
+</div>
+<!-- ProgressBar -->
+<div class="flex flex-col gap-3 px-4 pt-2">
+<div class="flex gap-6 justify-between items-end">
+<p class="text-[#0d1b12] dark:text-gray-200 text-sm font-medium leading-normal">Step 1 of 2</p>
+<p class="text-gray-500 dark:text-gray-400 text-xs font-medium">50% Completed</p>
+</div>
+<div class="rounded-full bg-[#cfe7d7] dark:bg-gray-700 h-1.5 overflow-hidden">
+<div class="h-full rounded-full bg-primary" style="width: 50%;"></div>
+</div>
+</div>
+<div class="flex-1 flex flex-col px-4 pb-8">
+<!-- HeadlineText -->
+<h1 class="text-[#0d1b12] dark:text-white tracking-tight text-[28px] font-bold leading-tight text-left pb-2 pt-6">
+                Join as an NGO Partner
+            </h1>
+<!-- BodyText -->
+<p class="text-gray-600 dark:text-gray-300 text-base font-normal leading-relaxed pb-6">
+                Help us distribute surplus food to those in need. Please verify your organization details below to get started.
+            </p>
+<!-- Form Section 1: Organization Details -->
+<div class="space-y-5">
+<div>
+<h3 class="text-[#0d1b12] dark:text-white text-lg font-bold leading-tight tracking-tight pb-3">Organization Details</h3>
+<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-semibold text-[#0d1b12] dark:text-gray-200">Organization Name</label>
+<input class="w-full rounded-lg border border-gray-200 bg-surface-light px-4 py-3.5 text-base text-[#0d1b12] placeholder-gray-400 focus:border-primary focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-surface-dark dark:text-white dark:placeholder-gray-500" placeholder="e.g. Green Earth Foundation" type="text"/>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-semibold text-[#0d1b12] dark:text-gray-200">Official Email Address</label>
+<input class="w-full rounded-lg border border-gray-200 bg-surface-light px-4 py-3.5 text-base text-[#0d1b12] placeholder-gray-400 focus:border-primary focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-surface-dark dark:text-white dark:placeholder-gray-500" placeholder="contact@organization.org" type="email"/>
+</div>
+</div>
+</div>
+<!-- Form Section 2: Representative Info -->
+<div class="pt-2">
+<h3 class="text-[#0d1b12] dark:text-white text-lg font-bold leading-tight tracking-tight pb-3">Representative Information</h3>
+<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-semibold text-[#0d1b12] dark:text-gray-200">Full Name</label>
+<input class="w-full rounded-lg border border-gray-200 bg-surface-light px-4 py-3.5 text-base text-[#0d1b12] placeholder-gray-400 focus:border-primary focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-surface-dark dark:text-white dark:placeholder-gray-500" placeholder="Name of person registering" type="text"/>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-semibold text-[#0d1b12] dark:text-gray-200">Role / Position</label>
+<div class="relative">
+<select class="w-full appearance-none rounded-lg border border-gray-200 bg-surface-light px-4 py-3.5 text-base text-[#0d1b12] focus:border-primary focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-surface-dark dark:text-white">
+<option disabled="" selected="" value="">Select your role</option>
+<option value="director">Director</option>
+<option value="manager">Operations Manager</option>
+<option value="coordinator">Volunteer Coordinator</option>
+<option value="admin">Administrator</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Form Section 3: Legal Verification -->
+<div class="pt-2">
+<div class="flex items-center gap-2 pb-3">
+<h3 class="text-[#0d1b12] dark:text-white text-lg font-bold leading-tight tracking-tight">Legal Verification</h3>
+<span class="material-symbols-outlined text-gray-400 text-[18px]" title="Secure Document Upload">lock</span>
+</div>
+<div class="flex flex-col gap-5">
+<!-- Tax Card Upload -->
+<div class="flex flex-col gap-2 p-4 rounded-xl border border-gray-200 bg-white dark:bg-surface-dark dark:border-gray-700 shadow-sm">
+<label class="text-sm font-semibold text-[#0d1b12] dark:text-gray-200">Tax Card Verification</label>
+<input class="w-full rounded-lg border border-gray-200 bg-background-light/50 px-3 py-2.5 text-sm text-[#0d1b12] placeholder-gray-400 focus:border-primary focus:ring-0 dark:border-gray-600 dark:bg-background-dark/50 dark:text-white" placeholder="Enter Tax Card No." type="text"/>
+<label class="group flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 bg-background-light py-3 hover:bg-green-50 hover:border-primary transition-colors dark:border-gray-600 dark:bg-background-dark dark:hover:bg-surface-dark">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">cloud_upload</span>
+<span class="text-sm font-medium text-gray-600 dark:text-gray-300">Upload Tax Card Image</span>
+<input class="hidden" type="file"/>
+</label>
+</div>
+<!-- Commercial Reg Upload -->
+<div class="flex flex-col gap-2 p-4 rounded-xl border border-gray-200 bg-white dark:bg-surface-dark dark:border-gray-700 shadow-sm">
+<label class="text-sm font-semibold text-[#0d1b12] dark:text-gray-200">Commercial Registration</label>
+<input class="w-full rounded-lg border border-gray-200 bg-background-light/50 px-3 py-2.5 text-sm text-[#0d1b12] placeholder-gray-400 focus:border-primary focus:ring-0 dark:border-gray-600 dark:bg-background-dark/50 dark:text-white" placeholder="Enter Registration No." type="text"/>
+<!-- Simulating an uploaded state for variety -->
+<div class="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/10 px-3 py-2.5 dark:bg-primary/20">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">description</span>
+<span class="text-sm font-medium text-[#0d1b12] dark:text-white truncate max-w-[150px]">reg_doc_2023.pdf</span>
+</div>
+<span class="material-symbols-outlined text-primary cursor-pointer hover:text-red-500">close</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Terms and Submit -->
+<div class="pt-6 pb-4">
+<label class="flex items-start gap-3 pb-6 cursor-pointer group">
+<div class="relative flex items-center">
+<input class="peer size-5 cursor-pointer appearance-none rounded border border-gray-300 bg-white checked:border-primary checked:bg-primary dark:border-gray-600 dark:bg-surface-dark" type="checkbox"/>
+<span class="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[16px] text-[#0d1b12] opacity-0 peer-checked:opacity-100 font-bold">check</span>
+</div>
+<span class="text-sm font-normal text-gray-600 dark:text-gray-300 pt-0.5 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                            I agree to the <a class="text-primary underline font-medium" href="#">Terms of Service</a> and confirm that our organization complies with food safety regulations.
+                        </span>
+</label>
+<button class="w-full rounded-full bg-primary py-4 text-center text-base font-bold text-[#0d1b12] hover:bg-[#0fd650] hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-[0.98]">
+                        Verify &amp; Register
+                    </button>
+<p class="mt-4 text-center text-xs text-gray-400 dark:text-gray-500">
+                        Secure 256-bit SSL Encrypted
+                    </p>
+</div>
+</div>
+</div>
+</div>
+</body></html>

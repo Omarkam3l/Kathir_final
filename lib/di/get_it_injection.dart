@@ -2,8 +2,11 @@ import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/supabase/supabase_helper.dart';
 import '../features/authentication/data/datasources/auth_remote_datasource.dart';
+import '../features/authentication/data/datasources/profile_remote_datasource.dart';
 import '../features/authentication/data/repositories/auth_repository_impl.dart';
+import '../features/authentication/data/repositories/profile_repository_impl.dart';
 import '../features/authentication/domain/repositories/auth_repository.dart';
+import '../features/authentication/domain/repositories/profile_repository.dart';
 import '../features/authentication/domain/usecases/sign_in_usecase.dart';
 import '../features/authentication/domain/usecases/sign_up_usecase.dart';
 import '../features/authentication/domain/usecases/upload_legal_documents_usecase.dart';
@@ -31,7 +34,10 @@ Future<void> registerGetItDependencies() async {
 
   sl.registerLazySingleton<AuthRemoteDataSource>(
       () => SupabaseAuthRemoteDataSource(sl(), sl()));
+  sl.registerLazySingleton<ProfileRemoteDataSource>(
+      () => SupabaseProfileRemoteDataSource(sl(), sl()));
   sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
+  sl.registerLazySingleton<ProfileRepository>(() => ProfileRepositoryImpl(sl()));
   sl.registerFactory<SignInUseCase>(() => SignInUseCase(sl()));
   sl.registerFactory<SignUpUseCase>(() => SignUpUseCase(sl()));
   sl.registerFactory<UploadLegalDocumentsUseCase>(

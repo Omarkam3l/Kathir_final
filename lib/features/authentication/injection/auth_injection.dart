@@ -65,7 +65,6 @@ void registerAuthDependencies() {
         verifyRecoveryOtp: AppLocator.I.get<VerifyRecoveryOtpUseCase>(),
         updatePassword: AppLocator.I.get<UpdatePasswordUseCase>(),
       ));
-
   AppLocator.I.registerFactory<ForgotPasswordViewModel>(
       () => ForgotPasswordViewModel());
   AppLocator.I

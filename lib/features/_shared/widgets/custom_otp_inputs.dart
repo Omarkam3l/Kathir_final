@@ -26,11 +26,11 @@ class _CustomOtpInputsState extends State<CustomOtpInputs> {
       keyboardType: TextInputType.text,
       decoration: InputDecoration(
         focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: AppColors.brandRed, width: 2),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
           borderRadius: BorderRadius.circular(8),
         ),
         enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Colors.grey),
+          borderSide: const BorderSide(color: AppColors.grey),
           borderRadius: BorderRadius.circular(8),
         ),
       ),

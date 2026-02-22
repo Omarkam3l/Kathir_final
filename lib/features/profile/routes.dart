@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'presentation/screens/profile_overview_screen.dart';
-import 'presentation/screens/user_profile_screen.dart';
+import 'presentation/screens/user_profile_screen_new.dart';
+import 'presentation/screens/addresses_screen.dart';
 import 'presentation/screens/settings_screen.dart';
 import 'presentation/screens/change_password_screen.dart';
 import '../checkout/presentation/screens/choose_address_screen.dart';
@@ -13,7 +14,9 @@ import 'presentation/screens/about_screen.dart';
 
 List<GoRoute> profileRoutes() => [
   GoRoute(path: ProfileOverviewScreen.routeName, builder: (context, state) => const ProfileOverviewScreen()),
-  GoRoute(path: '/profile/user', builder: (context, state) => const UserProfileScreen()),
+  GoRoute(path: '/profile/user', builder: (context, state) => const UserProfileScreenNew()),
+  GoRoute(path: UserProfileScreenNew.routeName, builder: (context, state) => const UserProfileScreenNew()),
+  GoRoute(path: AddressesScreen.routeName, builder: (context, state) => const AddressesScreen()),
   GoRoute(path: '/profile/settings', builder: (context, state) => const SettingsScreen()),
   GoRoute(path: '/profile/change-password', builder: (context, state) => const ChangePasswordScreen()),
   GoRoute(path: '/profile/saved-addresses', builder: (context, state) => const ChooseAddressScreen()),

@@ -12,6 +12,17 @@ class MealModel extends Meal {
     required super.quantity,
     required super.expiry,
     required super.restaurant,
+    super.description,
+    super.ingredients,
+    super.allergens,
+    super.co2Savings,
+    super.pickupTime,
+    super.category,
+    super.unit,
+    super.fulfillmentMethod,
+    super.status,
+    super.isDonationAvailable,
+    super.pickupDeadline,
   });
 
   factory MealModel.fromJson(Map<String, dynamic> json) {
@@ -24,12 +35,26 @@ class MealModel extends Meal {
       donationPrice: (json['donation_price'] as num?)?.toDouble() ?? 0.0,
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
       expiry: DateTime.tryParse(json['expiry']?.toString() ?? '') ?? DateTime.now(),
+      description: json['description'] ?? '',
+      ingredients: (json['ingredients'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      allergens: (json['allergens'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      co2Savings: (json['co2_savings'] as num?)?.toDouble() ?? 0.0,
+      pickupTime: json['pickup_time'] != null ? DateTime.tryParse(json['pickup_time'].toString()) : null,
+      category: json['category'] ?? 'meals',
+      unit: json['unit'] ?? 'portions',
+      fulfillmentMethod: json['fulfillment_method'] ?? 'pickup',
+      status: json['status'] ?? 'active',
+      isDonationAvailable: json['is_donation_available'] ?? false,
+      pickupDeadline: json['pickup_deadline'] != null ? DateTime.tryParse(json['pickup_deadline'].toString()) : null,
       restaurant: RestaurantModel.fromJson(json['restaurant'] is Map<String, dynamic>
           ? json['restaurant'] as Map<String, dynamic>
           : {
               'id': json['restaurant_id'],
               'name': json['restaurant_name'],
               'rating': json['restaurant_rating'],
+              'logo_url': json['restaurant_logo_url'],
+              'verified': json['restaurant_verified'],
+              'reviews_count': json['restaurant_reviews_count'],
             }),
     );
   }
@@ -43,6 +68,18 @@ class MealModel extends Meal {
         'donation_price': donationPrice,
         'quantity': quantity,
         'expiry': expiry.toIso8601String(),
+        'description': description,
+        'ingredients': ingredients,
+        'allergens': allergens,
+        'co2_savings': co2Savings,
+        'pickup_time': pickupTime?.toIso8601String(),
+        'category': category,
+        'unit': unit,
+        'fulfillment_method': fulfillmentMethod,
+        'status': status,
+        'is_donation_available': isDonationAvailable,
+        'pickup_deadline': pickupDeadline?.toIso8601String(),
         'restaurant_id': restaurant.id,
       };
 }
+

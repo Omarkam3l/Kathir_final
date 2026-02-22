@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kathir - User Profile</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a3524",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar hiding */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-gray-900 dark:text-gray-100 font-display transition-colors duration-200 antialiased pb-24">
+<!-- Top App Bar -->
+<div class="sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+<div class="flex items-center px-4 py-3 justify-between max-w-lg mx-auto w-full">
+<div class="flex items-center gap-4">
+<button class="flex items-center justify-center p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+<span class="material-symbols-outlined text-gray-900 dark:text-white">arrow_back</span>
+</button>
+</div>
+<h2 class="text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-10">Profile</h2>
+<div class="w-10"></div> <!-- Spacer to balance back button -->
+</div>
+</div>
+<div class="max-w-lg mx-auto w-full">
+<!-- Profile Header -->
+<div class="flex flex-col items-center pt-6 pb-6 px-4">
+<div class="relative group">
+<div class="bg-center bg-no-repeat bg-cover rounded-full h-28 w-28 shadow-lg border-4 border-white dark:border-surface-dark" data-alt="Profile picture of Jane Doe showing a smiling face" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBs4kxJqfafjf9ndR0Z83JW27RPVv11prOqa-PFLFbCj1O1Mde6GeR-_jz3EUGlpCSVdSwbuexfVp2yLJ34sRo8UNW4VeTFjeuMQiKKYokVeGczT189R3tsYjMjj97AUuFghtThFfNfLX2HnJTQ1ND9v2Kjbm83LieDZgJOBxd0ZXvEXI7kdsCAur69uieCj6Mwqp4Qy8vA6YbLcRm0vH-dRFJ80LU843BExI3DOZ8tISHIZfHd6GrP7Dy-ftFvYfovhXtfCdt5mmI");'></div>
+<button class="absolute bottom-0 right-0 bg-primary p-2 rounded-full shadow-md border-2 border-background-light dark:border-background-dark text-black flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+</div>
+<div class="flex flex-col items-center mt-4">
+<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Jane Doe</h1>
+<p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Food Rescuer since 2023</p>
+</div>
+<button class="mt-5 w-full max-w-[200px] flex items-center justify-center h-10 px-4 rounded-full bg-primary hover:bg-primary/90 transition text-black text-sm font-bold tracking-wide shadow-sm">
+                Edit Profile
+            </button>
+</div>
+<!-- Profile Stats -->
+<div class="px-4 mb-6">
+<div class="flex gap-3">
+<div class="flex-1 bg-white dark:bg-surface-dark rounded-xl p-4 flex flex-col items-center justify-center shadow-sm border border-gray-100 dark:border-gray-800">
+<span class="text-3xl font-bold text-gray-900 dark:text-white">12</span>
+<div class="flex items-center gap-1 mt-1 text-primary">
+<span class="material-symbols-outlined text-lg">receipt_long</span>
+<span class="text-xs font-semibold uppercase tracking-wider">Orders</span>
+</div>
+</div>
+<div class="flex-1 bg-white dark:bg-surface-dark rounded-xl p-4 flex flex-col items-center justify-center shadow-sm border border-gray-100 dark:border-gray-800">
+<span class="text-3xl font-bold text-gray-900 dark:text-white">5<span class="text-lg">kg</span></span>
+<div class="flex items-center gap-1 mt-1 text-primary">
+<span class="material-symbols-outlined text-lg">eco</span>
+<span class="text-xs font-semibold uppercase tracking-wider">Saved</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Section: Account Settings -->
+<div class="px-4 mb-2">
+<h3 class="text-gray-900 dark:text-white text-lg font-bold px-1 mb-3">Account Settings</h3>
+<div class="bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+<!-- My Orders -->
+<button class="w-full flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left border-b border-gray-100 dark:border-gray-700/50">
+<div class="flex items-center justify-center rounded-lg bg-primary/20 shrink-0 h-10 w-10 text-primary-dark">
+<span class="material-symbols-outlined text-black dark:text-primary">receipt</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-gray-900 dark:text-white text-base font-medium truncate">My Orders</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">View past meals</p>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</button>
+<!-- Saved Addresses -->
+<button class="w-full flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left border-b border-gray-100 dark:border-gray-700/50">
+<div class="flex items-center justify-center rounded-lg bg-primary/20 shrink-0 h-10 w-10 text-primary-dark">
+<span class="material-symbols-outlined text-black dark:text-primary">location_on</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-gray-900 dark:text-white text-base font-medium truncate">Addresses</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Home, Work</p>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</button>
+<!-- Payment Methods -->
+<button class="w-full flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left">
+<div class="flex items-center justify-center rounded-lg bg-primary/20 shrink-0 h-10 w-10 text-primary-dark">
+<span class="material-symbols-outlined text-black dark:text-primary">credit_card</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-gray-900 dark:text-white text-base font-medium truncate">Payment Methods</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Visa ending in 4242</p>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Section: Security & App -->
+<div class="px-4 mt-6 mb-6">
+<h3 class="text-gray-900 dark:text-white text-lg font-bold px-1 mb-3">Security &amp; App</h3>
+<div class="bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+<!-- Change Password -->
+<button class="w-full flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left border-b border-gray-100 dark:border-gray-700/50">
+<div class="flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 shrink-0 h-10 w-10">
+<span class="material-symbols-outlined text-gray-600 dark:text-gray-300">lock</span>
+</div>
+<p class="text-gray-900 dark:text-white text-base font-medium flex-1 truncate">Change Password</p>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</button>
+<!-- Notifications -->
+<button class="w-full flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left border-b border-gray-100 dark:border-gray-700/50">
+<div class="flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 shrink-0 h-10 w-10">
+<span class="material-symbols-outlined text-gray-600 dark:text-gray-300">notifications</span>
+</div>
+<p class="text-gray-900 dark:text-white text-base font-medium flex-1 truncate">Notifications</p>
+<div class="relative inline-flex h-6 w-11 items-center rounded-full bg-primary">
+<span class="translate-x-6 inline-block h-4 w-4 transform rounded-full bg-white transition"></span>
+</div>
+</button>
+<!-- Help & Support -->
+<button class="w-full flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left">
+<div class="flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 shrink-0 h-10 w-10">
+<span class="material-symbols-outlined text-gray-600 dark:text-gray-300">help</span>
+</div>
+<p class="text-gray-900 dark:text-white text-base font-medium flex-1 truncate">Help &amp; Support</p>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Logout Button -->
+<div class="px-4 mb-8">
+<button class="w-full flex items-center justify-center gap-2 p-4 rounded-xl border border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 font-bold hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors">
+<span class="material-symbols-outlined">logout</span>
+                Log Out
+            </button>
+<p class="text-center text-xs text-gray-400 mt-4">Kathir App v2.1.0</p>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<div class="fixed bottom-0 left-0 right-0 bg-surface-light dark:bg-surface-dark border-t border-gray-200 dark:border-gray-800 pb-safe z-50">
+<div class="flex justify-around items-center h-16 max-w-lg mx-auto">
+<a class="flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" href="#">
+<span class="material-symbols-outlined">search</span>
+<span class="text-[10px] font-medium mt-1">Explore</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full" href="#">
+<div class="bg-primary text-black rounded-full p-3 -mt-6 shadow-lg border-4 border-background-light dark:border-background-dark">
+<span class="material-symbols-outlined">volunteer_activism</span>
+</div>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="text-[10px] font-medium mt-1">Activity</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-primary" href="#">
+<span class="material-symbols-outlined filled" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="text-[10px] font-bold mt-1">Profile</span>
+</a>
+</div>
+</div>
+</body></html>

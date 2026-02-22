@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kathir_final/core/utils/app_colors.dart';
 
 class CustomInputField extends StatelessWidget {
   final String hintText;
@@ -19,6 +20,10 @@ class CustomInputField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isOptional = hintText.toLowerCase().contains('optional');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fill = fillColor ??
+        (isDark ? AppColors.inputFillDark : AppColors.inputFillLight);
+    final border = isDark ? AppColors.dividerDark : AppColors.dividerLight;
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
@@ -28,15 +33,23 @@ class CustomInputField extends StatelessWidget {
         if ((v ?? '').trim().isEmpty) return 'Required';
         return null;
       },
+      style: TextStyle(color: isDark ? AppColors.white : AppColors.darkText),
       decoration: InputDecoration(
         hintText: hintText,
+        hintStyle: const TextStyle(color: AppColors.grey),
         filled: true,
-        fillColor: fillColor,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        fillColor: fill,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: border)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: border)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.primary, width: 2)),
       ),
     );
   }

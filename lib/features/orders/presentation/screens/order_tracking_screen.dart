@@ -64,7 +64,7 @@ class OrderTrackingScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(26),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: AppColors.black.withOpacity(0.05),
                           blurRadius: 20,
                           offset: const Offset(0, 12),
                         ),
@@ -80,10 +80,14 @@ class OrderTrackingScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w700,
-                                color: Theme.of(context).textTheme.bodyLarge?.color,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.color,
                               ),
                             ),
                             const Spacer(),
+<<<<<<< HEAD
                             Text(l10n.orderNumber('921'),
                                 style: const TextStyle(color: Colors.grey)),
                           ],
@@ -92,12 +96,29 @@ class OrderTrackingScreen extends StatelessWidget {
                         Text(
                           l10n.courierArrivingMessage('Mathew', '5', '0.8'),
                           style: const TextStyle(color: Colors.grey),
+=======
+                            const Text('Order #921',
+                                style: TextStyle(color: AppColors.grey)),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Mathew is 5 min away • 0.8 km',
+                          style: TextStyle(color: AppColors.grey),
+>>>>>>> 56f87e16bb79ac3fb1fe1ae2f0ea37bbc4ec224f
                         ),
                         const SizedBox(height: 18),
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
+<<<<<<< HEAD
                             color: Theme.of(context).inputDecorationTheme.fillColor ?? Theme.of(context).cardColor,
+=======
+                            color: Theme.of(context)
+                                    .inputDecorationTheme
+                                    .fillColor ??
+                                AppColors.inputFillDark,
+>>>>>>> 56f87e16bb79ac3fb1fe1ae2f0ea37bbc4ec224f
                             borderRadius: BorderRadius.circular(18),
                           ),
                           child: Row(
@@ -106,7 +127,8 @@ class OrderTrackingScreen extends StatelessWidget {
                                 radius: 24,
                                 backgroundColor: Theme.of(context).cardColor,
                                 child: Icon(Icons.delivery_dining,
-                                    color: Theme.of(context).colorScheme.primary),
+                                    color:
+                                        Theme.of(context).colorScheme.primary),
                               ),
                               const SizedBox(width: 12),
                               const Column(
@@ -116,7 +138,7 @@ class OrderTrackingScreen extends StatelessWidget {
                                     'Mathew Carter',
                                     style: TextStyle(
                                       fontWeight: FontWeight.w700,
-                                      color: Colors.white,
+                                      color: AppColors.white,
                                     ),
                                   ),
                                   SizedBox(height: 4),
@@ -127,7 +149,8 @@ class OrderTrackingScreen extends StatelessWidget {
                               IconButton(
                                 onPressed: () {},
                                 icon: Icon(Icons.phone,
-                                    color: Theme.of(context).colorScheme.primary),
+                                    color:
+                                        Theme.of(context).colorScheme.primary),
                               ),
                             ],
                           ),
@@ -173,21 +196,37 @@ class OrderTrackingScreen extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.map, color: Theme.of(context).colorScheme.primary),
+                        Icon(Icons.map,
+                            color: Theme.of(context).colorScheme.primary),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
+<<<<<<< HEAD
                             l10n.trackCourierMap,
                             style: const TextStyle(
                                 color: Colors.white,
+=======
+                            'Track courier live on the map',
+                            style: TextStyle(
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.color,
+>>>>>>> 56f87e16bb79ac3fb1fe1ae2f0ea37bbc4ec224f
                                 fontWeight: FontWeight.w600),
                           ),
                         ),
                         TextButton(
                           onPressed: () {},
                           child: Text(
+<<<<<<< HEAD
                             l10n.openAction,
                             style: const TextStyle(color: Colors.white),
+=======
+                            'Open',
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary),
+>>>>>>> 56f87e16bb79ac3fb1fe1ae2f0ea37bbc4ec224f
                           ),
                         ),
                       ],
@@ -202,7 +241,10 @@ class OrderTrackingScreen extends StatelessWidget {
     );
   }
 
-  Widget _diamondButton({required IconData icon, required VoidCallback onTap, required BuildContext context}) {
+  Widget _diamondButton(
+      {required IconData icon,
+      required VoidCallback onTap,
+      required BuildContext context}) {
     return Transform.rotate(
       angle: 0.78,
       child: InkWell(
@@ -216,7 +258,7 @@ class OrderTrackingScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: AppColors.black.withOpacity(0.08),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -258,7 +300,11 @@ class _TimelineTile extends StatelessWidget {
               child: Icon(
                 stage.icon,
                 size: 18,
+<<<<<<< HEAD
                 color: isCompleted ? Colors.white : Theme.of(context).colorScheme.primary,
+=======
+                color: isCompleted ? AppColors.white : AppColors.primaryAccent,
+>>>>>>> 56f87e16bb79ac3fb1fe1ae2f0ea37bbc4ec224f
               ),
             ),
             if (!isLast)
@@ -282,14 +328,18 @@ class _TimelineTile extends StatelessWidget {
                   stage.label,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                color: isCompleted ? Theme.of(context).textTheme.bodyLarge?.color : Colors.grey,
+                    color: isCompleted
+                        ? Theme.of(context).textTheme.bodyLarge?.color
+                        : AppColors.grey,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   stage.time,
                   style: TextStyle(
-                    color: isCompleted ? Theme.of(context).colorScheme.primary : Colors.grey,
+                    color: isCompleted
+                        ? Theme.of(context).colorScheme.primary
+                        : AppColors.grey,
                   ),
                 ),
               ],

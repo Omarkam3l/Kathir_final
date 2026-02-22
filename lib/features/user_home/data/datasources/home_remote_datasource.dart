@@ -32,9 +32,69 @@ class SupabaseHomeRemoteDataSource implements HomeRemoteDataSource {
 
   @override
   Future<List<Meal>> getAvailableMeals() async {
-    final res = await client.from('meals').select();
+    final res = await client.from('meals').select('''
+      id,
+      title,
+      description,
+      category,
+      image_url,
+      original_price,
+      discounted_price,
+      quantity_available,
+      expiry_date,
+      pickup_deadline,
+      status,
+      location,
+      unit,
+      fulfillment_method,
+      is_donation_available,
+      ingredients,
+      allergens,
+      co2_savings,
+      pickup_time,
+      restaurant_id,
+      restaurants!inner(
+        profile_id,
+        restaurant_name,
+        rating,
+        address_text
+      )
+    ''').or('status.eq.active,status.is.null')
+      .gt('quantity_available', 0)
+      .gt('expiry_date', DateTime.now().toIso8601String())
+      .order('created_at', ascending: false);
+    
     final data = (res as List).cast<Map<String, dynamic>>();
-    return data.map((e) => MealModel.fromJson(e)).toList();
+    return data.map((e) {
+      // Transform to match MealModel expectations
+      final restaurant = e['restaurants'] as Map<String, dynamic>?;
+      return MealModel.fromJson({
+        'id': e['id'],
+        'title': e['title'] ?? '',
+        'location': e['location'] ?? 'Pickup at restaurant',
+        'image_url': e['image_url'] ?? '',
+        'original_price': e['original_price'],
+        'donation_price': e['discounted_price'], // Map discounted_price to donation_price
+        'quantity': e['quantity_available'], // Map quantity_available to quantity
+        'expiry': e['expiry_date'], // Map expiry_date to expiry
+        'description': e['description'] ?? '',
+        'category': e['category'] ?? 'Meals',
+        'status': e['status'] ?? 'active',
+        'unit': e['unit'] ?? 'portions',
+        'fulfillment_method': e['fulfillment_method'] ?? 'pickup',
+        'is_donation_available': e['is_donation_available'] ?? true,
+        'pickup_deadline': e['pickup_deadline'],
+        'pickup_time': e['pickup_time'],
+        'ingredients': e['ingredients'] ?? [],
+        'allergens': e['allergens'] ?? [],
+        'co2_savings': e['co2_savings'] ?? 0.0,
+        'restaurant': {
+          'id': restaurant?['profile_id'] ?? e['restaurant_id'],
+          'name': restaurant?['restaurant_name'] ?? 'Unknown Restaurant',
+          'rating': restaurant?['rating'] ?? 0.0,
+        },
+      });
+    }).toList();
   }
 }
 
