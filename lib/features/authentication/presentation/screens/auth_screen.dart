@@ -250,8 +250,8 @@ class _AuthScreenState extends State<AuthScreen> {
                               ? 'Restaurant Name'
                               : 'Organization Name',
                           hint: _selectedRole == UserRole.restaurant
-                              ? 'e.g. Green Leaf Bistro'
-                              : 'e.g. Green Earth Foundation',
+                              ? 'e.g. Koshary Al-Tahrir'
+                              : 'e.g. Egyptian Food Bank',
                           controller: _orgNameController,
                           prefixIcon: Icons.business,
                           isDark: isDark,
