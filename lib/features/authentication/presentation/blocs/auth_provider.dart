@@ -39,6 +39,8 @@ class AuthUserView {
   final String role;
   final String? defaultLocation;
   final ApprovalStatus approvalStatus;
+  final bool? isOnboardingCompleted;
+  final bool? isProfileCompleted;
   
   const AuthUserView({
     required this.id,
@@ -51,6 +53,8 @@ class AuthUserView {
     this.role = 'user',
     this.defaultLocation,
     this.approvalStatus = ApprovalStatus.unknown,
+    this.isOnboardingCompleted,
+    this.isProfileCompleted,
   }) : fullName = name;
 
   /// Check if user needs approval (restaurant or NGO)
@@ -142,6 +146,8 @@ class AuthProvider extends ChangeNotifier {
       role: role,
       defaultLocation: _userProfile?['default_location'] as String?,
       approvalStatus: approvalStatus,
+      isOnboardingCompleted: _userProfile?['is_onboarding_completed'] as bool?,
+      isProfileCompleted: _userProfile?['is_profile_completed'] as bool?,
     );
   }
 

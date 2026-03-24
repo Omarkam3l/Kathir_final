@@ -89,17 +89,9 @@ class _AddressesScreenState extends State<AddressesScreen> {
         'is_default': isDefault,
       });
 
-      // If this is the default address, update profile
-      if (isDefault) {
-        await _supabase
-            .from('profiles')
-            .update({'default_location': result['address']})
-            .eq('id', userId);
-        
-        // Refresh auth provider to update UI
-        if (mounted) {
-          await Provider.of<AuthProvider>(context, listen: false).refreshUser();
-        }
+      // Refresh auth provider to update UI
+      if (mounted) {
+        await Provider.of<AuthProvider>(context, listen: false).refreshUser();
       }
 
       await _loadAddresses();
@@ -145,20 +137,9 @@ class _AddressesScreenState extends State<AddressesScreen> {
         'longitude': result['longitude'],
       }).eq('id', address['id']);
 
-      // If this is the default address, update profile
-      if (address['is_default'] == true) {
-        final userId = _supabase.auth.currentUser?.id;
-        if (userId != null) {
-          await _supabase
-              .from('profiles')
-              .update({'default_location': result['address']})
-              .eq('id', userId);
-          
-          // Refresh auth provider to update UI
-          if (mounted) {
-            await Provider.of<AuthProvider>(context, listen: false).refreshUser();
-          }
-        }
+      // Refresh auth provider to update UI
+      if (mounted) {
+        await Provider.of<AuthProvider>(context, listen: false).refreshUser();
       }
 
       // Show success message first
@@ -249,19 +230,6 @@ class _AddressesScreenState extends State<AddressesScreen> {
           .from('user_addresses')
           .update({'is_default': true})
           .eq('id', addressId);
-
-      // Get the address text to update profile
-      final addressData = await _supabase
-          .from('user_addresses')
-          .select('address_text')
-          .eq('id', addressId)
-          .single();
-
-      // Update the default_location in profiles table
-      await _supabase
-          .from('profiles')
-          .update({'default_location': addressData['address_text']})
-          .eq('id', userId);
 
       // Refresh auth provider to update UI immediately
       if (mounted) {

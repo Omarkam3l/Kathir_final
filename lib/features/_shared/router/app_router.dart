@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kathir_final/features/onboarding/presentation/screens/user_category_selection_screen.dart';
+import 'package:kathir_final/features/onboarding/presentation/screens/user_profile_setup_screen.dart';
+import 'package:kathir_final/features/onboarding/presentation/screens/user_address_selector_screen.dart';
 import 'package:kathir_final/features/admin_dashboard/presentation/screens/admin_dashboard_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_home_screen.dart';
 import 'package:kathir_final/features/ngo_dashboard/presentation/screens/ngo_all_meals_screen.dart';
@@ -126,6 +129,50 @@ class AppRouter {
       if (isLoggedIn && isInitialized) {
         final role = user?.role;
         
+        // Check if user needs onboarding (only for regular users)
+        if (role == 'user' && user != null) {
+          final needsProfile = !(user.isProfileCompleted ?? false);
+          final needsCategories = !(user.isOnboardingCompleted ?? false);
+          
+          // Case 1: Profile completed (T), Categories not completed (F)
+          // Show categories, then go to home
+          if (!needsProfile && needsCategories) {
+            if (location != '/onboarding/categories') {
+              return '/onboarding/categories';
+            }
+            return null;
+          }
+          
+          // Case 2: Profile not completed (F), Categories not completed (F)
+          // Show profile, then categories, then home
+          if (needsProfile && needsCategories) {
+            if (location == '/onboarding/categories') {
+              return null; // Allow staying on categories if navigated there
+            }
+            if (location != '/onboarding/profile') {
+              return '/onboarding/profile';
+            }
+            return null;
+          }
+          
+          // Case 3: Profile not completed (F), Categories completed (T)
+          // Show profile, then go to home
+          if (needsProfile && !needsCategories) {
+            if (location != '/onboarding/profile') {
+              return '/onboarding/profile';
+            }
+            return null;
+          }
+          
+          // Case 4: Both completed (T, T)
+          // Go to home directly
+          if (!needsProfile && !needsCategories) {
+            if (location == '/onboarding/profile' || location == '/onboarding/categories') {
+              return '/home';
+            }
+          }
+        }
+        
         // If on auth flow or onboarding, redirect to appropriate dashboard
         if (isAuthFlow || isOnboarding) {
           // Check approval status (now guaranteed to be accurate)
@@ -248,6 +295,67 @@ class AppRouter {
         name: RouteNames.onboarding,
         path: '/',
         builder: (context, state) => const OnboardingFlowScreen(),
+      ),
+      // User-only onboarding routes (profile setup and category selection)
+      GoRoute(
+        path: '/onboarding/profile',
+        builder: (context, state) => const UserProfileSetupScreen(),
+        redirect: (context, state) {
+          final auth = Provider.of<AuthProvider>(context, listen: false);
+          final user = auth.user;
+          // Only allow users with role='user' to access this screen
+          if (user?.role != 'user') {
+            if (user?.role == 'restaurant') {
+              return '/restaurant-dashboard';
+            } else if (user?.role == 'ngo') {
+              return '/ngo/home';
+            } else if (user?.role == 'admin') {
+              return '/admin-dashboard';
+            }
+            return '/';
+          }
+          return null;
+        },
+      ),
+      GoRoute(
+        path: '/onboarding/categories',
+        builder: (context, state) => const UserCategorySelectionScreen(),
+        redirect: (context, state) {
+          final auth = Provider.of<AuthProvider>(context, listen: false);
+          final user = auth.user;
+          // Only allow users with role='user' to access this screen
+          if (user?.role != 'user') {
+            if (user?.role == 'restaurant') {
+              return '/restaurant-dashboard';
+            } else if (user?.role == 'ngo') {
+              return '/ngo/home';
+            } else if (user?.role == 'admin') {
+              return '/admin-dashboard';
+            }
+            return '/';
+          }
+          return null;
+        },
+      ),
+      GoRoute(
+        path: '/onboarding/select-address',
+        builder: (context, state) => const UserAddressSelectorScreen(),
+        redirect: (context, state) {
+          final auth = Provider.of<AuthProvider>(context, listen: false);
+          final user = auth.user;
+          // Only allow users with role='user' to access this screen
+          if (user?.role != 'user') {
+            if (user?.role == 'restaurant') {
+              return '/restaurant-dashboard';
+            } else if (user?.role == 'ngo') {
+              return '/ngo/home';
+            } else if (user?.role == 'admin') {
+              return '/admin-dashboard';
+            }
+            return '/';
+          }
+          return null;
+        },
       ),
       GoRoute(
         path: '/auth-splash',
