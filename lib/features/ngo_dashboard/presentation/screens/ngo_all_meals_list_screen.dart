@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../viewmodels/ngo_home_viewmodel.dart';
 import '../widgets/ngo_meal_card.dart';
 
@@ -46,8 +47,8 @@ class NgoAllMealsListScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.no_food, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
+                  Icon(Icons.no_food, size: ResponsiveUtils.iconSize(context, 64), color: Colors.grey[400]),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 16)),
                   Text(
                     'No meals available',
                     style: TextStyle(color: Colors.grey[600]),

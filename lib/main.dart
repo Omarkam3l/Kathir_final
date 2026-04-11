@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:kathir_final/core/utils/page_transitions.dart';
 import 'app/bootstrap/di_bootstrap.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'features/_shared/providers/theme_provider.dart';
 import 'features/authentication/presentation/blocs/auth_provider.dart';
 import 'features/orders/presentation/controllers/orders_controller.dart';
@@ -16,11 +18,36 @@ import 'core/supabase/supabase_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load .env file
   try {
     await dotenv.load(fileName: ".env");
+    debugPrint('✅ .env file loaded');
   } catch (e) {
-    // Ignore error
+    debugPrint('⚠️ Warning: Could not load .env file: $e');
   }
+  
+  // Initialize Stripe ONLY on mobile platforms (not web)
+  if (!kIsWeb) {
+    final stripePublishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'];
+    debugPrint('🔑 Stripe Key from .env: ${stripePublishableKey?.substring(0, 20)}...');
+    
+    if (stripePublishableKey != null && stripePublishableKey.isNotEmpty) {
+      try {
+        Stripe.publishableKey = stripePublishableKey;
+        Stripe.merchantIdentifier = 'merchant.com.kathir';
+        await Stripe.instance.applySettings();
+        debugPrint('✅ Stripe initialized successfully');
+      } catch (e) {
+        debugPrint('❌ Error initializing Stripe: $e');
+      }
+    } else {
+      debugPrint('⚠️ CRITICAL: STRIPE_PUBLISHABLE_KEY not found in .env');
+    }
+  } else {
+    debugPrint('⚠️ Running on web - Stripe payment not supported');
+  }
+  
   final hasConfig = supabaseUrl.isNotEmpty && supabaseKey.isNotEmpty;
   if (hasConfig) {
     await Supabase.initialize(url: supabaseUrl, anonKey: supabaseKey);

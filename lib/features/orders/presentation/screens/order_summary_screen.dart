@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../checkout/data/services/order_service.dart';
 
 class OrderSummaryScreen extends StatefulWidget {
@@ -28,11 +29,17 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
   Future<void> _loadOrder() async {
     try {
       final order = await _orderService.getOrder(widget.orderId);
+      debugPrint('📦 Order loaded:');
+      debugPrint('   Order ID: ${order['id']}');
+      debugPrint('   Delivery Type: ${order['delivery_type']}');
+      debugPrint('   Delivery Address: ${order['delivery_address']}');
+      debugPrint('   NGO ID: ${order['ngo_id']}');
       setState(() {
         _order = order;
         _isLoading = false;
       });
     } catch (e) {
+      debugPrint('❌ Error loading order: $e');
       setState(() {
         _error = e.toString();
         _isLoading = false;
@@ -116,7 +123,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: ResponsiveUtils.padding(context, all: 16),
         child: Column(
           children: [
             // Success Icon
@@ -127,40 +134,40 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                 color: AppColors.primaryGreen.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.check_circle,
-                size: 60,
+                size: ResponsiveUtils.iconSize(context, 60),
                 color: AppColors.primaryGreen,
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: ResponsiveUtils.spacing(context, 24)),
 
             // Success Message
             Text(
               'Order Placed Successfully!',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 24,
+                fontSize: ResponsiveUtils.fontSize(context, 24),
                 fontWeight: FontWeight.bold,
                 color: textColor,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: ResponsiveUtils.spacing(context, 8)),
             Text(
               'Your order has been confirmed',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 14,
+                fontSize: ResponsiveUtils.fontSize(context, 14),
                 color: textSub,
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: ResponsiveUtils.spacing(context, 32)),
 
             // Order Details Card
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: ResponsiveUtils.padding(context, all: 16),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: ResponsiveUtils.borderRadius(context, 16),
                 border: Border.all(
                   color: isDark ? Colors.white10 : Colors.grey[200]!,
                 ),
@@ -168,74 +175,92 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Order Number
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  // Order Number - Fixed overflow with proper constraints
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Order Number',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
+                          fontSize: ResponsiveUtils.fontSize(context, 13),
                           color: textSub,
                         ),
                       ),
-                      Text(
-                        _order!['order_number'] ?? 'N/A',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
+                      SizedBox(height: ResponsiveUtils.spacing(context, 4)),
+                      SizedBox(
+                        width: double.infinity,
+                        child: Text(
+                          _order!['order_number'] ?? 'N/A',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: ResponsiveUtils.fontSize(context, 11),
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                            letterSpacing: -0.5,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: true,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 12)),
 
-                  // Order Date
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  // Order Date - Fixed overflow
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Order Date',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
+                          fontSize: ResponsiveUtils.fontSize(context, 13),
                           color: textSub,
                         ),
                       ),
+                      SizedBox(height: ResponsiveUtils.spacing(context, 4)),
                       Text(
                         DateFormat('MMM dd, yyyy • hh:mm a').format(createdAt),
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
+                          fontSize: ResponsiveUtils.fontSize(context, 12),
                           fontWeight: FontWeight.w600,
                           color: textColor,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 12)),
 
                   // Restaurant
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Restaurant',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
+                          fontSize: ResponsiveUtils.fontSize(context, 13),
                           color: textSub,
                         ),
                       ),
-                      Text(
-                        restaurant?['restaurant_name'] ?? 'Restaurant',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: textColor,
+                      SizedBox(width: ResponsiveUtils.spacing(context, 8)),
+                      Flexible(
+                        child: Text(
+                          restaurant?['restaurant_name'] ?? 'Restaurant',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: ResponsiveUtils.fontSize(context, 13),
+                            fontWeight: FontWeight.w600,
+                            color: textColor,
+                          ),
+                          textAlign: TextAlign.right,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 12)),
 
                   // Status
                   Row(
@@ -244,23 +269,23 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                       Text(
                         'Status',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
+                          fontSize: ResponsiveUtils.fontSize(context, 13),
                           color: textSub,
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: ResponsiveUtils.spacing(context, 10),
+                          vertical: ResponsiveUtils.spacing(context, 4),
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: ResponsiveUtils.borderRadius(context, 12),
                         ),
                         child: Text(
                           (_order!['status'] as String).toUpperCase(),
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
+                            fontSize: ResponsiveUtils.fontSize(context, 11),
                             fontWeight: FontWeight.bold,
                             color: AppColors.primaryGreen,
                           ),
@@ -271,27 +296,120 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: ResponsiveUtils.spacing(context, 24)),
+
+            // Delivery Information
+            if (_order!['delivery_type'] != null) ...[
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Delivery Information',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: ResponsiveUtils.fontSize(context, 18),
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                ),
+              ),
+              SizedBox(height: ResponsiveUtils.spacing(context, 12)),
+              Container(
+                padding: ResponsiveUtils.padding(context, all: 16),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                  borderRadius: ResponsiveUtils.borderRadius(context, 16),
+                  border: Border.all(
+                    color: isDark ? Colors.white10 : Colors.grey[200]!,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Delivery Type
+                    Row(
+                      children: [
+                        Icon(
+                          _order!['delivery_type'] == 'delivery'
+                              ? Icons.local_shipping
+                              : _order!['delivery_type'] == 'pickup'
+                                  ? Icons.store
+                                  : Icons.volunteer_activism,
+                          size: ResponsiveUtils.iconSize(context, 20),
+                          color: AppColors.primaryGreen,
+                        ),
+                        SizedBox(width: ResponsiveUtils.spacing(context, 8)),
+                        Flexible(
+                          child: Text(
+                            _order!['delivery_type'] == 'delivery'
+                                ? 'Home Delivery'
+                                : _order!['delivery_type'] == 'pickup'
+                                    ? 'Self Pickup'
+                                    : 'Donation to NGO',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: ResponsiveUtils.fontSize(context, 14),
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    // Delivery Address - check for both null and empty string
+                    if (_order!['delivery_address'] != null && 
+                        (_order!['delivery_address'] as String).trim().isNotEmpty &&
+                        _order!['delivery_address'] != 'Self Pickup' &&
+                        _order!['delivery_address'] != 'Donated to NGO') ...[
+                      SizedBox(height: ResponsiveUtils.spacing(context, 12)),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            size: ResponsiveUtils.iconSize(context, 18),
+                            color: textSub,
+                          ),
+                          SizedBox(width: ResponsiveUtils.spacing(context, 8)),
+                          Expanded(
+                            child: Text(
+                              _order!['delivery_address'],
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: ResponsiveUtils.fontSize(context, 13),
+                                color: textColor,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              SizedBox(height: ResponsiveUtils.spacing(context, 24)),
+            ],
 
             // Order Items
-            Text(
-              'Order Items',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: textColor,
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Order Items',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: ResponsiveUtils.fontSize(context, 18),
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: ResponsiveUtils.spacing(context, 12)),
 
             ...orderItems.map((item) {
               final meal = item['meals'];
               return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
+                margin: EdgeInsets.only(bottom: ResponsiveUtils.spacing(context, 12)),
+                padding: ResponsiveUtils.padding(context, all: 14),
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: ResponsiveUtils.borderRadius(context, 12),
                   border: Border.all(
                     color: isDark ? Colors.white10 : Colors.grey[200]!,
                   ),
@@ -300,28 +418,28 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                   children: [
                     // Meal Image
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: ResponsiveUtils.borderRadius(context, 8),
                       child: meal?['image_url'] != null
                           ? Image.network(
                               meal['image_url'],
-                              width: 60,
-                              height: 60,
+                              width: 55,
+                              height: 55,
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => Container(
-                                width: 60,
-                                height: 60,
+                                width: 55,
+                                height: 55,
                                 color: Colors.grey[300],
-                                child: const Icon(Icons.restaurant),
+                                child: Icon(Icons.restaurant, size: ResponsiveUtils.iconSize(context, 24)),
                               ),
                             )
                           : Container(
-                              width: 60,
-                              height: 60,
+                              width: 55,
+                              height: 55,
                               color: Colors.grey[300],
-                              child: const Icon(Icons.restaurant),
+                              child: Icon(Icons.restaurant, size: ResponsiveUtils.iconSize(context, 24)),
                             ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: ResponsiveUtils.spacing(context, 12)),
 
                     // Meal Details
                     Expanded(
@@ -331,16 +449,18 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                           Text(
                             item['meal_title'] ?? 'Meal',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
+                              fontSize: ResponsiveUtils.fontSize(context, 13),
                               fontWeight: FontWeight.bold,
                               color: textColor,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: ResponsiveUtils.spacing(context, 4)),
                           Text(
                             'Qty: ${item['quantity']}',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
+                              fontSize: ResponsiveUtils.fontSize(context, 11),
                               color: textSub,
                             ),
                           ),
@@ -350,9 +470,9 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
 
                     // Price
                     Text(
-                      'EGP ${(item['unit_price'] * item['quantity']).toStringAsFixed(2)}',
+                      'EGP ${((item['unit_price'] ?? 0.0) * (item['quantity'] ?? 1)).toStringAsFixed(2)}',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
+                        fontSize: ResponsiveUtils.fontSize(context, 13),
                         fontWeight: FontWeight.bold,
                         color: textColor,
                       ),
@@ -362,14 +482,14 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
               );
             }),
 
-            const SizedBox(height: 24),
+            SizedBox(height: ResponsiveUtils.spacing(context, 24)),
 
             // Total
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: ResponsiveUtils.padding(context, all: 16),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: ResponsiveUtils.borderRadius(context, 16),
                 border: Border.all(
                   color: isDark ? Colors.white10 : Colors.grey[200]!,
                 ),
@@ -377,26 +497,26 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
               child: Column(
                 children: [
                   _buildRow('Subtotal', _order!['subtotal'], textSub, textColor),
-                  const SizedBox(height: 8),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 8)),
                   _buildRow('Service Fee', _order!['service_fee'], textSub, textColor),
-                  const SizedBox(height: 8),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 8)),
                   _buildRow('Delivery Fee', _order!['delivery_fee'], textSub, textColor),
-                  const Divider(height: 24),
+                  Divider(height: ResponsiveUtils.spacing(context, 24)),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         'Total',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 18,
+                          fontSize: ResponsiveUtils.fontSize(context, 17),
                           fontWeight: FontWeight.bold,
                           color: textColor,
                         ),
                       ),
                       Text(
-                        'EGP ${_order!['total_amount'].toStringAsFixed(2)}',
+                        'EGP ${(_order!['total_amount'] ?? 0.0).toStringAsFixed(2)}',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 20,
+                          fontSize: ResponsiveUtils.fontSize(context, 19),
                           fontWeight: FontWeight.bold,
                           color: AppColors.primaryGreen,
                         ),
@@ -406,7 +526,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: ResponsiveUtils.spacing(context, 32)),
 
             // Action Buttons
             SizedBox(
@@ -416,21 +536,21 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryGreen,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: EdgeInsets.symmetric(vertical: ResponsiveUtils.spacing(context, 14)),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: ResponsiveUtils.borderRadius(context, 12),
                   ),
                 ),
                 child: Text(
                   'View My Orders',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16,
+                    fontSize: ResponsiveUtils.fontSize(context, 15),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: ResponsiveUtils.spacing(context, 12)),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
@@ -438,21 +558,21 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.primaryGreen,
                   side: const BorderSide(color: AppColors.primaryGreen),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: EdgeInsets.symmetric(vertical: ResponsiveUtils.spacing(context, 14)),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: ResponsiveUtils.borderRadius(context, 12),
                   ),
                 ),
                 child: Text(
                   'Back to Home',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16,
+                    fontSize: ResponsiveUtils.fontSize(context, 15),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: ResponsiveUtils.spacing(context, 32)),
           ],
         ),
       ),
@@ -460,20 +580,21 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
   }
 
   Widget _buildRow(String label, dynamic value, Color labelColor, Color valueColor) {
+    final numValue = (value is num) ? value : 0.0;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
           style: GoogleFonts.plusJakartaSans(
-            fontSize: 14,
+            fontSize: ResponsiveUtils.fontSize(context, 13),
             color: labelColor,
           ),
         ),
         Text(
-          'EGP ${(value as num).toStringAsFixed(2)}',
+          'EGP ${numValue.toStringAsFixed(2)}',
           style: GoogleFonts.plusJakartaSans(
-            fontSize: 14,
+            fontSize: ResponsiveUtils.fontSize(context, 13),
             fontWeight: FontWeight.w600,
             color: valueColor,
           ),

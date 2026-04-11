@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../viewmodels/new_password_viewmodel.dart';
 import '../../../../di/global_injection/app_locator.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../blocs/auth_provider.dart';
 import '../viewmodels/auth_viewmodel.dart';
 
@@ -58,28 +59,28 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 16),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 16)),
                   Center(
                     child: Container(
-                      width: 72,
-                      height: 72,
+                      width: ResponsiveUtils.iconSize(context, 72),
+                      height: ResponsiveUtils.iconSize(context, 72),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.lock_reset,
-                          size: 36, color: AppColors.primary),
+                      child: Icon(Icons.lock_reset,
+                          size: ResponsiveUtils.iconSize(context, 36), color: AppColors.primary),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 24)),
                   Text(
                     'Create your new password',
                     style: GoogleFonts.plusJakartaSans(
-                        fontSize: 24,
+                        fontSize: ResponsiveUtils.fontSize(context, 24),
                         fontWeight: FontWeight.w700,
                         color: textPrimary),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 8)),
                   Text(
                     'Choose a strong password with at least 8 characters.',
                     style: GoogleFonts.plusJakartaSans(

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import '../../../profile/presentation/providers/foodie_state.dart';
 import '../../../profile/presentation/screens/addresses_screen.dart';
 import '../../../../core/utils/app_colors.dart';
-import '../../../checkout/data/services/order_service.dart';
+import '../../../checkout/data/services/payment_service.dart';
 
 class CheckoutScreen extends StatefulWidget {
   static const routeName = '/checkout';
@@ -18,10 +20,13 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final _supabase = Supabase.instance.client;
-  final _orderService = OrderService();
-  String _paymentMethod = 'card'; // card, wallet, cod
+  final _paymentService = PaymentService();
+  final _promoCodeController = TextEditingController();
+  String _paymentMethod = 'card'; // card, wallet
   bool _isCreatingOrder = false;
   String? _deliveryAddress;
+  double? _deliveryLatitude;
+  double? _deliveryLongitude;
   bool _isLoadingAddress = true;
   String? _selectedNgoId;
   List<Map<String, dynamic>> _ngos = [];
@@ -32,6 +37,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.initState();
     _loadDefaultAddress();
     _loadNgos();
+  }
+
+  @override
+  void dispose() {
+    _promoCodeController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadNgos() async {
@@ -78,40 +89,65 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Future<void> _loadDefaultAddress() async {
     try {
+      debugPrint('🔍 Loading default address...');
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) {
+        debugPrint('❌ No user ID found');
         setState(() => _isLoadingAddress = false);
         return;
       }
 
+      debugPrint('✅ User ID: $userId');
+      
+      // First try to get default address
       final response = await _supabase
           .from('user_addresses')
-          .select('address_text, label')
+          .select('address_text, label, latitude, longitude')
           .eq('user_id', userId)
           .eq('is_default', true)
           .maybeSingle();
 
+      debugPrint('📍 Default address query result: ${response != null ? "Found" : "Not found"}');
+      
       if (response != null) {
+        debugPrint('✅ Default address loaded:');
+        debugPrint('   Address: ${response['address_text']}');
+        debugPrint('   Label: ${response['label']}');
         setState(() {
           _deliveryAddress = response['address_text'];
+          _deliveryLatitude = response['latitude'] as double?;
+          _deliveryLongitude = response['longitude'] as double?;
           _isLoadingAddress = false;
         });
       } else {
         // No default address, try to get any address
+        debugPrint('⚠️ No default address, trying to get any address...');
         final anyAddress = await _supabase
             .from('user_addresses')
-            .select('address_text, label')
+            .select('address_text, label, latitude, longitude')
             .eq('user_id', userId)
             .limit(1)
             .maybeSingle();
 
+        debugPrint('📍 Any address query result: ${anyAddress != null ? "Found" : "Not found"}');
+        
+        if (anyAddress != null) {
+          debugPrint('✅ Address loaded:');
+          debugPrint('   Address: ${anyAddress['address_text']}');
+          debugPrint('   Label: ${anyAddress['label']}');
+        } else {
+          debugPrint('❌ No addresses found in database');
+        }
+        
         setState(() {
           _deliveryAddress = anyAddress?['address_text'];
+          _deliveryLatitude = anyAddress?['latitude'] as double?;
+          _deliveryLongitude = anyAddress?['longitude'] as double?;
           _isLoadingAddress = false;
         });
       }
     } catch (e) {
-      debugPrint('Error loading address: $e');
+      debugPrint('❌ Error loading address: $e');
       setState(() => _isLoadingAddress = false);
     }
   }
@@ -169,6 +205,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   'EGP ${foodie.platformFee.toStringAsFixed(2)}',
                   subTextColor,
                   textColor),
+              if (foodie.discountAmount > 0) ...[
+                const SizedBox(height: 8),
+                _buildFooterRow(
+                    'Discount (${foodie.promoCodeDiscount.toStringAsFixed(0)}%)',
+                    '- EGP ${foodie.discountAmount.toStringAsFixed(2)}',
+                    AppColors.primaryGreen,
+                    AppColors.primaryGreen),
+              ],
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -188,114 +232,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   SizedBox(
                     width: 180,
                     child: ElevatedButton(
-                      onPressed: _isCreatingOrder || _isButtonDisabled(foodie) ? null : () async {
-                        final userId = _supabase.auth.currentUser?.id;
-                        if (userId == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please login first')),
-                          );
-                          return;
-                        }
-
-                        if (foodie.cartItems.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Cart is empty')),
-                          );
-                          return;
-                        }
-
-                        setState(() => _isCreatingOrder = true);
-
-                        try {
-                          // Validate NGO selection for donation orders
-                          if (foodie.deliveryMethod == DeliveryMethod.donate) {
-                            if (_selectedNgoId == null || _selectedNgoId!.isEmpty) {
-                              throw Exception('Please select an NGO for donation');
-                            }
-                          }
-
-                          // Get delivery address based on delivery method
-                          String? finalAddress;
-                          if (foodie.deliveryMethod == DeliveryMethod.delivery) {
-                            if (_deliveryAddress == null || _deliveryAddress!.isEmpty) {
-                              throw Exception('Please add a delivery address in your profile');
-                            }
-                            finalAddress = _deliveryAddress;
-                          } else if (foodie.deliveryMethod == DeliveryMethod.pickup) {
-                            finalAddress = 'Self Pickup';
-                          } else {
-                            finalAddress = 'Donated to NGO';
-                          }
-
-                          // Create order in database (may create multiple orders if multiple restaurants)
-                          final results = await _orderService.createOrder(
-                            userId: userId,
-                            items: foodie.cartItems,
-                            deliveryType: foodie.deliveryMethod.name,
-                            subtotal: foodie.subtotal,
-                            serviceFee: foodie.platformFee,
-                            deliveryFee: foodie.deliveryFee,
-                            total: foodie.total,
-                            paymentMethod: _paymentMethod,
-                            deliveryAddress: finalAddress,
-                            ngoId: _selectedNgoId,  // Pass NGO ID
-                          );
-
-                          // Clear memory cart
-                          await foodie.clearCart();
-
-                          // Navigate to order summary (show first order, or create a multi-order summary)
-                          if (mounted) {
-                            if (results.length == 1) {
-                              // Single restaurant order
-                              context.go('/order-summary/${results[0]['order_id']}');
-                            } else {
-                              // Multiple restaurant orders - navigate to my orders screen
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('${results.length} orders created successfully!'),
-                                  backgroundColor: Colors.green,
-                                  duration: const Duration(seconds: 3),
-                                ),
-                              );
-                              context.go('/my-orders');
-                            }
-                          }
-                        } catch (e, stackTrace) {
-                          debugPrint('❌ Error creating order: $e');
-                          debugPrint('Stack trace: $stackTrace');
-                          setState(() => _isCreatingOrder = false);
-                          
-                          if (mounted) {
-                            // Parse error message for user-friendly display
-                            String errorMessage = 'Failed to create order';
-                            if (e.toString().contains('platform_fee')) {
-                              errorMessage = 'Database error: Invalid fee structure';
-                            } else if (e.toString().contains('subtotal')) {
-                              errorMessage = 'Database error: Invalid order calculation';
-                            } else if (e.toString().contains('NGO')) {
-                              errorMessage = 'Please select an NGO for donation';
-                            } else if (e.toString().contains('address')) {
-                              errorMessage = 'Please add a delivery address';
-                            } else {
-                              errorMessage = e.toString().replaceAll('Exception: ', '');
-                            }
-                            
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(errorMessage),
-                                backgroundColor: Colors.red,
-                                duration: const Duration(seconds: 5),
-                                action: SnackBarAction(
-                                  label: 'Dismiss',
-                                  textColor: Colors.white,
-                                  onPressed: () {},
-                                ),
-                              ),
-                            );
-                          }
-                        }
-                      },
+                      onPressed: _isCreatingOrder || _isButtonDisabled(foodie) ? null : () => _handleStripePayment(foodie),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryGreen,
                         foregroundColor: Colors.white,
@@ -672,6 +609,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: TextField(
+                          controller: _promoCodeController,
                           decoration: InputDecoration(
                             hintText: 'Enter promo code',
                             hintStyle: GoogleFonts.plusJakartaSans(
@@ -683,10 +621,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                           style: GoogleFonts.plusJakartaSans(
                               color: textColor, fontWeight: FontWeight.w500, fontSize: 14),
+                          onSubmitted: (_) => _applyPromoCode(foodie),
                         ),
                       ),
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () => _applyPromoCode(foodie),
                         child: Text('Apply',
                             style: GoogleFonts.plusJakartaSans(
                                 fontWeight: FontWeight.bold, 
@@ -696,6 +635,55 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ],
                   ),
                 ),
+                
+                // Show applied discount
+                if (foodie.promoCode != null && foodie.promoCodeDiscount > 0) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.check_circle, color: AppColors.primaryGreen, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Promo code "${foodie.promoCode}" applied',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primaryGreen,
+                                ),
+                              ),
+                              Text(
+                                '${foodie.promoCodeDiscount.toStringAsFixed(0)}% discount - Save EGP ${foodie.discountAmount.toStringAsFixed(2)}',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  color: AppColors.primaryGreen,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 18),
+                          color: AppColors.primaryGreen,
+                          onPressed: () {
+                            foodie.clearPromoCode();
+                            _promoCodeController.clear();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
 
                 const SizedBox(height: 24),
 
@@ -732,7 +720,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 _buildPaymentOption(
                     'card',
                     'Credit / Debit Card',
-                    'Visa, Mastercard (via Paymob)',
+                    'Pay with Visa, Mastercard via Stripe',
                     Icons.credit_card,
                     borderColor,
                     primaryColor,
@@ -741,19 +729,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 const SizedBox(height: 8),
                 _buildPaymentOption(
                     'wallet',
-                    'Mobile Wallet',
-                    'Vodafone, Orange, Etisalat Cash',
+                    'Digital Wallet',
+                    'Apple Pay, Google Pay',
                     Icons.account_balance_wallet,
-                    borderColor,
-                    primaryColor,
-                    textColor,
-                    subTextColor),
-                const SizedBox(height: 8),
-                _buildPaymentOption(
-                    'cod',
-                    'Cash on Delivery',
-                    'Pay cash when order arrives',
-                    Icons.payments,
                     borderColor,
                     primaryColor,
                     textColor,
@@ -953,6 +931,417 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  /// Handle Stripe payment flow
+  Future<void> _handleStripePayment(FoodieState foodie) async {
+    // Check if running on web (Stripe not supported)
+    if (kIsWeb) {
+      debugPrint('❌ Stripe payment not supported on web');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Stripe payment is only available on mobile. Please use the mobile app.'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+      setState(() => _isCreatingOrder = false);
+      return;
+    }
+
+    // Check if Stripe is configured
+    if (Stripe.publishableKey.isEmpty) {
+      debugPrint('❌ Stripe not configured');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Payment system not configured. Please restart the app.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      setState(() => _isCreatingOrder = false);
+      return;
+    }
+
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please login first')),
+        );
+      }
+      setState(() => _isCreatingOrder = false);
+      return;
+    }
+
+    if (foodie.cartItems.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cart is empty')),
+        );
+      }
+      setState(() => _isCreatingOrder = false);
+      return;
+    }
+
+    setState(() => _isCreatingOrder = true);
+
+    try {
+      // Validate NGO selection for donation orders
+      if (foodie.deliveryMethod == DeliveryMethod.donate) {
+        if (_selectedNgoId == null || _selectedNgoId!.isEmpty) {
+          throw Exception('Please select an NGO for donation');
+        }
+      }
+
+      // Get delivery address based on delivery method
+      String? finalAddress;
+      if (foodie.deliveryMethod == DeliveryMethod.delivery) {
+        if (_deliveryAddress == null || _deliveryAddress!.isEmpty) {
+          throw Exception('Please add a delivery address in your profile');
+        }
+        finalAddress = _deliveryAddress;
+      } else if (foodie.deliveryMethod == DeliveryMethod.pickup) {
+        finalAddress = 'Self Pickup';
+      } else {
+        finalAddress = 'Donated to NGO';
+      }
+
+      // Check if order is free (100% discount)
+      final isFreeOrder = foodie.total <= 0;
+      
+      if (isFreeOrder) {
+        debugPrint('🎁 Free order detected (100% discount)');
+        debugPrint('   Skipping Stripe payment, creating order directly...');
+        
+        // Show processing dialog
+        if (!mounted) return;
+        final rootNav = Navigator.of(context, rootNavigator: true);
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) => PopScope(
+            canPop: false,
+            child: AlertDialog(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(color: AppColors.primary),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Creating your free order...',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+
+        try {
+          // Create free order directly via Edge Function
+          final response = await _supabase.functions.invoke(
+            'create-free-order',
+            body: {
+              'delivery_method': foodie.deliveryMethod.name,
+              'delivery_address': finalAddress,
+              'delivery_latitude': _deliveryLatitude,
+              'delivery_longitude': _deliveryLongitude,
+              'special_instructions': null,
+              'ngo_id': _selectedNgoId,
+              'promo_code': foodie.promoCode,
+            },
+          );
+
+          if (!mounted) return;
+          rootNav.pop(); // Close loading dialog
+
+          if (response.status == 200) {
+            final data = response.data as Map<String, dynamic>;
+            final orderId = data['order_id'] as String;
+            
+            debugPrint('✅ Free order created: $orderId');
+            
+            // Increment promo code usage
+            if (foodie.promoCode != null && foodie.promoCode!.isNotEmpty) {
+              try {
+                await _supabase.rpc('increment_promo_code_usage', params: {
+                  'p_code': foodie.promoCode,
+                });
+              } catch (e) {
+                debugPrint('⚠️ Failed to increment promo code usage: $e');
+              }
+            }
+
+            await foodie.clearCart();
+            
+            if (!mounted) return;
+            context.go('/order-summary/$orderId');
+          } else {
+            throw Exception('Failed to create free order');
+          }
+        } catch (e) {
+          if (mounted) {
+            rootNav.pop(); // Close loading dialog
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error creating free order: ${e.toString()}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() => _isCreatingOrder = false);
+        }
+        return;
+      }
+
+      // STRIPE PAYMENT FLOW (for non-free orders)
+      // Step 1: Create PaymentIntent on backend (server calculates prices)
+      debugPrint('💳 Creating PaymentIntent...');
+      debugPrint('   Payment Method: $_paymentMethod');
+      final paymentIntent = await _paymentService.createPaymentIntent(
+        deliveryMethod: foodie.deliveryMethod.name,
+        deliveryAddress: finalAddress,
+        deliveryLatitude: _deliveryLatitude,
+        deliveryLongitude: _deliveryLongitude,
+        specialInstructions: null, // Can be added later if needed
+        ngoId: _selectedNgoId,
+        promoCode: foodie.promoCode, // Pass promo code for server-side validation
+      );
+
+      debugPrint('✅ PaymentIntent created: ${paymentIntent.paymentIntentId}');
+      debugPrint('   Amount: ${paymentIntent.amount} EGP');
+      if (foodie.promoCode != null && foodie.promoCode!.isNotEmpty) {
+        debugPrint('   Promo Code Applied: ${foodie.promoCode}');
+        debugPrint('   Discount: ${foodie.discountAmount.toStringAsFixed(2)} EGP');
+      }
+
+      // Step 2: Initialize Stripe Payment Sheet with appropriate payment method
+      debugPrint('🎨 Initializing Payment Sheet...');
+      
+      // Configure payment options based on selected method
+      PaymentSheetGooglePay? googlePayConfig;
+      PaymentSheetApplePay? applePayConfig;
+      
+      if (_paymentMethod == 'wallet') {
+        // Enable digital wallets (Apple Pay / Google Pay)
+        debugPrint('   Enabling digital wallet payments...');
+        
+        googlePayConfig = const PaymentSheetGooglePay(
+          merchantCountryCode: 'EG',
+          currencyCode: 'EGP',
+          testEnv: true, // Set to false in production
+        );
+        
+        applePayConfig = const PaymentSheetApplePay(
+          merchantCountryCode: 'EG',
+        );
+      }
+      
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: paymentIntent.clientSecret,
+          merchantDisplayName: 'Kathir',
+          customerId: paymentIntent.customerId,
+          customerEphemeralKeySecret: paymentIntent.ephemeralKey,
+          style: ThemeMode.system,
+          googlePay: googlePayConfig,
+          applePay: applePayConfig,
+          appearance: const PaymentSheetAppearance(
+            colors: PaymentSheetAppearanceColors(
+              primary: AppColors.primary,
+            ),
+          ),
+        ),
+      );
+
+      debugPrint('✅ Payment Sheet initialized');
+
+      // Step 3: Present Payment Sheet to user
+      debugPrint('📱 Presenting Payment Sheet...');
+      await Stripe.instance.presentPaymentSheet();
+
+      debugPrint('✅ Payment completed successfully!');
+
+      // Step 4: Payment successful! Wait for webhook to create order
+      if (!mounted) return;
+
+      final rootNav = Navigator.of(context, rootNavigator: true);
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => PopScope(
+          canPop: false,
+          child: AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(color: AppColors.primary),
+                const SizedBox(height: 16),
+                Text(
+                  'Processing your order...',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Confirming payment and creating your order',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      debugPrint('⏳ Waiting for webhook to create order...');
+      List<OrderInfo> orders = [];
+      try {
+        orders = await _paymentService.waitForOrderCreation(
+          paymentIntent.paymentIntentId,
+        );
+      } finally {
+        if (mounted) {
+          rootNav.pop();
+        }
+      }
+
+      if (orders.isNotEmpty) {
+        debugPrint('✅ Order(s) created by webhook!');
+
+        // Increment promo code usage if one was applied
+        if (foodie.promoCode != null && foodie.promoCode!.isNotEmpty) {
+          try {
+            debugPrint('📊 Incrementing promo code usage: ${foodie.promoCode}');
+            await _supabase.rpc('increment_promo_code_usage', params: {
+              'p_code': foodie.promoCode,
+            });
+            debugPrint('✅ Promo code usage incremented');
+          } catch (e) {
+            debugPrint('⚠️ Failed to increment promo code usage: $e');
+            // Don't fail the order if this fails
+          }
+        }
+
+        await foodie.clearCart();
+
+        if (!mounted) return;
+
+        if (orders.length == 1) {
+          context.go('/order-summary/${orders[0].orderId}');
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${orders.length} orders created successfully!'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+          context.go('/my-orders');
+        }
+      } else {
+        debugPrint('⏰ No order record yet after payment');
+
+        if (!mounted) return;
+
+        await showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(
+              'Payment received',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+            ),
+            content: Text(
+              'Your payment went through, but we could not confirm the order in the app yet. '
+              'Pull to refresh on My Orders in a minute. If nothing appears, contact support with your receipt.',
+              style: GoogleFonts.plusJakartaSans(fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('OK'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  context.go('/my-orders');
+                },
+                child: const Text('My orders'),
+              ),
+            ],
+          ),
+        );
+      }
+
+      setState(() => _isCreatingOrder = false);
+
+    } on StripeException catch (e) {
+      // Payment failed or cancelled by user
+      debugPrint('❌ Stripe error: ${e.error.code} - ${e.error.message}');
+      setState(() => _isCreatingOrder = false);
+
+      if (!mounted) return;
+
+      String errorMessage = 'Payment failed';
+      if (e.error.code == FailureCode.Canceled) {
+        errorMessage = 'Payment cancelled';
+      } else if (e.error.message != null) {
+        errorMessage = e.error.message!;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error in payment flow: $e');
+      debugPrint('Stack trace: $stackTrace');
+      setState(() => _isCreatingOrder = false);
+
+      if (!mounted) return;
+
+      // Parse error message for user-friendly display
+      String errorMessage = 'Failed to process payment';
+      if (e.toString().contains('Cart is empty')) {
+        errorMessage = 'Your cart is empty';
+      } else if (e.toString().contains('out of stock')) {
+        errorMessage = e.toString().replaceAll('Exception: ', '');
+      } else if (e.toString().contains('NGO')) {
+        errorMessage = 'Please select an NGO for donation';
+      } else if (e.toString().contains('address')) {
+        errorMessage = 'Please add a delivery address';
+      } else {
+        errorMessage = e.toString().replaceAll('Exception: ', '');
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(
+            label: 'Dismiss',
+            textColor: Colors.white,
+            onPressed: () {},
+          ),
+        ),
+      );
+    }
+  }
+
   /// Check if Pay Now button should be disabled
   bool _isButtonDisabled(FoodieState foodie) {
     // Check if cart is empty
@@ -978,5 +1367,90 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     return false;
+  }
+
+  /// Apply promo code with percentage discount
+  Future<void> _applyPromoCode(FoodieState foodie) async {
+    final code = _promoCodeController.text.trim().toUpperCase();
+    
+    if (code.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a promo code'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Show loading
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primaryGreen),
+      ),
+    );
+
+    try {
+      // Calculate order amount for validation
+      final orderAmount = foodie.subtotal + foodie.deliveryFee + foodie.platformFee;
+
+      // Validate promo code against database
+      final response = await _supabase.rpc(
+        'validate_promo_code',
+        params: {
+          'p_code': code,
+          'p_order_amount': orderAmount,
+        },
+      );
+
+      if (!mounted) return;
+      Navigator.of(context).pop(); // Close loading dialog
+
+      if (response is List && response.isNotEmpty) {
+        final result = response[0] as Map<String, dynamic>;
+        final isValid = result['is_valid'] as bool;
+        final discountPercentage = (result['discount_percentage'] as num?)?.toDouble() ?? 0.0;
+        final message = result['message'] as String;
+
+        if (isValid && discountPercentage > 0) {
+          foodie.setPromoCode(code, discountPercentage);
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$message! ${discountPercentage.toStringAsFixed(0)}% discount applied'),
+              backgroundColor: AppColors.primaryGreen,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invalid promo code'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error validating promo code: $e');
+      if (!mounted) return;
+      Navigator.of(context).pop(); // Close loading dialog if still open
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error validating promo code: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

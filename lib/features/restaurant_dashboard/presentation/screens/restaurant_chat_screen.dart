@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../ngo_dashboard/presentation/viewmodels/ngo_chat_viewmodel.dart';
 
 class RestaurantChatScreen extends StatefulWidget {
@@ -67,7 +68,7 @@ class _RestaurantChatScreenState extends State<RestaurantChatScreen> {
         title: Row(
           children: [
             CircleAvatar(
-              radius: 18,
+              radius: ResponsiveUtils.width(context, 18 / MediaQuery.of(context).size.width),
               backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.2),
               child: const Icon(
                 Icons.volunteer_activism,
@@ -80,7 +81,7 @@ class _RestaurantChatScreenState extends State<RestaurantChatScreen> {
               child: Text(
                 widget.otherPartyName,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: ResponsiveUtils.fontSize(context, 18),
                   fontWeight: FontWeight.bold,
                   color: isDark ? Colors.white : Colors.black,
                 ),

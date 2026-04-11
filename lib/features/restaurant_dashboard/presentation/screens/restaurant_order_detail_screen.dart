@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 
 class RestaurantOrderDetailScreen extends StatefulWidget {
   final String orderId;
@@ -134,16 +135,16 @@ class _RestaurantOrderDetailScreenState extends State<RestaurantOrderDetailScree
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 80, color: Colors.red),
-              const SizedBox(height: 16),
-              Text(
-                'Order not found',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
+            const Icon(Icons.error_outline, size: 80, color: Colors.red),
+            SizedBox(height: ResponsiveUtils.spacing(context, 16)),
+            Text(
+              'Order not found',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: ResponsiveUtils.fontSize(context, 18),
+                fontWeight: FontWeight.w500,
               ),
-              const SizedBox(height: 24),
+            ),
+            SizedBox(height: ResponsiveUtils.spacing(context, 24)),
               ElevatedButton(
                 onPressed: () => context.pop(),
                 child: const Text('Go Back'),
@@ -249,19 +250,19 @@ class _RestaurantOrderDetailScreenState extends State<RestaurantOrderDetailScree
       child: Row(
         children: [
           Container(
-            width: 60,
-            height: 60,
+            width: ResponsiveUtils.iconSize(context, 60),
+            height: ResponsiveUtils.iconSize(context, 60),
             decoration: BoxDecoration(
               color: _getStatusColor(status).withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(
               _getStatusIcon(status),
-              size: 30,
+              size: ResponsiveUtils.iconSize(context, 30),
               color: _getStatusColor(status),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: ResponsiveUtils.spacing(context, 16)),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -438,6 +439,13 @@ class _RestaurantOrderDetailScreenState extends State<RestaurantOrderDetailScree
     final deliveryFee = _orderData!['delivery_fee'] ?? 0.0;
     final platformFee = _orderData!['platform_fee'] ?? 0.0;
     final total = _orderData!['total_amount'] ?? 0.0;
+    final originalTotal = _orderData!['original_total'];
+    final discountAmount = _orderData!['discount_amount'] ?? 0.0;
+    final discountPercentage = _orderData!['discount_percentage'] ?? 0.0;
+    final promoCode = _orderData!['promo_code'] as String?;
+
+    // Show original total if discount was applied
+    final hasDiscount = discountAmount > 0 && originalTotal != null;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -466,12 +474,69 @@ class _RestaurantOrderDetailScreenState extends State<RestaurantOrderDetailScree
           _buildSummaryRow('Subtotal', subtotal, isDark),
           _buildSummaryRow('Delivery Fee', deliveryFee, isDark),
           _buildSummaryRow('Platform Fee', platformFee, isDark),
+          if (hasDiscount) ...[
+            Divider(height: 24, color: isDark ? Colors.grey[800] : Colors.grey[300]),
+            _buildSummaryRow('Order Total', originalTotal, isDark),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Discount',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      if (promoCode != null) ...[
+                        const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            promoCode,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primaryGreen,
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(width: 4),
+                      Text(
+                        '(${discountPercentage.toStringAsFixed(0)}%)',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    '-EGP ${discountAmount.toStringAsFixed(2)}',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           Divider(height: 24, color: isDark ? Colors.grey[800] : Colors.grey[300]),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Total',
+                hasDiscount ? 'Customer Paid' : 'Total',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -487,6 +552,32 @@ class _RestaurantOrderDetailScreenState extends State<RestaurantOrderDetailScree
               ),
             ],
           ),
+          if (hasDiscount) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue[200]!),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: Colors.blue[700]),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Original order value: EGP ${originalTotal.toStringAsFixed(2)}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        color: Colors.blue[900],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

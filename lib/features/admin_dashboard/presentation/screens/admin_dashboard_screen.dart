@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/utils/responsive_utils.dart';
+
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
 
@@ -11,17 +13,17 @@ class AdminDashboardScreen extends StatelessWidget {
         backgroundColor: Colors.black87,
         foregroundColor: Colors.white,
       ),
-      body: const Center(
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.admin_panel_settings, size: 64, color: Colors.black87),
-            SizedBox(height: 16),
+            Icon(Icons.admin_panel_settings, size: ResponsiveUtils.iconSize(context, 64), color: Colors.black87),
+            SizedBox(height: ResponsiveUtils.spacing(context, 16)),
             Text(
               'Admin Dashboard',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: ResponsiveUtils.fontSize(context, 24), fontWeight: FontWeight.bold),
             ),
-            Text('System overview and management.'),
+            const Text('System overview and management.'),
           ],
         ),
       ),

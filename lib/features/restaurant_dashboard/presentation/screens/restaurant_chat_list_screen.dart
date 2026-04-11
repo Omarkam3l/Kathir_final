@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../ngo_dashboard/presentation/viewmodels/ngo_chat_list_viewmodel.dart';
 import '../../../ngo_dashboard/domain/entities/conversation.dart';
 
@@ -141,7 +142,7 @@ class _RestaurantChatListScreenState extends State<RestaurantChatListScreen> {
           Text(
             'Messages',
             style: TextStyle(
-              fontSize: 24,
+              fontSize: ResponsiveUtils.fontSize(context, 24),
               fontWeight: FontWeight.bold,
               color: isDark ? Colors.white : Colors.black,
             ),
@@ -207,7 +208,7 @@ class _RestaurantChatListScreenState extends State<RestaurantChatListScreen> {
           children: [
             // Avatar
             CircleAvatar(
-              radius: 28,
+              radius: ResponsiveUtils.width(context, 28 / MediaQuery.of(context).size.width),
               backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.2),
               child: conversation.restaurantAvatar != null
                   ? ClipOval(

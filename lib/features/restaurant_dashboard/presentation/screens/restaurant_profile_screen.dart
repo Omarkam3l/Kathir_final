@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../authentication/presentation/blocs/auth_provider.dart';
 import '../../../_shared/widgets/location_selector_widget.dart';
 import '../widgets/restaurant_bottom_nav.dart';
@@ -331,7 +332,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                     // Header with avatar
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(24),
+                      padding: EdgeInsets.all(ResponsiveUtils.spacing(context, 24)),
                       decoration: BoxDecoration(
                         color: surface,
                         border: Border(
@@ -425,8 +426,8 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                           const SizedBox(height: 16),
                           Text(
                             _restaurantData?['restaurant_name'] ?? 'Unnamed Restaurant',
-                            style: const TextStyle(
-                              fontSize: 24,
+                            style: TextStyle(
+                              fontSize: ResponsiveUtils.fontSize(context, 24),
                               fontWeight: FontWeight.bold,
                             ),
                             textAlign: TextAlign.center,
@@ -464,7 +465,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
 
                     // Restaurant Information
                     Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(ResponsiveUtils.spacing(context, 16)),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -600,8 +601,8 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(
-        fontSize: 18,
+      style: TextStyle(
+        fontSize: ResponsiveUtils.fontSize(context, 18),
         fontWeight: FontWeight.bold,
       ),
     );

@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../viewmodels/verification_viewmodel.dart';
 import '../../../../di/global_injection/app_locator.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import 'new_password_screen.dart';
 
 class VerificationScreen extends StatefulWidget {
@@ -92,31 +93,31 @@ class _VerificationScreenState extends State<VerificationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 24),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 24)),
                   Center(
                     child: Container(
-                      width: 64,
-                      height: 64,
+                      width: ResponsiveUtils.iconSize(context, 64),
+                      height: ResponsiveUtils.iconSize(context, 64),
                       decoration: BoxDecoration(
                         color: isDark
                             ? AppColors.surfaceDark
                             : AppColors.primary.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.lock_reset,
-                          size: 32, color: AppColors.primary),
+                      child: Icon(Icons.lock_reset,
+                          size: ResponsiveUtils.iconSize(context, 32), color: AppColors.primary),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 24)),
                   Text(
                     'Verify OTP',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.plusJakartaSans(
-                        fontSize: 28,
+                        fontSize: ResponsiveUtils.fontSize(context, 28),
                         fontWeight: FontWeight.w800,
                         color: textPrimary),
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 12)),
                   Text(
                     'Enter the 8-digit code we sent to your registered email address.',
                     textAlign: TextAlign.center,

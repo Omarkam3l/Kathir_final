@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as s;
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../../core/utils/auth_logger.dart';
 import '../blocs/auth_provider.dart';
 
@@ -314,8 +315,8 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen> {
                   children: [
                     // Icon
                     Container(
-                      width: 120,
-                      height: 120,
+                      width: ResponsiveUtils.iconSize(context, 120),
+                      height: ResponsiveUtils.iconSize(context, 120),
                       decoration: BoxDecoration(
                         color: hasDocuments
                             ? AppColors.warning.withValues(alpha: 0.1)
@@ -324,23 +325,23 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen> {
                       ),
                       child: Icon(
                         hasDocuments ? Icons.hourglass_top_rounded : Icons.upload_file,
-                        size: 64,
+                        size: ResponsiveUtils.iconSize(context, 64),
                         color: hasDocuments ? AppColors.warning : AppColors.primary,
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: ResponsiveUtils.spacing(context, 32)),
 
                     // Title
                     Text(
                       hasDocuments ? 'Account Pending Approval' : 'Upload Legal Documents',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 24,
+                        fontSize: ResponsiveUtils.fontSize(context, 24),
                         fontWeight: FontWeight.bold,
                         color: isDark ? AppColors.white : AppColors.darkText,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: ResponsiveUtils.spacing(context, 16)),
 
                     // Message
                     Text(

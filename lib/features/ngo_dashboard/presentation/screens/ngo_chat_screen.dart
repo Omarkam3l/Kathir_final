@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../viewmodels/ngo_chat_viewmodel.dart';
 
 class NgoChatScreen extends StatefulWidget {
@@ -80,7 +81,7 @@ class _NgoChatScreenState extends State<NgoChatScreen> {
               child: Text(
                 widget.restaurantName,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: ResponsiveUtils.fontSize(context, 18),
                   fontWeight: FontWeight.bold,
                   color: isDark ? Colors.white : Colors.black,
                 ),
@@ -236,15 +237,15 @@ class _NgoChatScreenState extends State<NgoChatScreen> {
             Text(
               message.content,
               style: TextStyle(
-                fontSize: 15,
+                fontSize: ResponsiveUtils.fontSize(context, 15),
                 color: isMine ? Colors.black : (isDark ? Colors.white : Colors.black),
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: ResponsiveUtils.spacing(context, 4)),
             Text(
               DateFormat('h:mm a').format(message.createdAt),
               style: TextStyle(
-                fontSize: 11,
+                fontSize: ResponsiveUtils.fontSize(context, 11),
                 color: isMine
                     ? Colors.black54
                     : (isDark ? Colors.grey[400] : Colors.grey[600]),

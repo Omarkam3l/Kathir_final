@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../authentication/presentation/blocs/auth_provider.dart';
 import '../viewmodels/ngo_home_viewmodel.dart';
 import '../widgets/ngo_stat_card.dart';
@@ -161,7 +162,7 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
             RichText(
               text: TextSpan(
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: ResponsiveUtils.fontSize(context, 24),
                   fontWeight: FontWeight.bold,
                   color: isDark ? Colors.white : Colors.black,
                 ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../viewmodels/ngo_home_viewmodel.dart';
 import '../viewmodels/ngo_cart_viewmodel.dart';
 import '../widgets/ngo_bottom_nav.dart';
@@ -109,7 +110,7 @@ class _NgoAllMealsScreenState extends State<NgoAllMealsScreen> {
           Text(
             'Available Meals',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: ResponsiveUtils.fontSize(context, 18),
               fontWeight: FontWeight.bold,
               color: textMain,
             ),

@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../authentication/presentation/blocs/auth_provider.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 
 class UserProfileSetupScreen extends StatefulWidget {
   static const routeName = '/onboarding/profile';
@@ -267,24 +268,24 @@ class _UserProfileSetupScreenState extends State<UserProfileSetupScreen> {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: ResponsiveUtils.padding(context, horizontal: 24, vertical: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 20),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 20)),
                   Text(
                     'Complete Your Profile',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 28,
+                      fontSize: ResponsiveUtils.fontSize(context, 28),
                       fontWeight: FontWeight.bold,
                       color: Colors.grey[900],
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 8)),
                   Text(
                     'Add your details to personalize your experience',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
+                      fontSize: ResponsiveUtils.fontSize(context, 16),
                       color: Colors.grey[600],
                     ),
                   ),
@@ -295,12 +296,12 @@ class _UserProfileSetupScreenState extends State<UserProfileSetupScreen> {
             // Form
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: ResponsiveUtils.padding(context, horizontal: 24),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     children: [
-                      const SizedBox(height: 20),
+                      SizedBox(height: ResponsiveUtils.spacing(context, 20)),
                       
                       // Avatar
                       GestureDetector(
@@ -308,8 +309,8 @@ class _UserProfileSetupScreenState extends State<UserProfileSetupScreen> {
                         child: Stack(
                           children: [
                             Container(
-                              width: 120,
-                              height: 120,
+                              width: ResponsiveUtils.iconSize(context, 120),
+                              height: ResponsiveUtils.iconSize(context, 120),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: Colors.grey[200],
@@ -328,7 +329,7 @@ class _UserProfileSetupScreenState extends State<UserProfileSetupScreen> {
                               child: _avatarFile == null && _avatarUrl == null
                                   ? Icon(
                                       Icons.person,
-                                      size: 60,
+                                      size: ResponsiveUtils.iconSize(context, 60),
                                       color: Colors.grey[400],
                                     )
                                   : null,

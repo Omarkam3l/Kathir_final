@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../viewmodels/ngo_cart_viewmodel.dart';
 
 enum PickupMethod { selfPickup, delivery }
@@ -120,7 +121,7 @@ class _NgoCheckoutScreenState extends State<NgoCheckoutScreen> {
           Text(
             'Pickup Method',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: ResponsiveUtils.fontSize(context, 18),
               fontWeight: FontWeight.bold,
               color: isDark ? Colors.white : Colors.black,
             ),
@@ -189,13 +190,13 @@ class _NgoCheckoutScreenState extends State<NgoCheckoutScreen> {
             Icon(
               icon,
               color: isSelected ? AppColors.primaryGreen : Colors.grey,
-              size: 32,
+              size: ResponsiveUtils.iconSize(context, 32),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: ResponsiveUtils.spacing(context, 8)),
             Text(
               title,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: ResponsiveUtils.fontSize(context, 14),
                 fontWeight: FontWeight.bold,
                 color: isSelected
                     ? AppColors.primaryGreen
@@ -203,11 +204,11 @@ class _NgoCheckoutScreenState extends State<NgoCheckoutScreen> {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: ResponsiveUtils.spacing(context, 4)),
             Text(
               subtitle,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: ResponsiveUtils.fontSize(context, 11),
                 color: isDark ? Colors.grey[400] : Colors.grey[600],
               ),
               textAlign: TextAlign.center,

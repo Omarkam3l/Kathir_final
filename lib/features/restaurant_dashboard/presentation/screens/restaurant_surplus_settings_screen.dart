@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../data/services/rush_hour_service.dart';
 import '../../domain/entities/rush_hour_config.dart';
 
@@ -239,7 +240,7 @@ class _RestaurantSurplusSettingsScreenState
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(ResponsiveUtils.spacing(context, 16)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -284,16 +285,16 @@ class _RestaurantSurplusSettingsScreenState
                   Text(
                     'Rush Hour',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: ResponsiveUtils.fontSize(context, 20),
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : const Color(0xFF1B140D),
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'High discount period',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: ResponsiveUtils.fontSize(context, 14),
                       color: AppColors.primaryGreen,
                     ),
                   ),

@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../../core/services/geocoding_service.dart';
 
 class NgoLocationSelectorScreen extends StatefulWidget {
@@ -228,21 +229,21 @@ class _NgoLocationSelectorScreenState extends State<NgoLocationSelectorScreen> {
                               Text(
                                 'Selected Location',
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: ResponsiveUtils.fontSize(context, 12),
                                   color: isDark ? Colors.grey[400] : Colors.grey[600],
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              SizedBox(height: ResponsiveUtils.spacing(context, 4)),
                               _isLoadingAddress
-                                  ? const SizedBox(
-                                      height: 16,
-                                      width: 16,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                  ? SizedBox(
+                                      height: ResponsiveUtils.spacing(context, 16),
+                                      width: ResponsiveUtils.spacing(context, 16),
+                                      child: const CircularProgressIndicator(strokeWidth: 2),
                                     )
                                   : Text(
                                       _selectedAddress,
                                       style: TextStyle(
-                                        fontSize: 14,
+                                        fontSize: ResponsiveUtils.fontSize(context, 14),
                                         fontWeight: FontWeight.w600,
                                         color: isDark ? Colors.white : Colors.black,
                                       ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../viewmodels/ngo_cart_viewmodel.dart';
 import '../widgets/ngo_bottom_nav.dart';
 
@@ -117,7 +118,7 @@ class _NgoCartScreenFullState extends State<NgoCartScreenFull> {
               Text(
                 'My Cart',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: ResponsiveUtils.fontSize(context, 20),
                   fontWeight: FontWeight.bold,
                   color: isDark ? Colors.white : Colors.black,
                 ),
@@ -126,10 +127,10 @@ class _NgoCartScreenFullState extends State<NgoCartScreenFull> {
           ),
           TextButton(
             onPressed: () => _showClearCartDialog(context, cart),
-            child: const Text(
+            child: Text(
               'Clear All',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: ResponsiveUtils.fontSize(context, 16),
                 fontWeight: FontWeight.bold,
                 color: AppColors.primaryGreen,
               ),
@@ -152,7 +153,7 @@ class _NgoCartScreenFullState extends State<NgoCartScreenFull> {
           Text(
             '${cart.cartCount} Items in your Cart',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: ResponsiveUtils.fontSize(context, 14),
               fontWeight: FontWeight.w500,
               color: isDark ? Colors.grey[400] : Colors.grey[600],
             ),
@@ -206,10 +207,10 @@ class _NgoCartScreenFullState extends State<NgoCartScreenFull> {
         children: [
           // Meal image
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: ResponsiveUtils.borderRadius(context, 12),
             child: SizedBox(
-              width: 80,
-              height: 80,
+              width: ResponsiveUtils.spacing(context, 80),
+              height: ResponsiveUtils.spacing(context, 80),
               child: meal.imageUrl.isNotEmpty
                   ? Image.network(
                       meal.imageUrl,
@@ -234,16 +235,16 @@ class _NgoCartScreenFullState extends State<NgoCartScreenFull> {
                 Text(
                   meal.title,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: ResponsiveUtils.fontSize(context, 16),
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : Colors.black,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: ResponsiveUtils.spacing(context, 4)),
                 Text(
                   meal.restaurant.name,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: ResponsiveUtils.fontSize(context, 14),
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
                   ),
                 ),
@@ -407,12 +408,12 @@ class _NgoCartScreenFullState extends State<NgoCartScreenFull> {
           Text(
             'Summary',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: ResponsiveUtils.fontSize(context, 16),
               fontWeight: FontWeight.bold,
               color: isDark ? Colors.white : Colors.black,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: ResponsiveUtils.spacing(context, 16)),
           _summaryRow(
             'Total Items',
             '${cart.cartCount} meals',
@@ -453,19 +454,19 @@ class _NgoCartScreenFullState extends State<NgoCartScreenFull> {
               Text(
                 'CO₂ Savings',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: ResponsiveUtils.fontSize(context, 18),
                   fontWeight: FontWeight.bold,
                   color: isDark ? Colors.white : Colors.black,
                 ),
               ),
               Row(
                 children: [
-                  const Icon(Icons.eco, size: 20, color: AppColors.primaryGreen),
-                  const SizedBox(width: 4),
+                  Icon(Icons.eco, size: ResponsiveUtils.iconSize(context, 20), color: AppColors.primaryGreen),
+                  SizedBox(width: ResponsiveUtils.spacing(context, 4)),
                   Text(
                     '${cart.co2Savings.toStringAsFixed(1)} kg',
-                    style: const TextStyle(
-                      fontSize: 20,
+                    style: TextStyle(
+                      fontSize: ResponsiveUtils.fontSize(context, 20),
                       fontWeight: FontWeight.bold,
                       color: AppColors.primaryGreen,
                     ),
@@ -551,17 +552,17 @@ class _NgoCartScreenFullState extends State<NgoCartScreenFull> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Text(
-                        'Proceed to Checkout',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    Text(
+                      'Proceed to Checkout',
+                      style: TextStyle(
+                        fontSize: ResponsiveUtils.fontSize(context, 18),
+                        fontWeight: FontWeight.bold,
                       ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward, size: 20),
+                    ),
+                    SizedBox(width: ResponsiveUtils.spacing(context, 8)),
+                    Icon(Icons.arrow_forward, size: ResponsiveUtils.iconSize(context, 20)),
                     ],
                   ),
                   Container(

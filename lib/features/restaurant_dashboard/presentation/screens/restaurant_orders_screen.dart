@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../widgets/restaurant_bottom_nav.dart';
 import '../widgets/active_order_card.dart';
 
@@ -356,19 +357,19 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
         children: [
           Icon(
             Icons.receipt_long_outlined,
-            size: 80,
+            size: ResponsiveUtils.iconSize(context, 80),
             color: isDark ? Colors.grey[700] : Colors.grey[300],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: ResponsiveUtils.spacing(context, 16)),
           Text(
             'No orders found',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: ResponsiveUtils.fontSize(context, 20),
               fontWeight: FontWeight.bold,
               color: isDark ? Colors.grey[400] : Colors.grey[600],
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: ResponsiveUtils.spacing(context, 8)),
           Text(
             _selectedFilter == 'all'
                 ? 'Orders will appear here when customers place them'

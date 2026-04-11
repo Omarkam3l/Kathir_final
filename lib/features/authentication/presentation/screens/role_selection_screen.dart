@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
+import 'package:kathir_final/core/utils/responsive_utils.dart';
 import 'package:kathir_final/core/utils/user_role.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -42,16 +43,16 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 fontSize: 18, fontWeight: FontWeight.w700, color: textPrimary)),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: ResponsiveUtils.padding(context, all: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               'Choose your role to continue.',
               style: GoogleFonts.plusJakartaSans(
-                  fontSize: 15, color: textMuted, height: 1.4),
+                  fontSize: ResponsiveUtils.fontSize(context, 15), color: textMuted, height: 1.4),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: ResponsiveUtils.spacing(context, 24)),
             ...UserRole.values.where((r) => r != UserRole.admin).map((r) {
               final isSelected = _selected == r;
               return Padding(
@@ -106,7 +107,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
             }),
             const Spacer(),
             SizedBox(
-              height: 56,
+              height: ResponsiveUtils.spacing(context, 56),
               child: ElevatedButton(
                 onPressed: () {
                   roleVm.selectRole(_selected);

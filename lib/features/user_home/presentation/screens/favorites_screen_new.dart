@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../profile/presentation/providers/foodie_state.dart';
 import '../viewmodels/favorites_viewmodel.dart';
 
@@ -251,7 +252,7 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
               Text(
                 'Favorited Restaurants',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 18,
+                  fontSize: ResponsiveUtils.fontSize(context, 18),
                   fontWeight: FontWeight.bold,
                   color: textMain,
                 ),
@@ -263,7 +264,7 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
                 child: Text(
                   'View Map',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
+                    fontSize: ResponsiveUtils.fontSize(context, 14),
                     fontWeight: FontWeight.w600,
                     color: AppColors.primary,
                   ),
@@ -280,12 +281,12 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
             child: Center(
               child: Column(
                 children: [
-                  Icon(Icons.favorite_border, size: 64, color: textSub),
-                  const SizedBox(height: 16),
+                  Icon(Icons.favorite_border, size: ResponsiveUtils.iconSize(context, 64), color: textSub),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 16)),
                   Text(
                     'No favorites yet',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
+                      fontSize: ResponsiveUtils.fontSize(context, 16),
                       color: textSub,
                     ),
                   ),
@@ -407,18 +408,18 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
                 Text(
                   restaurant.name,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16,
+                    fontSize: ResponsiveUtils.fontSize(context, 16),
                     fontWeight: FontWeight.bold,
                     color: textMain,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: ResponsiveUtils.spacing(context, 4)),
 
                 // Distance and Status
                 Text(
                   '${restaurant.rating.toStringAsFixed(1)} ⭐ • Open now',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
+                    fontSize: ResponsiveUtils.fontSize(context, 14),
                     color: textSub,
                   ),
                 ),
@@ -575,20 +576,20 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
                 Text(
                   meal.title,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16,
+                    fontSize: ResponsiveUtils.fontSize(context, 16),
                     fontWeight: FontWeight.bold,
                     color: textMain,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: ResponsiveUtils.spacing(context, 4)),
 
                 // Restaurant Name and Price
                 Text(
                   '${meal.restaurant.name} • EGP ${meal.donationPrice.toStringAsFixed(0)}',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
+                    fontSize: ResponsiveUtils.fontSize(context, 14),
                     color: textSub,
                   ),
                 ),
@@ -672,16 +673,16 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
               Text(
                 'Meal Category Notifications',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 18,
+                  fontSize: ResponsiveUtils.fontSize(context, 18),
                   fontWeight: FontWeight.bold,
                   color: textMain,
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: ResponsiveUtils.spacing(context, 4)),
               Text(
                 'Get notified when new meals are added',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
+                  fontSize: ResponsiveUtils.fontSize(context, 14),
                   color: textSub,
                 ),
               ),
@@ -812,16 +813,16 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
             Text(
               name,
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 16,
+                fontSize: ResponsiveUtils.fontSize(context, 16),
                 fontWeight: FontWeight.bold,
                 color: textMain,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: ResponsiveUtils.spacing(context, 4)),
             Text(
               description,
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 12,
+                fontSize: ResponsiveUtils.fontSize(context, 12),
                 color: textSub,
               ),
             ),

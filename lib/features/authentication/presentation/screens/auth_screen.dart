@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
+import 'package:kathir_final/core/utils/responsive_utils.dart';
 import 'package:kathir_final/core/utils/user_role.dart';
 import 'package:kathir_final/features/authentication/presentation/screens/verification_screen.dart';
 import 'package:kathir_final/features/authentication/presentation/viewmodels/auth_viewmodel.dart';
@@ -209,7 +210,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       topLeft: Radius.circular(24),
                       topRight: Radius.circular(24)),
                 ),
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                padding: ResponsiveUtils.padding(context, horizontal: 24, top: 24, bottom: 32),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -348,7 +349,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           ),
                         ),
                       ],
-                      const SizedBox(height: 28),
+                      SizedBox(height: ResponsiveUtils.spacing(context, 28)),
                       _PrimaryButton(
                         label: isLogin ? 'Sign In' : 'Create Account',
                         loading: _isLoading,
@@ -672,7 +673,7 @@ class _PrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 56,
+      height: ResponsiveUtils.spacing(context, 56),
       child: ElevatedButton(
         onPressed: loading ? null : onPressed,
         style: ElevatedButton.styleFrom(

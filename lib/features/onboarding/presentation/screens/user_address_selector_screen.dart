@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../../core/services/geocoding_service.dart';
 
 class UserAddressSelectorScreen extends StatefulWidget {
@@ -233,12 +234,12 @@ class _UserAddressSelectorScreenState extends State<UserAddressSelectorScreen> {
           markers: [
             Marker(
               point: _selectedLocation,
-              width: 50,
-              height: 50,
-              child: const Icon(
+              width: ResponsiveUtils.iconSize(context, 50),
+              height: ResponsiveUtils.iconSize(context, 50),
+              child: Icon(
                 Icons.location_on,
                 color: AppColors.primary,
-                size: 50,
+                size: ResponsiveUtils.iconSize(context, 50),
               ),
             ),
           ],
@@ -249,13 +250,13 @@ class _UserAddressSelectorScreenState extends State<UserAddressSelectorScreen> {
 
   Widget _buildTopBar() {
     return Positioned(
-      top: 16,
-      left: 16,
-      right: 16,
+      top: ResponsiveUtils.spacing(context, 16),
+      left: ResponsiveUtils.spacing(context, 16),
+      right: ResponsiveUtils.spacing(context, 16),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: ResponsiveUtils.borderRadius(context, 16),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -268,8 +269,8 @@ class _UserAddressSelectorScreenState extends State<UserAddressSelectorScreen> {
           children: [
             IconButton(
               onPressed: () => context.pop(),
-              icon: const Icon(Icons.arrow_back, size: 24),
-              padding: const EdgeInsets.all(16),
+              icon: Icon(Icons.arrow_back, size: ResponsiveUtils.iconSize(context, 24)),
+              padding: ResponsiveUtils.padding(context, all: 16),
             ),
             Expanded(
               child: TextField(
@@ -364,10 +365,10 @@ class _UserAddressSelectorScreenState extends State<UserAddressSelectorScreen> {
       left: 0,
       right: 0,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: ResponsiveUtils.padding(context, all: 20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(ResponsiveUtils.spacing(context, 24))),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -380,11 +381,11 @@ class _UserAddressSelectorScreenState extends State<UserAddressSelectorScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Select Address',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: ResponsiveUtils.fontSize(context, 20), fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: ResponsiveUtils.spacing(context, 16)),
             TextField(
               controller: _labelController,
               decoration: InputDecoration(

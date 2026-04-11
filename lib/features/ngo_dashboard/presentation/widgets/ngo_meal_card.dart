@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../user_home/domain/entities/meal.dart';
 
 class NgoMealCard extends StatelessWidget {
@@ -23,19 +24,19 @@ class NgoMealCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.push('/ngo/meal/${meal.id}', extra: meal),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
+        margin: ResponsiveUtils.margin(context, bottom: 10),
+        padding: ResponsiveUtils.padding(context, all: 10),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1A2E22) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: ResponsiveUtils.borderRadius(context, 14),
           border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
         ),
         child: Opacity(
           opacity: isReserved ? 0.6 : 1.0,
           child: Row(
             children: [
-              _buildImage(isReserved),
-              const SizedBox(width: 12),
+              _buildImage(context, isReserved),
+              SizedBox(width: ResponsiveUtils.spacing(context, 10)),
               Expanded(
                 child: _buildContent(context, isReserved),
               ),
@@ -46,14 +47,15 @@ class NgoMealCard extends StatelessWidget {
     );
   }
 
-  Widget _buildImage(bool isReserved) {
+  Widget _buildImage(BuildContext context, bool isReserved) {
+    final imageSize = ResponsiveUtils.iconSize(context, 75);
     return Stack(
       children: [
         Container(
-          width: 80,
-          height: 80,
+          width: imageSize,
+          height: imageSize,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: ResponsiveUtils.borderRadius(context, 10),
             color: Colors.grey[300],
             image: meal.imageUrl.isNotEmpty
                 ? DecorationImage(
@@ -63,24 +65,30 @@ class NgoMealCard extends StatelessWidget {
                 : null,
           ),
           child: meal.imageUrl.isEmpty
-              ? const Center(child: Icon(Icons.restaurant, color: Colors.grey))
+              ? Center(
+                  child: Icon(
+                    Icons.restaurant,
+                    color: Colors.grey,
+                    size: ResponsiveUtils.iconSize(context, 30),
+                  ),
+                )
               : null,
         ),
         if (_isVegetarian)
           Positioned(
-            top: 4,
-            right: 4,
+            top: ResponsiveUtils.spacing(context, 3),
+            right: ResponsiveUtils.spacing(context, 3),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              padding: ResponsiveUtils.padding(context, horizontal: 3, vertical: 1),
               decoration: BoxDecoration(
                 color: Colors.green,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: ResponsiveUtils.borderRadius(context, 3),
               ),
-              child: const Text(
+              child: Text(
                 'Veg',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 8,
+                  fontSize: ResponsiveUtils.fontSize(context, 7),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -91,20 +99,20 @@ class NgoMealCard extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.black38,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: ResponsiveUtils.borderRadius(context, 10),
               ),
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: ResponsiveUtils.padding(context, horizontal: 5, vertical: 2),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.white),
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: ResponsiveUtils.borderRadius(context, 3),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Reserved',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 9,
+                      fontSize: ResponsiveUtils.fontSize(context, 8),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -119,43 +127,50 @@ class NgoMealCard extends StatelessWidget {
   Widget _buildContent(BuildContext context, bool isReserved) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           meal.title,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: isDark ? Colors.white : Colors.black,
+            fontSize: ResponsiveUtils.fontSize(context, 14),
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        const SizedBox(height: 2),
+        SizedBox(height: ResponsiveUtils.spacing(context, 2)),
         Text(
           meal.restaurant.name,
-          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+          style: TextStyle(
+            fontSize: ResponsiveUtils.fontSize(context, 11),
+            color: Colors.grey[500],
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: ResponsiveUtils.spacing(context, 5)),
         Row(
           children: [
-            _buildTag('${meal.quantity}${meal.unit.substring(0, 2)}', Icons.scale),
-            const SizedBox(width: 8),
-            _buildTag('~${(meal.quantity * 3).clamp(10, 100)}', Icons.group),
-            const SizedBox(width: 8),
+            _buildTag(context, '${meal.quantity}${meal.unit.substring(0, 2)}', Icons.scale),
+            SizedBox(width: ResponsiveUtils.spacing(context, 6)),
+            _buildTag(context, '~${(meal.quantity * 3).clamp(10, 100)}', Icons.group),
+            SizedBox(width: ResponsiveUtils.spacing(context, 6)),
             // Price badge
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: ResponsiveUtils.padding(context, horizontal: 5, vertical: 2),
               decoration: BoxDecoration(
                 color: meal.donationPrice == 0 
                     ? (isDark ? Colors.green.withValues(alpha: 0.2) : Colors.green.shade100)
                     : (isDark ? Colors.orange.withValues(alpha: 0.2) : Colors.orange.shade100),
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: ResponsiveUtils.borderRadius(context, 3),
               ),
               child: Text(
                 meal.donationPrice == 0 
                     ? 'FREE' 
                     : 'EGP ${meal.donationPrice.toStringAsFixed(0)}',
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: ResponsiveUtils.fontSize(context, 9),
                   fontWeight: FontWeight.bold,
                   color: meal.donationPrice == 0 
                       ? (isDark ? Colors.green[300] : Colors.green[700])
@@ -165,43 +180,53 @@ class NgoMealCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: ResponsiveUtils.spacing(context, 6)),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
               child: Row(
                 children: [
-                  Icon(Icons.schedule, size: 12, color: Colors.grey[500]),
-                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.schedule,
+                    size: ResponsiveUtils.iconSize(context, 11),
+                    color: Colors.grey[500],
+                  ),
+                  SizedBox(width: ResponsiveUtils.spacing(context, 3)),
                   Expanded(
                     child: Text(
                       'Pickup by ${_formatTime(meal.pickupDeadline ?? meal.expiry)}',
-                      style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                      style: TextStyle(
+                        fontSize: ResponsiveUtils.fontSize(context, 10),
+                        color: Colors.grey[500],
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: ResponsiveUtils.spacing(context, 6)),
             if (!isReserved)
               ElevatedButton.icon(
                 onPressed: onClaim,
-                icon: const Icon(Icons.shopping_cart, size: 16),
-                label: const Text(
+                icon: Icon(
+                  Icons.shopping_cart,
+                  size: ResponsiveUtils.iconSize(context, 14),
+                ),
+                label: Text(
                   'Add to Cart',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: ResponsiveUtils.fontSize(context, 11),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isDark ? Colors.white : Colors.black,
                   foregroundColor: isDark ? Colors.black : Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: ResponsiveUtils.padding(context, horizontal: 10, vertical: 6),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: ResponsiveUtils.borderRadius(context, 6),
                   ),
                   elevation: 0,
                   minimumSize: Size.zero,
@@ -214,22 +239,26 @@ class NgoMealCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTag(String text, IconData icon) {
+  Widget _buildTag(BuildContext context, String text, IconData icon) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: ResponsiveUtils.padding(context, horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1F3A2B) : const Color(0xFFE7F3EB),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: ResponsiveUtils.borderRadius(context, 3),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: isDark ? Colors.grey[300] : Colors.grey[600]),
-          const SizedBox(width: 4),
+          Icon(
+            icon,
+            size: ResponsiveUtils.iconSize(context, 11),
+            color: isDark ? Colors.grey[300] : Colors.grey[600],
+          ),
+          SizedBox(width: ResponsiveUtils.spacing(context, 3)),
           Text(
             text,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: ResponsiveUtils.fontSize(context, 9),
               fontWeight: FontWeight.w600,
               color: isDark ? Colors.grey[300] : Colors.grey[600],
             ),

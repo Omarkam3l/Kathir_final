@@ -34,12 +34,14 @@ class FoodieState extends ChangeNotifier {
   final List<CartItem> _cart = [];
   DeliveryMethod _deliveryMethod = DeliveryMethod.pickup;
   String? _promoCode;
+  double _promoCodeDiscount = 0.0; // Percentage discount (0-100)
   bool _isLoadingCart = false;
 
   // ... (existing favourites logic)
 
   DeliveryMethod get deliveryMethod => _deliveryMethod;
   String? get promoCode => _promoCode;
+  double get promoCodeDiscount => _promoCodeDiscount;
   bool get isLoadingCart => _isLoadingCart;
 
   void setDeliveryMethod(DeliveryMethod method) {
@@ -47,8 +49,15 @@ class FoodieState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setPromoCode(String code) {
+  void setPromoCode(String code, double discountPercentage) {
     _promoCode = code;
+    _promoCodeDiscount = discountPercentage.clamp(0.0, 100.0); // Ensure 0-100%
+    notifyListeners();
+  }
+
+  void clearPromoCode() {
+    _promoCode = null;
+    _promoCodeDiscount = 0.0;
     notifyListeners();
   }
 
@@ -111,11 +120,20 @@ class FoodieState extends ChangeNotifier {
     if (_deliveryMethod == DeliveryMethod.donate) return 0.0;
     return 1.5;
   }
+
+  // Calculate discount amount based on percentage
+  double get discountAmount {
+    if (_promoCodeDiscount <= 0) return 0.0;
+    final totalBeforeDiscount = subtotal + deliveryFee + platformFee;
+    return (totalBeforeDiscount * _promoCodeDiscount / 100.0);
+  }
   
   double get total {
     try {
-      final sum = subtotal + deliveryFee + platformFee;
-      return sum.isNaN || sum.isInfinite ? 0.0 : sum;
+      final totalBeforeDiscount = subtotal + deliveryFee + platformFee;
+      final discount = discountAmount;
+      final finalTotal = totalBeforeDiscount - discount;
+      return finalTotal.isNaN || finalTotal.isInfinite || finalTotal < 0 ? 0.0 : finalTotal;
     } catch (e) {
       debugPrint('Error calculating total: $e');
       return 0.0;

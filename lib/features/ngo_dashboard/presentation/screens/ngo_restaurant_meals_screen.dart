@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../viewmodels/ngo_cart_viewmodel.dart';
 import '../widgets/ngo_meal_card.dart';
 
@@ -46,17 +47,17 @@ class NgoRestaurantMealsScreen extends StatelessWidget {
               style: TextStyle(
                 color: isDark ? Colors.white : Colors.black,
                 fontWeight: FontWeight.bold,
-                fontSize: 18,
+                fontSize: ResponsiveUtils.fontSize(context, 18),
               ),
             ),
             Row(
               children: [
-                const Icon(Icons.star, size: 14, color: Colors.amber),
-                const SizedBox(width: 4),
+                Icon(Icons.star, size: ResponsiveUtils.iconSize(context, 14), color: Colors.amber),
+                SizedBox(width: ResponsiveUtils.spacing(context, 4)),
                 Text(
                   (restaurant['rating'] as double).toStringAsFixed(1),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: ResponsiveUtils.fontSize(context, 12),
                     color: Colors.grey[600],
                   ),
                 ),
@@ -70,8 +71,8 @@ class NgoRestaurantMealsScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.no_food, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
+                  Icon(Icons.no_food, size: ResponsiveUtils.iconSize(context, 64), color: Colors.grey[400]),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 16)),
                   Text(
                     'No meals available from this restaurant',
                     style: TextStyle(color: Colors.grey[600]),
@@ -86,19 +87,19 @@ class NgoRestaurantMealsScreen extends StatelessWidget {
                 if (freeMeals.isNotEmpty) ...[
                   Row(
                     children: [
-                      const Icon(Icons.volunteer_activism, color: AppColors.primaryGreen, size: 20),
-                      const SizedBox(width: 8),
+                      Icon(Icons.volunteer_activism, color: AppColors.primaryGreen, size: ResponsiveUtils.iconSize(context, 20)),
+                      SizedBox(width: ResponsiveUtils.spacing(context, 8)),
                       Text(
                         'Free Meals',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: ResponsiveUtils.fontSize(context, 18),
                           fontWeight: FontWeight.bold,
                           color: isDark ? Colors.white : Colors.black,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 12)),
                   ...freeMeals.map((meal) => NgoMealCard(
                         meal: meal,
                         isDark: isDark,
@@ -121,19 +122,19 @@ class NgoRestaurantMealsScreen extends StatelessWidget {
                 if (paidMeals.isNotEmpty) ...[
                   Row(
                     children: [
-                      const Icon(Icons.local_offer, color: AppColors.primaryGreen, size: 20),
-                      const SizedBox(width: 8),
+                      Icon(Icons.local_offer, color: AppColors.primaryGreen, size: ResponsiveUtils.iconSize(context, 20)),
+                      SizedBox(width: ResponsiveUtils.spacing(context, 8)),
                       Text(
                         'Available Meals',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: ResponsiveUtils.fontSize(context, 18),
                           fontWeight: FontWeight.bold,
                           color: isDark ? Colors.white : Colors.black,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 12)),
                   ...paidMeals.map((meal) => NgoMealCard(
                         meal: meal,
                         isDark: isDark,

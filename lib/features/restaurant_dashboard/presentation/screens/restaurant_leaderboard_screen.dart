@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../data/services/leaderboard_service.dart';
 import '../../domain/entities/leaderboard_entry.dart';
 import '../widgets/restaurant_bottom_nav.dart';
@@ -142,12 +143,12 @@ class _RestaurantLeaderboardScreenState
             ),
             onPressed: () => context.go('/restaurant-dashboard'),
           ),
-          const Expanded(
+          Expanded(
             child: Text(
               'Leaderboard',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 18,
+                fontSize: ResponsiveUtils.fontSize(context, 18),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -343,12 +344,12 @@ class _RestaurantLeaderboardScreenState
       children: [
         // Crown for rank 1
         if (rank == 1)
-          const Padding(
-            padding: EdgeInsets.only(bottom: 8),
+          Padding(
+            padding: EdgeInsets.only(bottom: ResponsiveUtils.spacing(context, 8)),
             child: Icon(
               Icons.emoji_events,
-              color: Color(0xFFFFD700),
-              size: 32,
+              color: const Color(0xFFFFD700),
+              size: ResponsiveUtils.iconSize(context, 32),
             ),
           ),
         
@@ -431,7 +432,7 @@ class _RestaurantLeaderboardScreenState
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: rank == 1 ? 16 : 14,
+            fontSize: ResponsiveUtils.fontSize(context, rank == 1 ? 16 : 14),
             fontWeight: FontWeight.bold,
             color: isDark ? Colors.white : const Color(0xFF1B140D),
           ),

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../profile/presentation/providers/foodie_state.dart';
 import '../../domain/entities/meal_offer.dart';
 
@@ -417,7 +418,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                 Text(
                   meal.title,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 18,
+                    fontSize: ResponsiveUtils.fontSize(context, 18),
                     fontWeight: FontWeight.bold,
                     color: textMain,
                   ),

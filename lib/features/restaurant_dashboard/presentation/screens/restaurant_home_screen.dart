@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../authentication/presentation/blocs/auth_provider.dart';
 import '../widgets/restaurant_bottom_nav.dart';
 import '../widgets/kpi_card.dart';
@@ -180,8 +181,8 @@ class _RestaurantHomeScreenState extends State<RestaurantHomeScreen> {
                 GestureDetector(
                   onTap: () => context.go('/restaurant-dashboard/profile'),
                   child: Container(
-                    width: 48,
-                    height: 48,
+                    width: ResponsiveUtils.iconSize(context, 48),
+                    height: ResponsiveUtils.iconSize(context, 48),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: AppColors.primaryGreen.withValues(alpha: 0.2),
@@ -214,13 +215,13 @@ class _RestaurantHomeScreenState extends State<RestaurantHomeScreen> {
                       Text(
                         'Welcome back!',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: ResponsiveUtils.fontSize(context, 12),
                           color: isDark ? Colors.grey[400] : Colors.grey[600],
                         ),
                       ),
                       Text(
                         _restaurantName ?? 'Restaurant',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: ResponsiveUtils.fontSize(context, 18)),
                       ),
                     ],
                   ),
@@ -250,11 +251,11 @@ class _RestaurantHomeScreenState extends State<RestaurantHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Overview',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: ResponsiveUtils.fontSize(context, 18), fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: ResponsiveUtils.spacing(context, 12)),
             Row(
               children: [
                 Expanded(
@@ -322,9 +323,9 @@ class _RestaurantHomeScreenState extends State<RestaurantHomeScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Recent Meals',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: ResponsiveUtils.fontSize(context, 18), fontWeight: FontWeight.bold),
                 ),
                 TextButton(
                   onPressed: () => context.go('/restaurant-dashboard/meals'),
@@ -375,9 +376,9 @@ class _RestaurantHomeScreenState extends State<RestaurantHomeScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Active Orders',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: ResponsiveUtils.fontSize(context, 18), fontWeight: FontWeight.bold),
                 ),
                 if (_activeOrders.isNotEmpty)
                   TextButton(

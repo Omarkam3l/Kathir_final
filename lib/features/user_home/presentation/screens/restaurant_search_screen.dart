@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../domain/entities/restaurant.dart';
 
 /// Restaurant Search Screen with Map and Location-based filtering
@@ -589,16 +590,16 @@ class _RestaurantSearchScreenState extends State<RestaurantSearchScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    restaurant.name,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                Text(
+                  restaurant.name,
+                  style: TextStyle(
+                    fontSize: ResponsiveUtils.fontSize(context, 16),
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                   const SizedBox(height: 4),
                   if (restaurant.addressText != null)
                     Text(

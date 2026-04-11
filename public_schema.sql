@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict OX3h9F17ex0GpisyGnJkbKsfB46kdU8gB6lvXad96w4z9PcOUt3Qj9FHv9XB4fX
+\restrict n48cNljbAam853uAcmaSFfjXCkGYuGeJdeFUjbaebtqxGxvmsi6Ed4AFkwumlmx
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.1
@@ -1244,6 +1244,86 @@ $$;
 ALTER FUNCTION public.get_pending_emails(p_limit integer) OWNER TO postgres;
 
 --
+-- Name: get_personalized_meals(uuid, integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_personalized_meals(p_user_id uuid, p_limit integer DEFAULT 20) RETURNS TABLE(id uuid, restaurant_id uuid, title text, description text, category text, image_url text, original_price numeric, discounted_price numeric, quantity_available integer, expiry_date timestamp with time zone, restaurant_name text, restaurant_rating double precision)
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  v_user_categories text[];
+BEGIN
+  -- Get user's favorite categories
+  SELECT array_agg(category)
+  INTO v_user_categories
+  FROM user_category_preferences
+  WHERE user_id = p_user_id
+    AND notifications_enabled = true;
+  
+  -- If user has no preferences, return all meals
+  IF v_user_categories IS NULL OR array_length(v_user_categories, 1) = 0 THEN
+    RETURN QUERY
+    SELECT 
+      m.id,
+      m.restaurant_id,
+      m.title,
+      m.description,
+      m.category,
+      m.image_url,
+      m.original_price,
+      m.discounted_price,
+      m.quantity_available,
+      m.expiry_date,
+      r.restaurant_name,
+      r.rating
+    FROM meals m
+    LEFT JOIN restaurants r ON m.restaurant_id = r.profile_id
+    WHERE (m.status = 'active' OR m.status IS NULL)
+      AND m.quantity_available > 0
+      AND m.expiry_date > NOW()
+    ORDER BY m.created_at DESC
+    LIMIT p_limit;
+  ELSE
+    -- Return meals matching user's favorite categories first, then others
+    RETURN QUERY
+    SELECT 
+      m.id,
+      m.restaurant_id,
+      m.title,
+      m.description,
+      m.category,
+      m.image_url,
+      m.original_price,
+      m.discounted_price,
+      m.quantity_available,
+      m.expiry_date,
+      r.restaurant_name,
+      r.rating
+    FROM meals m
+    LEFT JOIN restaurants r ON m.restaurant_id = r.profile_id
+    WHERE (m.status = 'active' OR m.status IS NULL)
+      AND m.quantity_available > 0
+      AND m.expiry_date > NOW()
+    ORDER BY 
+      CASE WHEN m.category = ANY(v_user_categories) THEN 0 ELSE 1 END,
+      m.created_at DESC
+    LIMIT p_limit;
+  END IF;
+END;
+$$;
+
+
+ALTER FUNCTION public.get_personalized_meals(p_user_id uuid, p_limit integer) OWNER TO postgres;
+
+--
+-- Name: FUNCTION get_personalized_meals(p_user_id uuid, p_limit integer); Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON FUNCTION public.get_personalized_meals(p_user_id uuid, p_limit integer) IS 'Returns meals personalized based on user category preferences. Preferred categories shown first.';
+
+
+--
 -- Name: get_restaurant_leaderboard(text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -1670,6 +1750,34 @@ $$;
 
 
 ALTER FUNCTION public.log_order_status_change() OWNER TO postgres;
+
+--
+-- Name: match_meals(public.vector, double precision, integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.match_meals(query_embedding public.vector, match_threshold double precision DEFAULT 0.55, match_count integer DEFAULT 8) RETURNS TABLE(id uuid, title text, description text, category text, discounted_price numeric, restaurant_id uuid, similarity double precision)
+    LANGUAGE sql STABLE
+    AS $$
+    SELECT
+        id,
+        title,
+        description,
+        category,
+        discounted_price,
+        restaurant_id,
+        1 - (embedding <=> query_embedding) AS similarity
+    FROM meals
+    WHERE status = 'active'
+      AND quantity_available > 0
+      AND expiry_date > now()
+      AND embedding IS NOT NULL
+      AND (1 - (embedding <=> query_embedding)) >= match_threshold
+    ORDER BY embedding <=> query_embedding
+    LIMIT match_count;
+$$;
+
+
+ALTER FUNCTION public.match_meals(query_embedding public.vector, match_threshold double precision, match_count integer) OWNER TO postgres;
 
 --
 -- Name: notify_category_subscribers(); Type: FUNCTION; Schema: public; Owner: postgres
@@ -2209,6 +2317,144 @@ COMMENT ON FUNCTION public.safe_delete_meal(p_meal_id uuid) IS 'Safely deletes a
 
 
 --
+-- Name: send_order_whatsapp_test(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.send_order_whatsapp_test() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+DECLARE
+  v_user_phone text;
+  v_user_name text;
+  v_restaurant_phone text;
+  v_restaurant_name text;
+  v_total text;
+  v_order_id text;
+BEGIN
+  -- Get user details
+  SELECT 
+    p.phone_number,
+    p.full_name
+  INTO 
+    v_user_phone,
+    v_user_name
+  FROM profiles p
+  WHERE p.id = NEW.user_id;
+  
+  -- Get restaurant details
+  SELECT 
+    r.phone,
+    r.restaurant_name
+  INTO 
+    v_restaurant_phone,
+    v_restaurant_name
+  FROM restaurants r
+  WHERE r.profile_id = NEW.restaurant_id;
+  
+  -- Format data
+  v_total := NEW.total_amount::text;
+  v_order_id := NEW.id::text;
+  
+  -- Send to USER using hello_world template (the one you have approved)
+  IF v_user_phone IS NOT NULL AND v_user_phone != '' THEN
+    PERFORM send_whatsapp_message_test(
+      v_user_phone,
+      'hello_world',  -- Using your approved template
+      'en_US',        -- Language from your template
+      ARRAY[]::text[] -- hello_world has no parameters
+    );
+  END IF;
+  
+  -- Send to RESTAURANT using hello_world template
+  IF v_restaurant_phone IS NOT NULL AND v_restaurant_phone != '' THEN
+    PERFORM send_whatsapp_message_test(
+      v_restaurant_phone,
+      'hello_world',  -- Using your approved template
+      'en_US',
+      ARRAY[]::text[]
+    );
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.send_order_whatsapp_test() OWNER TO postgres;
+
+--
+-- Name: send_whatsapp_message_test(text, text, text, text[]); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.send_whatsapp_message_test(p_phone_number text, p_template_name text, p_template_language text DEFAULT 'en'::text, p_template_params text[] DEFAULT ARRAY[]::text[]) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+DECLARE
+  v_log_id uuid;
+  v_response jsonb;
+BEGIN
+  -- Insert log entry
+  INSERT INTO public.whatsapp_logs (
+    phone_number,
+    template_name,
+    status
+  )
+  VALUES (
+    p_phone_number,
+    p_template_name,
+    'pending'
+  )
+  RETURNING id INTO v_log_id;
+  
+  -- Call WhatsApp API directly (replace with YOUR values)
+  SELECT content::jsonb INTO v_response
+  FROM http((
+    'POST',
+    'https://graph.facebook.com/v22.0/1058985460611984/messages',
+    ARRAY[
+      http_header('Authorization', 'Bearer EAANVQ3pC6o0BRJXSMbk8v9j4uNx1TVfxotsIQkhfpIErhXjlkwi1eekEKpg7rES9EvCkeQlIv3YFehopyw6u9Pcpo0U8kE2g4Dmld8DOef81kAheJX1RLF8fWgALfAzVd8bXwXIfiU6ErYFamX8NZA9TNnx284LOKe3ZCCifIQg3ux3Ott23kBdW6Pxpg2L8htZBiXdkt7QeY6bwXTosQczg9v79tFng6zrqbZAQItGr4Wwa9c3DzFJkaZCq4I9jL7tztWVx9C5UZBufKzTpz6oabX'),
+      http_header('Content-Type', 'application/json')
+    ],
+    'application/json',
+    jsonb_build_object(
+      'messaging_product', 'whatsapp',
+      'to', p_phone_number,
+      'type', 'template',
+      'template', jsonb_build_object(
+        'name', p_template_name,
+        'language', jsonb_build_object(
+          'code', p_template_language
+        )
+      )
+    )::text
+  ));
+  
+  -- Update log with success
+  UPDATE public.whatsapp_logs
+  SET 
+    status = 'sent',
+    sent_at = NOW(),
+    message_id = v_response->'messages'->0->>'id'
+  WHERE id = v_log_id;
+  
+  RETURN v_log_id;
+  
+EXCEPTION WHEN OTHERS THEN
+  -- Update log with error
+  UPDATE public.whatsapp_logs
+  SET 
+    status = 'failed',
+    error_message = SQLERRM
+  WHERE id = v_log_id;
+  
+  RETURN v_log_id;
+END;
+$$;
+
+
+ALTER FUNCTION public.send_whatsapp_message_test(p_phone_number text, p_template_name text, p_template_language text, p_template_params text[]) OWNER TO postgres;
+
+--
 -- Name: set_order_pickup_location(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -2717,48 +2963,6 @@ $$;
 ALTER FUNCTION public.update_order_issue_timestamp() OWNER TO postgres;
 
 --
--- Name: update_profile_default_location(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.update_profile_default_location() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-  -- When an address is set as default, update the profile
-  IF NEW.is_default = true THEN
-    UPDATE profiles
-    SET default_location = NEW.address_text
-    WHERE id = NEW.user_id;
-  END IF;
-  
-  -- When an address is unset as default, check if there are other defaults
-  IF OLD.is_default = true AND NEW.is_default = false THEN
-    -- Check if there's another default address
-    DECLARE
-      other_default TEXT;
-    BEGIN
-      SELECT address_text INTO other_default
-      FROM user_addresses
-      WHERE user_id = NEW.user_id 
-        AND is_default = true 
-        AND id != NEW.id
-      LIMIT 1;
-      
-      -- Update profile with the other default, or NULL if none
-      UPDATE profiles
-      SET default_location = other_default
-      WHERE id = NEW.user_id;
-    END;
-  END IF;
-  
-  RETURN NEW;
-END;
-$$;
-
-
-ALTER FUNCTION public.update_profile_default_location() OWNER TO postgres;
-
---
 -- Name: update_restaurant_rating(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -2844,6 +3048,25 @@ $$;
 
 
 ALTER FUNCTION public.update_updated_at_column() OWNER TO postgres;
+
+--
+-- Name: update_user_address_location(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.update_user_address_location() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  IF NEW.latitude IS NOT NULL AND NEW.longitude IS NOT NULL THEN
+    NEW.location := ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326)::geography;
+    NEW.location_updated_at := NOW();
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_user_address_location() OWNER TO postgres;
 
 --
 -- Name: update_user_tier(uuid); Type: FUNCTION; Schema: public; Owner: postgres
@@ -3042,8 +3265,9 @@ CREATE TABLE public.profiles (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     approval_status text DEFAULT 'pending'::text NOT NULL,
-    address_text text,
-    default_location text,
+    is_profile_completed boolean DEFAULT false,
+    is_onboarding_completed boolean DEFAULT false,
+    stripe_customer_id text,
     CONSTRAINT profiles_approval_status_check CHECK ((approval_status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text]))),
     CONSTRAINT profiles_role_check CHECK ((role = ANY (ARRAY['user'::text, 'restaurant'::text, 'ngo'::text, 'admin'::text])))
 );
@@ -3052,17 +3276,34 @@ CREATE TABLE public.profiles (
 ALTER TABLE public.profiles OWNER TO postgres;
 
 --
--- Name: COLUMN profiles.address_text; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE profiles; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.profiles.address_text IS 'Primary address for all stakeholders (users, restaurants, NGOs) - displayed on home screen';
+COMMENT ON TABLE public.profiles IS 'Core user profile table. Location data is stored in role-specific tables:
+- Regular users: user_addresses table (location_lat/location_long)
+- Restaurants: restaurants table (latitude/longitude/location PostGIS)
+- NGOs: ngos table (latitude/longitude/location PostGIS)';
 
 
 --
--- Name: COLUMN profiles.default_location; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN profiles.is_profile_completed; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.profiles.default_location IS 'User default delivery address for homepage display';
+COMMENT ON COLUMN public.profiles.is_profile_completed IS 'Indicates whether the user has completed the profile setup step during onboarding. New users start with FALSE.';
+
+
+--
+-- Name: COLUMN profiles.is_onboarding_completed; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.profiles.is_onboarding_completed IS 'Flag indicating if user has completed full onboarding flow';
+
+
+--
+-- Name: COLUMN profiles.stripe_customer_id; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.profiles.stripe_customer_id IS 'Stripe Customer ID linked to this profile';
 
 
 --
@@ -3078,7 +3319,6 @@ CREATE TABLE public.restaurants (
     min_order_price numeric(12,2) DEFAULT 0,
     rush_hour_active boolean DEFAULT false,
     phone text,
-    address text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     rating_count integer DEFAULT 0,
@@ -3090,6 +3330,13 @@ CREATE TABLE public.restaurants (
 
 
 ALTER TABLE public.restaurants OWNER TO postgres;
+
+--
+-- Name: COLUMN restaurants.address_text; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.restaurants.address_text IS 'Restaurant address (human-readable). This is the primary address field used throughout the application.';
+
 
 --
 -- Name: COLUMN restaurants.rating; Type: COMMENT; Schema: public; Owner: postgres
@@ -3109,21 +3356,21 @@ COMMENT ON COLUMN public.restaurants.rating_count IS 'Total number of ratings re
 -- Name: COLUMN restaurants.latitude; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.restaurants.latitude IS 'Latitude coordinate for restaurant location';
+COMMENT ON COLUMN public.restaurants.latitude IS 'Latitude coordinate for restaurant location. Used with longitude for distance calculations and map display.';
 
 
 --
 -- Name: COLUMN restaurants.longitude; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.restaurants.longitude IS 'Longitude coordinate for restaurant location';
+COMMENT ON COLUMN public.restaurants.longitude IS 'Longitude coordinate for restaurant location. Used with latitude for distance calculations and map display.';
 
 
 --
 -- Name: COLUMN restaurants.location; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.restaurants.location IS 'PostGIS geography point for spatial queries';
+COMMENT ON COLUMN public.restaurants.location IS 'PostGIS geography point (auto-generated from lat/lng). Used for efficient spatial queries like finding nearby restaurants.';
 
 
 --
@@ -3359,7 +3606,6 @@ CREATE TABLE public.meals (
     quantity_available integer DEFAULT 0 NOT NULL,
     expiry_date timestamp with time zone NOT NULL,
     pickup_deadline timestamp with time zone,
-    embedding public.vector(1536),
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     status text DEFAULT 'active'::text,
@@ -3371,6 +3617,7 @@ CREATE TABLE public.meals (
     allergens text[] DEFAULT ARRAY[]::text[],
     co2_savings numeric(12,2) DEFAULT 0,
     pickup_time timestamp with time zone,
+    embedding public.vector(1024),
     CONSTRAINT meals_category_check CHECK ((category = ANY (ARRAY['Meals'::text, 'Bakery'::text, 'Meat & Poultry'::text, 'Seafood'::text, 'Vegetables'::text, 'Desserts'::text, 'Groceries'::text]))),
     CONSTRAINT meals_fulfillment_method_check CHECK ((fulfillment_method = ANY (ARRAY['pickup'::text, 'delivery'::text]))),
     CONSTRAINT meals_status_check CHECK ((status = ANY (ARRAY['active'::text, 'sold'::text, 'expired'::text]))),
@@ -3472,24 +3719,31 @@ CREATE TABLE public.ngos (
 ALTER TABLE public.ngos OWNER TO postgres;
 
 --
+-- Name: COLUMN ngos.address_text; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.ngos.address_text IS 'NGO address (human-readable). Primary address field used throughout the application.';
+
+
+--
 -- Name: COLUMN ngos.latitude; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.ngos.latitude IS 'Latitude coordinate for NGO location';
+COMMENT ON COLUMN public.ngos.latitude IS 'Latitude coordinate for NGO location.';
 
 
 --
 -- Name: COLUMN ngos.longitude; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.ngos.longitude IS 'Longitude coordinate for NGO location';
+COMMENT ON COLUMN public.ngos.longitude IS 'Longitude coordinate for NGO location.';
 
 
 --
 -- Name: COLUMN ngos.location; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.ngos.location IS 'PostGIS geography point for spatial queries';
+COMMENT ON COLUMN public.ngos.location IS 'PostGIS geography point (auto-generated from lat/lng). Used for efficient spatial queries.';
 
 
 --
@@ -3648,6 +3902,8 @@ CREATE TABLE public.orders (
     pickup_longitude double precision,
     pickup_location public.geography(Point,4326),
     pickup_address_text text,
+    stripe_payment_intent_id text,
+    stripe_customer_id text,
     CONSTRAINT orders_delivery_type_check CHECK ((delivery_type = ANY (ARRAY['pickup'::text, 'delivery'::text, 'donation'::text]))),
     CONSTRAINT orders_payment_method_check CHECK ((payment_method = ANY (ARRAY['card'::text, 'wallet'::text, 'cod'::text, 'cash'::text]))),
     CONSTRAINT orders_payment_status_check CHECK ((payment_status = ANY (ARRAY['pending'::text, 'paid'::text, 'failed'::text, 'refunded'::text]))),
@@ -3763,6 +4019,20 @@ COMMENT ON COLUMN public.orders.pickup_address_text IS 'Human-readable pickup ad
 
 
 --
+-- Name: COLUMN orders.stripe_payment_intent_id; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.orders.stripe_payment_intent_id IS 'Stripe PaymentIntent ID for tracking payments';
+
+
+--
+-- Name: COLUMN orders.stripe_customer_id; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.orders.stripe_customer_id IS 'Stripe Customer ID for the user';
+
+
+--
 -- Name: orders_order_code_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -3796,11 +4066,51 @@ CREATE TABLE public.payments (
     amount numeric(12,2),
     status text,
     created_at timestamp with time zone DEFAULT now(),
+    stripe_payment_intent_id text,
+    stripe_charge_id text,
+    payment_method_type text,
+    last_4 text,
+    card_brand text,
     CONSTRAINT payments_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'success'::text, 'failed'::text, 'refunded'::text])))
 );
 
 
 ALTER TABLE public.payments OWNER TO postgres;
+
+--
+-- Name: COLUMN payments.stripe_payment_intent_id; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.payments.stripe_payment_intent_id IS 'Stripe PaymentIntent ID';
+
+
+--
+-- Name: COLUMN payments.stripe_charge_id; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.payments.stripe_charge_id IS 'Stripe Charge ID';
+
+
+--
+-- Name: COLUMN payments.payment_method_type; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.payments.payment_method_type IS 'Payment method type (card, wallet, etc.)';
+
+
+--
+-- Name: COLUMN payments.last_4; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.payments.last_4 IS 'Last 4 digits of card';
+
+
+--
+-- Name: COLUMN payments.card_brand; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.payments.card_brand IS 'Card brand (visa, mastercard, etc.)';
+
 
 --
 -- Name: restaurant_ratings; Type: TABLE; Schema: public; Owner: postgres
@@ -3886,11 +4196,73 @@ CREATE TABLE public.user_addresses (
     location_long double precision,
     is_default boolean DEFAULT false,
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now()
+    updated_at timestamp with time zone DEFAULT now(),
+    latitude double precision,
+    longitude double precision,
+    location public.geography(Point,4326),
+    location_updated_at timestamp with time zone DEFAULT now()
 );
 
 
 ALTER TABLE public.user_addresses OWNER TO postgres;
+
+--
+-- Name: TABLE user_addresses; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.user_addresses IS 'Stores multiple addresses for regular users. Each user can have multiple saved addresses with one marked as default (is_default=true). 
+To get a users default address, query: SELECT address_text FROM user_addresses WHERE user_id = ? AND is_default = true';
+
+
+--
+-- Name: COLUMN user_addresses.address_text; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.user_addresses.address_text IS 'Human-readable address string. This is what was previously stored in profiles.default_location.';
+
+
+--
+-- Name: COLUMN user_addresses.location_lat; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.user_addresses.location_lat IS 'Latitude coordinate for the address';
+
+
+--
+-- Name: COLUMN user_addresses.location_long; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.user_addresses.location_long IS 'Longitude coordinate for the address';
+
+
+--
+-- Name: COLUMN user_addresses.is_default; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.user_addresses.is_default IS 'Indicates if this is the users default address. Only one address per user should have is_default=true. 
+Applications should query this table instead of profiles.default_location (which has been removed).';
+
+
+--
+-- Name: COLUMN user_addresses.latitude; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.user_addresses.latitude IS 'Latitude coordinate for address location';
+
+
+--
+-- Name: COLUMN user_addresses.longitude; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.user_addresses.longitude IS 'Longitude coordinate for address location';
+
+
+--
+-- Name: COLUMN user_addresses.location; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.user_addresses.location IS 'PostGIS geography point for spatial queries';
+
 
 --
 -- Name: user_badges; Type: TABLE; Schema: public; Owner: postgres
@@ -4005,6 +4377,26 @@ ALTER TABLE public.user_rewards OWNER TO postgres;
 
 COMMENT ON TABLE public.user_rewards IS 'Rewards redeemed by users';
 
+
+--
+-- Name: whatsapp_logs; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.whatsapp_logs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    phone_number text NOT NULL,
+    template_name text NOT NULL,
+    message_id text,
+    status text DEFAULT 'pending'::text,
+    error_message text,
+    sent_at timestamp with time zone,
+    delivered_at timestamp with time zone,
+    read_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.whatsapp_logs OWNER TO postgres;
 
 --
 -- Name: orders order_code; Type: DEFAULT; Schema: public; Owner: postgres
@@ -4198,6 +4590,14 @@ ALTER TABLE ONLY public.orders
 
 
 --
+-- Name: orders orders_stripe_payment_intent_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.orders
+    ADD CONSTRAINT orders_stripe_payment_intent_id_key UNIQUE (stripe_payment_intent_id);
+
+
+--
 -- Name: payments payments_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4219,6 +4619,14 @@ ALTER TABLE ONLY public.profiles
 
 ALTER TABLE ONLY public.profiles
     ADD CONSTRAINT profiles_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: profiles profiles_stripe_customer_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.profiles
+    ADD CONSTRAINT profiles_stripe_customer_id_key UNIQUE (stripe_customer_id);
 
 
 --
@@ -4323,6 +4731,14 @@ ALTER TABLE ONLY public.user_loyalty
 
 ALTER TABLE ONLY public.user_rewards
     ADD CONSTRAINT user_rewards_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: whatsapp_logs whatsapp_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.whatsapp_logs
+    ADD CONSTRAINT whatsapp_logs_pkey PRIMARY KEY (id);
 
 
 --
@@ -4802,6 +5218,13 @@ CREATE INDEX idx_orders_status ON public.orders USING btree (status);
 
 
 --
+-- Name: idx_orders_stripe_payment_intent; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_orders_stripe_payment_intent ON public.orders USING btree (stripe_payment_intent_id);
+
+
+--
 -- Name: idx_orders_user_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -4809,10 +5232,10 @@ CREATE INDEX idx_orders_user_id ON public.orders USING btree (user_id);
 
 
 --
--- Name: idx_profiles_address; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_payments_stripe_payment_intent; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX idx_profiles_address ON public.profiles USING btree (address_text);
+CREATE INDEX idx_payments_stripe_payment_intent ON public.payments USING btree (stripe_payment_intent_id);
 
 
 --
@@ -4827,13 +5250,6 @@ CREATE INDEX idx_profiles_approval_role ON public.profiles USING btree (approval
 --
 
 CREATE INDEX idx_profiles_approval_status ON public.profiles USING btree (approval_status);
-
-
---
--- Name: idx_profiles_default_location; Type: INDEX; Schema: public; Owner: postgres
---
-
-CREATE INDEX idx_profiles_default_location ON public.profiles USING btree (id) WHERE (default_location IS NOT NULL);
 
 
 --
@@ -4928,6 +5344,13 @@ CREATE INDEX idx_rush_hours_restaurant_id ON public.rush_hours USING btree (rest
 
 
 --
+-- Name: idx_user_addresses_location; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_user_addresses_location ON public.user_addresses USING gist (location);
+
+
+--
 -- Name: idx_user_badges_user; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -4984,10 +5407,52 @@ CREATE INDEX idx_user_rewards_user ON public.user_rewards USING btree (user_id, 
 
 
 --
+-- Name: idx_whatsapp_logs_created; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_whatsapp_logs_created ON public.whatsapp_logs USING btree (created_at DESC);
+
+
+--
+-- Name: idx_whatsapp_logs_phone; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_whatsapp_logs_phone ON public.whatsapp_logs USING btree (phone_number);
+
+
+--
+-- Name: idx_whatsapp_logs_status; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_whatsapp_logs_status ON public.whatsapp_logs USING btree (status);
+
+
+--
+-- Name: meals_embedding_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX meals_embedding_idx ON public.meals USING hnsw (embedding public.vector_cosine_ops);
+
+
+--
+-- Name: meals embed; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER embed AFTER INSERT OR UPDATE ON public.meals FOR EACH ROW EXECUTE FUNCTION supabase_functions.http_request('https://kapqefuchyqqprhneeiw.supabase.co/functions/v1/clever-service', 'POST', '{"Content-type":"application/json","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthcHFlZnVjaHlxcXByaG5lZWl3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTM1MjE2MCwiZXhwIjoyMDgwOTI4MTYwfQ.RkVNwFFL0MswYlQ74EfaUHCQSLcOpULFuqDbW_F7Acc"}', '{}', '9960');
+
+
+--
 -- Name: ngos ngos_location_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
 CREATE TRIGGER ngos_location_trigger BEFORE INSERT OR UPDATE OF latitude, longitude ON public.ngos FOR EACH ROW EXECUTE FUNCTION public.update_location_from_coordinates();
+
+
+--
+-- Name: orders on_order_created_whatsapp_test; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER on_order_created_whatsapp_test AFTER INSERT ON public.orders FOR EACH ROW EXECUTE FUNCTION public.send_order_whatsapp_test();
 
 
 --
@@ -5131,13 +5596,6 @@ CREATE TRIGGER trigger_update_issue_timestamp BEFORE UPDATE ON public.order_issu
 
 
 --
--- Name: user_addresses trigger_update_profile_default_location; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER trigger_update_profile_default_location AFTER INSERT OR UPDATE OF is_default, address_text ON public.user_addresses FOR EACH ROW EXECUTE FUNCTION public.update_profile_default_location();
-
-
---
 -- Name: restaurant_ratings trigger_update_restaurant_rating_delete; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -5156,6 +5614,13 @@ CREATE TRIGGER trigger_update_restaurant_rating_insert AFTER INSERT ON public.re
 --
 
 CREATE TRIGGER trigger_update_restaurant_rating_update AFTER UPDATE ON public.restaurant_ratings FOR EACH ROW EXECUTE FUNCTION public.update_restaurant_rating();
+
+
+--
+-- Name: user_addresses user_addresses_location_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER user_addresses_location_trigger BEFORE INSERT OR UPDATE OF latitude, longitude ON public.user_addresses FOR EACH ROW EXECUTE FUNCTION public.update_user_address_location();
 
 
 --
@@ -7027,6 +7492,15 @@ GRANT ALL ON FUNCTION public.get_pending_emails(p_limit integer) TO service_role
 
 
 --
+-- Name: FUNCTION get_personalized_meals(p_user_id uuid, p_limit integer); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.get_personalized_meals(p_user_id uuid, p_limit integer) TO anon;
+GRANT ALL ON FUNCTION public.get_personalized_meals(p_user_id uuid, p_limit integer) TO authenticated;
+GRANT ALL ON FUNCTION public.get_personalized_meals(p_user_id uuid, p_limit integer) TO service_role;
+
+
+--
 -- Name: FUNCTION get_restaurant_leaderboard(period_filter text); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -7117,6 +7591,15 @@ GRANT ALL ON FUNCTION public.log_order_status_change() TO service_role;
 
 
 --
+-- Name: FUNCTION match_meals(query_embedding public.vector, match_threshold double precision, match_count integer); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.match_meals(query_embedding public.vector, match_threshold double precision, match_count integer) TO anon;
+GRANT ALL ON FUNCTION public.match_meals(query_embedding public.vector, match_threshold double precision, match_count integer) TO authenticated;
+GRANT ALL ON FUNCTION public.match_meals(query_embedding public.vector, match_threshold double precision, match_count integer) TO service_role;
+
+
+--
 -- Name: FUNCTION notify_category_subscribers(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -7186,6 +7669,24 @@ GRANT ALL ON FUNCTION public.redeem_reward(p_user_id uuid, p_reward_id uuid) TO 
 GRANT ALL ON FUNCTION public.safe_delete_meal(p_meal_id uuid) TO anon;
 GRANT ALL ON FUNCTION public.safe_delete_meal(p_meal_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.safe_delete_meal(p_meal_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION send_order_whatsapp_test(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.send_order_whatsapp_test() TO anon;
+GRANT ALL ON FUNCTION public.send_order_whatsapp_test() TO authenticated;
+GRANT ALL ON FUNCTION public.send_order_whatsapp_test() TO service_role;
+
+
+--
+-- Name: FUNCTION send_whatsapp_message_test(p_phone_number text, p_template_name text, p_template_language text, p_template_params text[]); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.send_whatsapp_message_test(p_phone_number text, p_template_name text, p_template_language text, p_template_params text[]) TO anon;
+GRANT ALL ON FUNCTION public.send_whatsapp_message_test(p_phone_number text, p_template_name text, p_template_language text, p_template_params text[]) TO authenticated;
+GRANT ALL ON FUNCTION public.send_whatsapp_message_test(p_phone_number text, p_template_name text, p_template_language text, p_template_params text[]) TO service_role;
 
 
 --
@@ -7279,15 +7780,6 @@ GRANT ALL ON FUNCTION public.update_order_issue_timestamp() TO service_role;
 
 
 --
--- Name: FUNCTION update_profile_default_location(); Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON FUNCTION public.update_profile_default_location() TO anon;
-GRANT ALL ON FUNCTION public.update_profile_default_location() TO authenticated;
-GRANT ALL ON FUNCTION public.update_profile_default_location() TO service_role;
-
-
---
 -- Name: FUNCTION update_restaurant_rating(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -7312,6 +7804,15 @@ GRANT ALL ON FUNCTION public.update_restaurant_rush_hour_flag() TO service_role;
 GRANT ALL ON FUNCTION public.update_updated_at_column() TO anon;
 GRANT ALL ON FUNCTION public.update_updated_at_column() TO authenticated;
 GRANT ALL ON FUNCTION public.update_updated_at_column() TO service_role;
+
+
+--
+-- Name: FUNCTION update_user_address_location(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.update_user_address_location() TO anon;
+GRANT ALL ON FUNCTION public.update_user_address_location() TO authenticated;
+GRANT ALL ON FUNCTION public.update_user_address_location() TO service_role;
 
 
 --
@@ -7639,6 +8140,15 @@ GRANT ALL ON TABLE public.user_rewards TO service_role;
 
 
 --
+-- Name: TABLE whatsapp_logs; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.whatsapp_logs TO anon;
+GRANT ALL ON TABLE public.whatsapp_logs TO authenticated;
+GRANT ALL ON TABLE public.whatsapp_logs TO service_role;
+
+
+--
 -- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: postgres
 --
 
@@ -7702,5 +8212,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON T
 -- PostgreSQL database dump complete
 --
 
-\unrestrict OX3h9F17ex0GpisyGnJkbKsfB46kdU8gB6lvXad96w4z9PcOUt3Qj9FHv9XB4fX
+\unrestrict n48cNljbAam853uAcmaSFfjXCkGYuGeJdeFUjbaebtqxGxvmsi6Ed4AFkwumlmx
 

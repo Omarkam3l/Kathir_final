@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../authentication/presentation/blocs/auth_provider.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 
 class UserCategorySelectionScreen extends StatefulWidget {
   static const routeName = '/onboarding/categories';
@@ -163,32 +164,32 @@ class _UserCategorySelectionScreenState extends State<UserCategorySelectionScree
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: ResponsiveUtils.padding(context, horizontal: 24, vertical: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 20),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 20)),
                   Text(
                     'Choose Your Favorites',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 28,
+                      fontSize: ResponsiveUtils.fontSize(context, 28),
                       fontWeight: FontWeight.bold,
                       color: Colors.grey[900],
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 8)),
                   Text(
                     'Select meal categories you\'re interested in to get personalized notifications',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
+                      fontSize: ResponsiveUtils.fontSize(context, 16),
                       color: Colors.grey[600],
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 8)),
                   Text(
                     '${_selectedCategories.length} selected',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
+                      fontSize: ResponsiveUtils.fontSize(context, 14),
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
                     ),
@@ -200,10 +201,10 @@ class _UserCategorySelectionScreenState extends State<UserCategorySelectionScree
             // Categories List (Horizontal Chips)
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: ResponsiveUtils.padding(context, horizontal: 24),
                 child: Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
+                  spacing: ResponsiveUtils.spacing(context, 12),
+                  runSpacing: ResponsiveUtils.spacing(context, 12),
                   children: _categories.map((category) {
                     final isSelected = _selectedCategories.contains(category['name']);
                     
@@ -233,14 +234,14 @@ class _UserCategorySelectionScreenState extends State<UserCategorySelectionScree
                           children: [
                             Icon(
                               category['icon'],
-                              size: 20,
+                              size: ResponsiveUtils.iconSize(context, 20),
                               color: isSelected ? Colors.white : Colors.grey[700],
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: ResponsiveUtils.spacing(context, 8)),
                             Text(
                               category['name'],
                               style: GoogleFonts.plusJakartaSans(
-                                fontSize: 14,
+                                fontSize: ResponsiveUtils.fontSize(context, 14),
                                 fontWeight: FontWeight.w600,
                                 color: isSelected ? Colors.white : Colors.grey[800],
                               ),

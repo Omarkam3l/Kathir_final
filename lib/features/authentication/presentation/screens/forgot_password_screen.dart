@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../viewmodels/forgot_password_viewmodel.dart';
 import '../../../../di/global_injection/app_locator.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import 'package:go_router/go_router.dart';
 import 'verification_screen.dart';
 
@@ -53,16 +54,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 16),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 16)),
                   Text(
                     'Forgot Password?',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 28,
+                      fontSize: ResponsiveUtils.fontSize(context, 28),
                       fontWeight: FontWeight.w700,
                       color: textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 12)),
                   Text(
                     "Don't worry! It happens. Please enter the email address or phone number associated with your account.",
                     style: GoogleFonts.plusJakartaSans(
@@ -106,7 +107,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                   const SizedBox(height: 28),
                   SizedBox(
-                    height: 56,
+                    height: ResponsiveUtils.spacing(context, 56),
                     child: ElevatedButton(
                       onPressed: vm.loading
                           ? null

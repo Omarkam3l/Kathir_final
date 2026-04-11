@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../../core/utils/auth_logger.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../widgets/image_upload_widget.dart';
 
 /// Screen to edit an existing meal
@@ -250,7 +251,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(ResponsiveUtils.spacing(context, 16)),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -271,13 +272,13 @@ class _EditMealScreenState extends State<EditMealScreen> {
 
                     // Title
                     _buildLabel('Meal Title *'),
-                    const SizedBox(height: 8),
+                    SizedBox(height: ResponsiveUtils.spacing(context, 8)),
                     TextFormField(
                       controller: _titleController,
                       decoration: _inputDecoration('e.g. Grilled Chicken Salad', isDark),
                       validator: (v) => v?.isEmpty == true ? 'Title is required' : null,
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: ResponsiveUtils.spacing(context, 20)),
 
                     // Description
                     _buildLabel('Description'),
@@ -373,7 +374,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
                     // Save Button
                     SizedBox(
                       width: double.infinity,
-                      height: 56,
+                      height: ResponsiveUtils.height(context, 56 / MediaQuery.of(context).size.height),
                       child: ElevatedButton(
                         onPressed: _isSaving ? null : _saveMeal,
                         style: ElevatedButton.styleFrom(

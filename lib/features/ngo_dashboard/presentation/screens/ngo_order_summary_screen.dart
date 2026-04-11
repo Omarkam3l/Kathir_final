@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 
 class NgoOrderSummaryScreen extends StatelessWidget {
   final String orderId;
@@ -21,42 +22,42 @@ class NgoOrderSummaryScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 120,
-                  height: 120,
+                  width: ResponsiveUtils.iconSize(context, 120),
+                  height: ResponsiveUtils.iconSize(context, 120),
                   decoration: BoxDecoration(
                     color: AppColors.primaryGreen.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.check_circle,
-                    size: 80,
+                    size: ResponsiveUtils.iconSize(context, 80),
                     color: AppColors.primaryGreen,
                   ),
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: ResponsiveUtils.spacing(context, 32)),
                 Text(
                   'Order Confirmed!',
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: ResponsiveUtils.fontSize(context, 28),
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : Colors.black,
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: ResponsiveUtils.spacing(context, 16)),
                 Text(
                   'Your pickup request has been sent to the restaurants.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: ResponsiveUtils.fontSize(context, 16),
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: ResponsiveUtils.spacing(context, 8)),
                 Text(
                   'You will receive a notification when your order is ready for pickup.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: ResponsiveUtils.fontSize(context, 14),
                     color: isDark ? Colors.grey[500] : Colors.grey[500],
                   ),
                 ),
@@ -73,10 +74,10 @@ class NgoOrderSummaryScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'View Orders',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: ResponsiveUtils.fontSize(context, 18),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -85,10 +86,10 @@ class NgoOrderSummaryScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () => context.go('/ngo/home'),
-                  child: const Text(
+                  child: Text(
                     'Back to Home',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: ResponsiveUtils.fontSize(context, 16),
                       color: AppColors.primaryGreen,
                     ),
                   ),

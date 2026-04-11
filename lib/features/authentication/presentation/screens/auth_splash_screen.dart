@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 
 /// Splash screen shown while initializing authentication state
 /// This prevents race conditions by ensuring user profile is loaded
@@ -20,30 +21,35 @@ class AuthSplashScreen extends StatelessWidget {
           children: [
             // App Logo/Icon
             Container(
-              width: 100,
-              height: 100,
+              width: ResponsiveUtils.iconSize(context, 100),
+              height: ResponsiveUtils.iconSize(context, 100),
               decoration: BoxDecoration(
                 color: AppColors.primaryGreen.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.restaurant_menu,
-                size: 50,
+                size: ResponsiveUtils.iconSize(context, 50),
                 color: AppColors.primaryGreen,
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: ResponsiveUtils.spacing(context, 32)),
             
             // Loading Indicator
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
+            SizedBox(
+              width: ResponsiveUtils.iconSize(context, 40),
+              height: ResponsiveUtils.iconSize(context, 40),
+              child: const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
+              ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: ResponsiveUtils.spacing(context, 24)),
             
             // Loading Text
             Text(
               'Loading your account...',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontSize: ResponsiveUtils.fontSize(context, 16),
                 color: isDark ? Colors.grey[400] : Colors.grey[600],
               ),
             ),

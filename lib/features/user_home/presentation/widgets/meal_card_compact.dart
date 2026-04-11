@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../../core/utils/app_dimensions.dart';
 import '../../../../core/utils/app_styles.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import 'package:provider/provider.dart';
 import '../../../profile/presentation/providers/foodie_state.dart';
 import '../../domain/entities/meal_offer.dart';
@@ -252,8 +253,9 @@ class _MealCardCompactState extends State<MealCardCompact>
   Widget _buildContentSection(MealOffer offer, bool isSelected) {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+        padding: ResponsiveUtils.padding(context, horizontal: 12, vertical: 10),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -261,39 +263,43 @@ class _MealCardCompactState extends State<MealCardCompact>
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 18,
+                fontSize: ResponsiveUtils.fontSize(context, 17),
                 fontWeight: FontWeight.w700,
                 color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: ResponsiveUtils.spacing(context, 3)),
             Text(
               '${offer.restaurant.name} • ${offer.location}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Theme.of(context).textTheme.bodySmall?.color,
-                fontSize: 13,
+                fontSize: ResponsiveUtils.fontSize(context, 12),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: ResponsiveUtils.spacing(context, 6)),
             Row(
               children: [
-                const Icon(Icons.star, size: 14, color: Colors.amber),
-                const SizedBox(width: 6),
+                Icon(
+                  Icons.star,
+                  size: ResponsiveUtils.iconSize(context, 13),
+                  color: Colors.amber,
+                ),
+                SizedBox(width: ResponsiveUtils.spacing(context, 4)),
                 Flexible(
                   child: Text(
                     '${offer.restaurant.rating.toStringAsFixed(1)}/5',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: ResponsiveUtils.fontSize(context, 12),
                       fontWeight: FontWeight.w600,
                       color: Theme.of(context).textTheme.bodySmall?.color,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: ResponsiveUtils.spacing(context, 6)),
                 Flexible(
                   child: Text(
                     '${offer.quantity} Left',
@@ -301,7 +307,7 @@ class _MealCardCompactState extends State<MealCardCompact>
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Theme.of(context).textTheme.bodySmall?.color,
-                      fontSize: 12,
+                      fontSize: ResponsiveUtils.fontSize(context, 11),
                     ),
                   ),
                 ),
@@ -309,21 +315,21 @@ class _MealCardCompactState extends State<MealCardCompact>
                 _buildTimerBadge(offer),
               ],
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: ResponsiveUtils.spacing(context, 8)),
             Row(
               children: [
                 Flexible(
                   child: Text(
-                    'Estimated \$${offer.originalPrice.toStringAsFixed(0)}',
+                    'Estimated \${offer.originalPrice.toStringAsFixed(0)}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Theme.of(context).textTheme.bodySmall?.color,
-                      fontSize: 13,
+                      fontSize: ResponsiveUtils.fontSize(context, 12),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: ResponsiveUtils.spacing(context, 10)),
                 Flexible(
                   child: Text(
                     'Expires: ${_formatExpiry(offer.expiry)}',
@@ -331,36 +337,39 @@ class _MealCardCompactState extends State<MealCardCompact>
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Theme.of(context).textTheme.bodySmall?.color,
-                      fontSize: 12,
+                      fontSize: ResponsiveUtils.fontSize(context, 11),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: ResponsiveUtils.spacing(context, 8)),
             Row(
               children: [
                 Text(
-                  '\$${offer.originalPrice.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    fontSize: 14,
+                  '\${offer.originalPrice.toStringAsFixed(0)}',
+                  style: TextStyle(
+                    fontSize: ResponsiveUtils.fontSize(context, 13),
                     color: Colors.grey,
                     decoration: TextDecoration.lineThrough,
                   ),
                 ),
-                const SizedBox(width: 10),
-                Text(
-                  'Donation \$${offer.donationPrice.toStringAsFixed(0)}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.w900,
+                SizedBox(width: ResponsiveUtils.spacing(context, 8)),
+                Flexible(
+                  child: Text(
+                    'Donation \${offer.donationPrice.toStringAsFixed(0)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: ResponsiveUtils.fontSize(context, 15),
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
-                const Spacer(),
               ],
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: ResponsiveUtils.spacing(context, 8)),
             _buildAddToCartButton(offer, isSelected),
           ],
         ),
@@ -372,20 +381,25 @@ class _MealCardCompactState extends State<MealCardCompact>
     final isUrgent = offer.minutesLeft <= 30;
     final color = isUrgent ? AppColors.secondaryAccent : AppColors.primaryAccent;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: ResponsiveUtils.padding(context, horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+        borderRadius: ResponsiveUtils.borderRadius(context, AppDimensions.radiusMedium),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.timer, size: 14, color: color),
-          const SizedBox(width: 6),
+          Icon(
+            Icons.timer,
+            size: ResponsiveUtils.iconSize(context, 12),
+            color: color,
+          ),
+          SizedBox(width: ResponsiveUtils.spacing(context, 4)),
           Text(
             '${offer.minutesLeft} min',
             style: TextStyle(
               color: color,
-              fontSize: 12,
+              fontSize: ResponsiveUtils.fontSize(context, 11),
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -411,15 +425,16 @@ class _MealCardCompactState extends State<MealCardCompact>
             },
             style: AppStyles.primaryButtonStyle.copyWith(
           padding: WidgetStateProperty.all(
-            EdgeInsets.symmetric(
-              vertical: isSelected ? 14 : 10,
+            ResponsiveUtils.padding(
+              context,
+              vertical: isSelected ? 12 : 8,
             ),
           ),
         ),
-            child: const Text(
+            child: Text(
               'Add to Cart',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: ResponsiveUtils.fontSize(context, 15),
                 color: Colors.white,
               ),
             ),

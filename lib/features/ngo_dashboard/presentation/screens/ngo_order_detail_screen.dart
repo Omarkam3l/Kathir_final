@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 
 class NgoOrderDetailScreen extends StatefulWidget {
   final String orderId;
@@ -240,16 +241,16 @@ class _NgoOrderDetailScreenState extends State<NgoOrderDetailScreen> {
                   Text(
                     'Order #$orderCode',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: ResponsiveUtils.fontSize(context, 20),
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : Colors.black,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: ResponsiveUtils.spacing(context, 4)),
                   Text(
                     _formatDate(createdAt),
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: ResponsiveUtils.fontSize(context, 14),
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
                   ),
@@ -291,35 +292,35 @@ class _NgoOrderDetailScreenState extends State<NgoOrderDetailScreen> {
         children: [
           // Success Icon
           Container(
-            width: 70,
-            height: 70,
+            width: ResponsiveUtils.iconSize(context, 70),
+            height: ResponsiveUtils.iconSize(context, 70),
             decoration: BoxDecoration(
               color: AppColors.primaryGreen.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.check_circle,
-              size: 40,
+              size: ResponsiveUtils.iconSize(context, 40),
               color: AppColors.primaryGreen,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: ResponsiveUtils.spacing(context, 16)),
 
           // Title
           Text(
             'Order Ready for Pickup!',
             style: TextStyle(
-              fontSize: 22,
+              fontSize: ResponsiveUtils.fontSize(context, 22),
               fontWeight: FontWeight.bold,
               color: isDark ? Colors.white : Colors.black,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: ResponsiveUtils.spacing(context, 8)),
           Text(
             'Show this QR code or OTP at the restaurant',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: ResponsiveUtils.fontSize(context, 14),
               color: isDark ? Colors.grey[400] : Colors.grey[600],
             ),
             textAlign: TextAlign.center,

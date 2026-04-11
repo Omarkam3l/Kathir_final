@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 
 /// Screen to view meal details with edit and delete options
 class MealDetailsScreen extends StatefulWidget {
@@ -217,7 +218,7 @@ class _MealDetailsScreenState extends State<MealDetailsScreen> {
                                           shape: BoxShape.circle,
                                         ),
                                         child: IconButton(
-                                          icon: const Icon(Icons.arrow_back, color: Colors.white),
+                                          icon: Icon(Icons.arrow_back, color: Colors.white, size: ResponsiveUtils.iconSize(context, 20)),
                                           onPressed: () => context.pop(),
                                         ),
                                       ),
@@ -311,7 +312,7 @@ class _MealDetailsScreenState extends State<MealDetailsScreen> {
                   Text(
                     meal['title'] ?? 'Untitled',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: ResponsiveUtils.fontSize(context, 24),
                       fontWeight: FontWeight.bold,
                       color: textColor,
                       height: 1.2,
@@ -328,8 +329,8 @@ class _MealDetailsScreenState extends State<MealDetailsScreen> {
               children: [
                 Text(
                   'EGP ${meal['discounted_price'] ?? 0}',
-                  style: const TextStyle(
-                    fontSize: 24,
+                  style: TextStyle(
+                    fontSize: ResponsiveUtils.fontSize(context, 24),
                     fontWeight: FontWeight.bold,
                     color: AppColors.primaryGreen,
                   ),
@@ -488,7 +489,7 @@ class _MealDetailsScreenState extends State<MealDetailsScreen> {
           Text(
             'Description',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: ResponsiveUtils.fontSize(context, 18),
               fontWeight: FontWeight.bold,
               color: textColor,
             ),
@@ -509,7 +510,7 @@ class _MealDetailsScreenState extends State<MealDetailsScreen> {
         Text(
           'Meal Details',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: ResponsiveUtils.fontSize(context, 18),
             fontWeight: FontWeight.bold,
             color: textColor,
           ),

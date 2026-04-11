@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
+import 'package:kathir_final/core/utils/responsive_utils.dart';
 import 'package:kathir_final/features/user_home/domain/entities/meal_offer.dart';
 import 'package:kathir_final/features/profile/presentation/providers/foodie_state.dart';
 import 'package:go_router/go_router.dart';
@@ -102,99 +103,104 @@ class MealCardGrid extends StatelessWidget {
                   ),
                 ),
               ),
-              // Content - flexible padding
+              // Content - responsive padding
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title - 13px font, max 2 lines
-                    Text(
-                      offer.title.isEmpty ? 'Delicious Meal' : offer.title,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: textMain,
-                        height: 1.2,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
-                    // Restaurant - 11px font
-                    Text(
-                      offer.restaurant.name,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        color: muted,
-                        height: 1.2,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
-                    // Location - 9px font
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on, size: 12, color: muted),
-                        const SizedBox(width: 3),
-                        Flexible(
-                          child: Text(
-                            'Cairo, Egypt • $pickupStr',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w500,
-                              color: muted,
-                              height: 1.2,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                  padding: ResponsiveUtils.padding(context, all: 8),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title - responsive font, max 2 lines
+                      Text(
+                        offer.title.isEmpty ? 'Delicious Meal' : offer.title,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: ResponsiveUtils.fontSize(context, 13),
+                          fontWeight: FontWeight.w700,
+                          color: textMain,
+                          height: 1.15,
                         ),
-                      ],
-                    ),
-                    const Spacer(),
-                    // Price row with button
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Original price - 11px font, only show if different
-                              if (offer.originalPrice > offer.donationPrice)
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: ResponsiveUtils.spacing(context, 2)),
+                      // Restaurant - responsive font
+                      Text(
+                        offer.restaurant.name,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: ResponsiveUtils.fontSize(context, 10),
+                          color: muted,
+                          height: 1.15,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: ResponsiveUtils.spacing(context, 4)),
+                      // Location - responsive font
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            size: ResponsiveUtils.iconSize(context, 11),
+                            color: muted,
+                          ),
+                          SizedBox(width: ResponsiveUtils.spacing(context, 2)),
+                          Flexible(
+                            child: Text(
+                              'Cairo, Egypt • $pickupStr',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: ResponsiveUtils.fontSize(context, 8.5),
+                                fontWeight: FontWeight.w500,
+                                color: muted,
+                                height: 1.15,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      // Price row with button
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Original price - responsive font, only show if different
+                                if (offer.originalPrice > offer.donationPrice)
+                                  Text(
+                                    'EGP ${offer.originalPrice.toStringAsFixed(0)}',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: ResponsiveUtils.fontSize(context, 10),
+                                      fontWeight: FontWeight.w500,
+                                      color: const Color(0xFF9CA3AF),
+                                      decoration: TextDecoration.lineThrough,
+                                      height: 1.15,
+                                    ),
+                                  ),
+                                // Discounted price - responsive font
                                 Text(
-                                  'EGP ${offer.originalPrice.toStringAsFixed(0)}',
+                                  'EGP ${offer.donationPrice.toStringAsFixed(0)}',
                                   style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                    color: const Color(0xFF9CA3AF),
-                                    decoration: TextDecoration.lineThrough,
-                                    height: 1.2,
+                                    fontSize: ResponsiveUtils.fontSize(context, 15),
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                    height: 1.15,
                                   ),
                                 ),
-                              // Discounted price - 16px font
-                              Text(
-                                'EGP ${offer.donationPrice.toStringAsFixed(0)}',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primary,
-                                  height: 1.2,
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 6),
-                        _AddButton(offer: offer),
-                      ],
-                    ),
-                  ],
-                ),
+                          SizedBox(width: ResponsiveUtils.spacing(context, 4)),
+                          _AddButton(offer: offer),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -220,6 +226,7 @@ class _AddButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? const Color(0xFF374151) : const Color(0xFFF3F4F6);
+    final buttonSize = ResponsiveUtils.iconSize(context, 30);
 
     return Material(
       color: Colors.transparent,
@@ -233,16 +240,20 @@ class _AddButton extends StatelessWidget {
             ),
           );
         },
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: ResponsiveUtils.borderRadius(context, 8),
         child: Container(
-          width: 32,
-          height: 32,
+          width: buttonSize,
+          height: buttonSize,
           decoration: BoxDecoration(
             color: bg,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: ResponsiveUtils.borderRadius(context, 8),
           ),
-          child: const Center(
-            child: Icon(Icons.add, size: 20, color: AppColors.primary),
+          child: Center(
+            child: Icon(
+              Icons.add,
+              size: ResponsiveUtils.iconSize(context, 18),
+              color: AppColors.primary,
+            ),
           ),
         ),
       ),

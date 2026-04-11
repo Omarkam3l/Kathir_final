@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
+import 'package:kathir_final/core/utils/responsive_utils.dart';
 import 'package:kathir_final/features/onboarding/data/onboarding_storage.dart';
 import 'package:kathir_final/features/onboarding/presentation/screens/onboarding_screen.dart';
 
@@ -41,15 +42,23 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
         future: _hasSeenFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
+            return Center(
+              child: SizedBox(
+                width: ResponsiveUtils.iconSize(context, 40),
+                height: ResponsiveUtils.iconSize(context, 40),
+                child: const CircularProgressIndicator(color: AppColors.primary),
+              ),
             );
           }
           final hasSeen = snapshot.data ?? false;
           if (hasSeen) {
             _redirectToAuth();
-            return const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
+            return Center(
+              child: SizedBox(
+                width: ResponsiveUtils.iconSize(context, 40),
+                height: ResponsiveUtils.iconSize(context, 40),
+                child: const CircularProgressIndicator(color: AppColors.primary),
+              ),
             );
           }
           return const OnboardingScreen();

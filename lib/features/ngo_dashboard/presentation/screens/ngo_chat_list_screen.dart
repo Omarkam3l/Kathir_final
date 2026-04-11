@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../viewmodels/ngo_chat_list_viewmodel.dart';
 
 class NgoChatListScreen extends StatefulWidget {
@@ -137,7 +138,7 @@ class _NgoChatListScreenState extends State<NgoChatListScreen> {
           Text(
             'Messages',
             style: TextStyle(
-              fontSize: 24,
+              fontSize: ResponsiveUtils.fontSize(context, 24),
               fontWeight: FontWeight.bold,
               color: isDark ? Colors.white : Colors.black,
             ),
@@ -233,7 +234,7 @@ class _NgoChatListScreenState extends State<NgoChatListScreen> {
                         child: Text(
                           conversation.restaurantName,
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: ResponsiveUtils.fontSize(context, 16),
                             fontWeight: hasUnread ? FontWeight.bold : FontWeight.w600,
                             color: isDark ? Colors.white : Colors.black,
                           ),
@@ -244,7 +245,7 @@ class _NgoChatListScreenState extends State<NgoChatListScreen> {
                       Text(
                         _formatTimeAgo(conversation.lastMessageAt),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: ResponsiveUtils.fontSize(context, 12),
                           color: hasUnread ? AppColors.primaryGreen : Colors.grey[500],
                           fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
                         ),

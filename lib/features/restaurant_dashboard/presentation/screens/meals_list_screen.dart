@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../widgets/meal_card.dart';
 import '../widgets/restaurant_bottom_nav.dart';
 
@@ -199,19 +200,19 @@ class _MealsListScreenState extends State<MealsListScreen> {
         children: [
           Icon(
             Icons.restaurant_menu,
-            size: 80,
+            size: ResponsiveUtils.iconSize(context, 80),
             color: isDark ? Colors.grey[700] : Colors.grey[300],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: ResponsiveUtils.spacing(context, 16)),
           Text(
             'No meals yet',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: ResponsiveUtils.fontSize(context, 20),
               fontWeight: FontWeight.bold,
               color: isDark ? Colors.grey[400] : Colors.grey[600],
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: ResponsiveUtils.spacing(context, 8)),
           Text(
             'Tap the + button to add your first meal',
             style: TextStyle(
