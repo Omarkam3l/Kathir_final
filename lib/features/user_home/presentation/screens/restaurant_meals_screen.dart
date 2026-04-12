@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/utils/app_colors.dart';
-import '../../../../core/utils/responsive_utils.dart';
 import '../../domain/entities/restaurant.dart';
 import '../../domain/entities/meal_offer.dart';
 

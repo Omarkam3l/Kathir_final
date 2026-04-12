@@ -22,30 +22,30 @@ void main() async {
   // Load .env file
   try {
     await dotenv.load(fileName: ".env");
-    debugPrint('✅ .env file loaded');
+    debugPrint('.env file loaded');
   } catch (e) {
-    debugPrint('⚠️ Warning: Could not load .env file: $e');
+    debugPrint('Warning: Could not load .env file: $e');
   }
   
   // Initialize Stripe ONLY on mobile platforms (not web)
   if (!kIsWeb) {
     final stripePublishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'];
-    debugPrint('🔑 Stripe Key from .env: ${stripePublishableKey?.substring(0, 20)}...');
+    debugPrint('Stripe Key from .env: ${stripePublishableKey?.substring(0, 20)}...');
     
     if (stripePublishableKey != null && stripePublishableKey.isNotEmpty) {
       try {
         Stripe.publishableKey = stripePublishableKey;
         Stripe.merchantIdentifier = 'merchant.com.kathir';
         await Stripe.instance.applySettings();
-        debugPrint('✅ Stripe initialized successfully');
+        debugPrint('Stripe initialized successfully');
       } catch (e) {
-        debugPrint('❌ Error initializing Stripe: $e');
+        debugPrint('Error initializing Stripe: $e');
       }
     } else {
-      debugPrint('⚠️ CRITICAL: STRIPE_PUBLISHABLE_KEY not found in .env');
+      debugPrint('CRITICAL: STRIPE_PUBLISHABLE_KEY not found in .env');
     }
   } else {
-    debugPrint('⚠️ Running on web - Stripe payment not supported');
+    debugPrint('Running on web - Stripe payment not supported');
   }
   
   final hasConfig = supabaseUrl.isNotEmpty && supabaseKey.isNotEmpty;

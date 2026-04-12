@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../user_home/presentation/screens/home_screen.dart';
 import '../../favorites/presentation/screens/favourites_screen.dart';
 import '../../cart/presentation/screens/cart_screen.dart';
-import '../../profile/presentation/screens/notifications_screen_new.dart';
+import '../../orders/presentation/screens/my_orders_screen_new.dart';
 import '../../profile/presentation/screens/user_profile_screen_new.dart';
 
 class NavItem {
@@ -25,7 +25,7 @@ class UiConfig {
         NavItem(key: 'home', icon: Icons.home, label: 'Home', builder: HomeScreen.new),
         NavItem(key: 'favourites', icon: Icons.favorite_border, label: 'Favourites', builder: FavouritesScreen.new),
         NavItem(key: 'cart', icon: Icons.shopping_cart_outlined, label: 'Cart', builder: CartScreen.new),
-        NavItem(key: 'alerts', icon: Icons.notifications_none, label: 'Alerts', builder: NotificationsScreenNew.new),
+        NavItem(key: 'orders', icon: Icons.receipt_long_outlined, label: 'Orders', builder: MyOrdersScreenNew.new),
         NavItem(key: 'profile', icon: Icons.person_outline, label: 'Profile', builder: UserProfileScreenNew.new),
       ];
 
@@ -33,7 +33,7 @@ class UiConfig {
         DrawerItem(icon: Icons.person, label: 'My Profile', path: UserProfileScreenNew.routeName),
         DrawerItem(icon: Icons.favorite, label: 'My Favourites', path: '/favourites'),
         DrawerItem(icon: Icons.shopping_cart, label: 'Cart', path: '/cart'),
-        DrawerItem(icon: Icons.notifications, label: 'Notification', path: '/alerts'),
+        DrawerItem(icon: Icons.receipt_long, label: 'My Orders', path: '/my-orders'),
         DrawerItem(icon: Icons.credit_card, label: 'My Cards', path: '/profile/cards'),
         DrawerItem(icon: Icons.settings, label: 'Settings', path: '/profile/settings'),
         DrawerItem(icon: Icons.map, label: 'Saved Addresses', path: '/profile/saved-addresses'),

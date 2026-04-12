@@ -7,8 +7,24 @@ import '../../../../core/utils/app_dimensions.dart';
 class HomeBottomNavigation extends StatelessWidget {
   const HomeBottomNavigation({super.key});
 
+  String _getCurrentRoute(BuildContext context) {
+    final location = GoRouterState.of(context).matchedLocation;
+    if (location.startsWith('/favorites') || location.startsWith('/favourites')) {
+      return 'favorites';
+    } else if (location.startsWith('/meals')) {
+      return 'meals';
+    } else if (location.startsWith('/my-orders') || location.startsWith('/orders')) {
+      return 'orders';
+    } else if (location.startsWith('/profile')) {
+      return 'profile';
+    }
+    return 'home';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final currentRoute = _getCurrentRoute(context);
+
     return Container(
       height: AppDimensions.bottomNavHeight,
       padding: const EdgeInsets.symmetric(
@@ -31,43 +47,79 @@ class HomeBottomNavigation extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          IconButton(
-            onPressed: () => context.go('/home'),
-            icon: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(AppDimensions.paddingSmall),
-                  decoration: BoxDecoration(
-                    color: AppColors.darkText,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-                  ),
-                  child: const Icon(
-                    Icons.home,
-                    color: Colors.white,
-                    size: AppDimensions.iconMedium,
-                  ),
-                ),
-              ],
-            ),
+          _buildNavItem(
+            context: context,
+            icon: Icons.favorite_border,
+            activeIcon: Icons.favorite,
+            isActive: currentRoute == 'favorites',
+            onTap: () => context.go('/favorites'),
           ),
-          IconButton(
-            onPressed: () => context.go('/favorites'),
-            icon: const Icon(Icons.favorite_border, color: Colors.grey),
+          _buildNavItem(
+            context: context,
+            icon: Icons.restaurant_menu_outlined,
+            activeIcon: Icons.restaurant_menu,
+            isActive: currentRoute == 'meals',
+            onTap: () => context.go('/meals/all'),
           ),
-          IconButton(
-            onPressed: () => context.go('/cart'),
-            icon: const Icon(Icons.shopping_cart_outlined, color: Colors.grey),
+          _buildNavItem(
+            context: context,
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home,
+            isActive: currentRoute == 'home',
+            onTap: () => context.go('/home'),
+            isCenter: true,
           ),
-          IconButton(
-            onPressed: () => context.go('/alerts'),
-            icon: const Icon(Icons.notifications_none, color: Colors.grey),
+          _buildNavItem(
+            context: context,
+            icon: Icons.receipt_long_outlined,
+            activeIcon: Icons.receipt_long,
+            isActive: currentRoute == 'orders',
+            onTap: () => context.go('/my-orders'),
           ),
-          IconButton(
-            onPressed: () => context.go('/profile'),
-            icon: const Icon(Icons.person_outline, color: Colors.grey),
+          _buildNavItem(
+            context: context,
+            icon: Icons.person_outline,
+            activeIcon: Icons.person,
+            isActive: currentRoute == 'profile',
+            onTap: () => context.go('/profile'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required BuildContext context,
+    required IconData icon,
+    required IconData activeIcon,
+    required bool isActive,
+    required VoidCallback onTap,
+    bool isCenter = false,
+  }) {
+    if (isCenter) {
+      return IconButton(
+        onPressed: onTap,
+        icon: Container(
+          padding: const EdgeInsets.all(AppDimensions.paddingSmall),
+          decoration: BoxDecoration(
+            color: isActive ? AppColors.primary : AppColors.darkText,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+          ),
+          child: Icon(
+            isActive ? activeIcon : icon,
+            color: Colors.white,
+            size: AppDimensions.iconMedium,
+          ),
+        ),
+      );
+    }
+
+    return IconButton(
+      onPressed: onTap,
+      icon: Icon(
+        isActive ? activeIcon : icon,
+        color: isActive ? AppColors.primary : Colors.grey,
+        size: AppDimensions.iconMedium,
       ),
     );
   }

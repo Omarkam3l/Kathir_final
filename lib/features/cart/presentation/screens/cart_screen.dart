@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -63,23 +62,10 @@ class _CartScreenState extends State<CartScreen> {
 
                     Expanded(
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Meta Text
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: Text(
-                                '${foodie.cartCount} Items in your Cart',
-                                style: GoogleFonts.plusJakartaSans(
-                                  color: isDark ? accentColor : Colors.grey[800],
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-
                             // Cart Items Grouped by Restaurant
                             ...groupedItems.entries.map((entry) {
                               final restaurant = entry.value.first.meal.restaurant;
@@ -118,7 +104,7 @@ class _CartScreenState extends State<CartScreen> {
                             Text(
                               'Distribution Method',
                               style: GoogleFonts.plusJakartaSans(
-                                fontSize: 16,
+                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: textColor,
                               ),
@@ -169,49 +155,76 @@ class _CartScreenState extends State<CartScreen> {
   Widget _buildAppBar(BuildContext context, FoodieState foodie, Color textColor,
       Color accentColor, bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.backgroundLight.withValues(alpha: 0.95),
-        border: Border(
-          bottom: BorderSide(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.05)
-                : Colors.transparent,
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-        ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
-              IconButton(
-                icon: Icon(Icons.arrow_back, color: textColor),
-                onPressed: () => context.go('/home'),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'My Cart',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                  letterSpacing: -0.5,
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundLight,
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                child: IconButton(
+                  icon: Icon(Icons.arrow_back, color: textColor),
+                  onPressed: () => context.go('/home'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'My Cart',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  Text(
+                    '${foodie.cartCount} ${foodie.cartCount == 1 ? 'item' : 'items'}',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          TextButton(
+          TextButton.icon(
             onPressed: () {
               final foodie = context.read<FoodieState>();
               foodie.clearCart();
             },
-            child: Text(
-              'Clear All',
+            icon: const Icon(Icons.delete_outline, size: 18),
+            label: Text(
+              'Clear',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: accentColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red[600],
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              backgroundColor: Colors.red[50],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
           ),
@@ -242,47 +255,53 @@ class _RestaurantHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primaryGreen.withValues(alpha: 0.08),
+            AppColors.primaryGreen.withValues(alpha: 0.03),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.restaurant, color: AppColors.primaryGreen, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  restaurant.name,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                  ),
-                ),
-              ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.primaryGreen,
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Text(
-                  '$itemCount ${itemCount == 1 ? 'item' : 'items'}',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryGreen,
-                  ),
+                child: const Icon(Icons.restaurant, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      restaurant.name,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$itemCount ${itemCount == 1 ? 'item' : 'items'}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.primaryGreen,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -290,43 +309,29 @@ class _RestaurantHeader extends StatelessWidget {
           if (hasLocation) ...[
             const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.primaryGreen.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(8),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 children: [
                   const Icon(
                     Icons.location_on,
                     color: AppColors.primaryGreen,
-                    size: 18,
+                    size: 16,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pickup Location',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          restaurant.addressText ?? 'Restaurant Location',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: textColor,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                    child: Text(
+                      restaurant.addressText ?? 'Restaurant Location',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[700],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -362,14 +367,15 @@ class _CartItemCard extends StatelessWidget {
     final isAtMax = item.qty >= meal.quantity;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[200]!),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
@@ -380,19 +386,19 @@ class _CartItemCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: SizedBox(
-              width: 80,
-              height: 80,
+              width: 90,
+              height: 90,
               child: Image.network(
                 meal.imageUrl,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.broken_image),
+                  color: Colors.grey[100],
+                  child: Icon(Icons.restaurant, color: Colors.grey[400], size: 40),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -400,135 +406,119 @@ class _CartItemCard extends StatelessWidget {
                 Text(
                   meal.title,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: textColor,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'EGP ${meal.donationPrice.toStringAsFixed(2)}',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
-                        ),
-                      ),
-                      const TextSpan(text: ' '),
-                      TextSpan(
-                        text: 'EGP ${meal.originalPrice.toStringAsFixed(2)}',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          decoration: TextDecoration.lineThrough,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                icon: const Icon(Icons.delete_outline, size: 20, color: Colors.grey),
-                onPressed: () => foodie.removeFromCart(meal.id),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.black26 : Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
+                const SizedBox(height: 6),
+                Row(
                   children: [
-                    _qtyBtn(context, '-', () => foodie.decrement(meal.id)),
-                    SizedBox(
-                      width: 24,
-                      child: Text(
-                        '${item.qty}',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
-                        ),
+                    Text(
+                      'EGP ${meal.donationPrice.toStringAsFixed(2)}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
                       ),
                     ),
-                    _qtyBtn(
-                      context,
-                      '+',
-                      canAddMore ? () => foodie.increment(meal.id) : () {},
-                      isAdd: true,
-                      accentColor: accentColor,
-                      isDisabled: isAtMax,
+                    const SizedBox(width: 8),
+                    Text(
+                      'EGP ${meal.originalPrice.toStringAsFixed(2)}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        decoration: TextDecoration.lineThrough,
+                        color: Colors.grey[500],
+                      ),
                     ),
                   ],
                 ),
-              ),
-              if (isAtMax)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    'Max qty',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.orange[700],
-                      fontWeight: FontWeight.w600,
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _qtyBtn(context, Icons.remove, () => foodie.decrement(meal.id)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text(
+                              '${item.qty}',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: textColor,
+                              ),
+                            ),
+                          ),
+                          _qtyBtn(
+                            context,
+                            Icons.add,
+                            canAddMore ? () => foodie.increment(meal.id) : () {},
+                            isAdd: true,
+                            accentColor: accentColor,
+                            isDisabled: isAtMax,
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: Icon(Icons.delete_outline, size: 22, color: Colors.red[400]),
+                      onPressed: () => foodie.removeFromCart(meal.id),
+                    ),
+                  ],
+                ),
+                if (isAtMax)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Maximum quantity reached',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10,
+                        color: Colors.orange[700],
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _qtyBtn(BuildContext context, String label, VoidCallback onTap,
+  Widget _qtyBtn(BuildContext context, IconData icon, VoidCallback onTap,
       {bool isAdd = false, Color? accentColor, bool isDisabled = false}) {
     return InkWell(
       onTap: isDisabled ? null : onTap,
       borderRadius: BorderRadius.circular(6),
       child: Container(
-        width: 28,
-        height: 28,
+        width: 30,
+        height: 30,
         decoration: BoxDecoration(
           color: isDisabled
               ? Colors.grey[300]
-              : (isAdd
-                  ? accentColor
-                  : (Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white10
-                      : Colors.white)),
+              : (isAdd ? accentColor : Colors.white),
           borderRadius: BorderRadius.circular(6),
-          boxShadow: isAdd && !isDisabled
-              ? null
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 2,
-                  )
-                ],
         ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isDisabled
-                  ? Colors.grey[500]
-                  : (isAdd ? Colors.white : Colors.grey[600]),
-            ),
-          ),
+        child: Icon(
+          icon,
+          size: 18,
+          color: isDisabled
+              ? Colors.grey[500]
+              : (isAdd ? Colors.white : Colors.grey[700]),
         ),
       ),
     );
@@ -823,78 +813,87 @@ class _StickyCheckoutBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: EdgeInsets.fromLTRB(
-            16,
-            16,
-            16,
-            16 + MediaQuery.of(context).padding.bottom,
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        16,
+        16,
+        16 + MediaQuery.of(context).padding.bottom,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
           ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 20,
-                offset: const Offset(0, -4),
-              ),
-            ],
-            border: Border(
-              top: BorderSide(
-                color: isDark ? Colors.white10 : Colors.grey[100]!,
-              ),
-            ),
-          ),
-          child: ElevatedButton(
-            onPressed: () {
-              context.go('/checkout');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: accentColor,
-              foregroundColor: Colors.white,
-              elevation: 4,
-              shadowColor: accentColor.withValues(alpha: 0.25),
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: Row(
+        ],
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(24),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Checkout',
+                      'Total Amount',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.arrow_forward, size: 20),
+                    const SizedBox(height: 4),
+                    Text(
+                      'EGP ${foodie.total.toStringAsFixed(2)}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                    ),
                   ],
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    ' EGP ${foodie.total.toStringAsFixed(2)}',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
+                ElevatedButton(
+                  onPressed: () {
+                    context.go('/checkout');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: accentColor,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Checkout',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.arrow_forward, size: 20),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );

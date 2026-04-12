@@ -12,7 +12,7 @@ import '../../data/models/agent_message.dart';
 final _supabase = Supabase.instance.client;
 
 class KathirAgentScreen extends StatefulWidget {
-  const KathirAgentScreen({Key? key}) : super(key: key);
+  const KathirAgentScreen({super.key});
 
   @override
   State<KathirAgentScreen> createState() => _KathirAgentScreenState();

@@ -19,6 +19,9 @@ class AvailableMealsGridSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMain = isDark ? AppColors.white : AppColors.darkText;
+    
+    // Limit to 4 meals for home screen display
+    final displayMeals = meals.take(4).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,8 +66,8 @@ class AvailableMealsGridSection extends StatelessWidget {
               crossAxisSpacing: 16,
               childAspectRatio: MediaQuery.of(context).size.width > 600 ? 0.8 : 0.65,
             ),
-            itemCount: meals.length,
-            itemBuilder: (_, i) => MealCardGrid(offer: meals[i]),
+            itemCount: displayMeals.length,
+            itemBuilder: (_, i) => MealCardGrid(offer: displayMeals[i]),
           ),
         ),
       ],

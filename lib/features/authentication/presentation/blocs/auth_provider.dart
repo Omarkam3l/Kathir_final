@@ -194,11 +194,10 @@ class AuthProvider extends ChangeNotifier {
     _loggedIn = ok;
     if (ok) {
       _isInitialized = false; // Reset initialization state
-      notifyListeners(); // Trigger splash screen
-      await _syncUserProfile(); // Load profile
+      await _syncUserProfile(); // Load profile first
       _isInitialized = true; // Mark as initialized
     }
-    notifyListeners();
+    notifyListeners(); // Notify only after everything is ready
     return ok;
   }
 
@@ -208,7 +207,6 @@ class AuthProvider extends ChangeNotifier {
     _loggedIn = ok;
     if (ok) {
       _isInitialized = false;
-      notifyListeners();
       await _syncUserProfile();
       _isInitialized = true;
     }
@@ -222,7 +220,6 @@ class AuthProvider extends ChangeNotifier {
     _loggedIn = ok;
     if (ok) {
       _isInitialized = false;
-      notifyListeners();
       await _syncUserProfile();
       _isInitialized = true;
     }
@@ -236,7 +233,6 @@ class AuthProvider extends ChangeNotifier {
     _loggedIn = ok;
     if (ok) {
       _isInitialized = false;
-      notifyListeners();
       await _syncUserProfile();
       _isInitialized = true;
     }

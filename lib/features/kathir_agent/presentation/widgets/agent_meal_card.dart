@@ -9,10 +9,10 @@ class AgentMealCard extends StatelessWidget {
   final VoidCallback? onAdd;
 
   const AgentMealCard({
-    Key? key,
+    super.key,
     required this.meal,
     this.onAdd,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

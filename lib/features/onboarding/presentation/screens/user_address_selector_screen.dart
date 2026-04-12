@@ -8,7 +8,7 @@ import '../../../../core/utils/responsive_utils.dart';
 import '../../../../core/services/geocoding_service.dart';
 
 class UserAddressSelectorScreen extends StatefulWidget {
-  const UserAddressSelectorScreen({Key? key}) : super(key: key);
+  const UserAddressSelectorScreen({super.key});
 
   @override
   State<UserAddressSelectorScreen> createState() => _UserAddressSelectorScreenState();

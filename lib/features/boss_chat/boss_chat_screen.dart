@@ -171,11 +171,11 @@ class _BossChatScreenState extends State<BossChatScreen> {
       child: Row(
         children: [
           // Title
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   '🍽️ Boss Food Ordering',
                   style: TextStyle(
                     fontSize: 28,
@@ -183,8 +183,8 @@ class _BossChatScreenState extends State<BossChatScreen> {
                     color: Color(0xFF2563eb),
                   ),
                 ),
-                const SizedBox(height: 5),
-                const Text(
+                SizedBox(height: 5),
+                Text(
                   'AI-Powered Food Assistant for Cairo',
                   style: TextStyle(
                     fontSize: 14,

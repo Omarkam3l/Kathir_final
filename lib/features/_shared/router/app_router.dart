@@ -45,7 +45,6 @@ import '../../authentication/presentation/screens/pending_approval_screen.dart';
 import '../../authentication/presentation/screens/auth_splash_screen.dart';
 import '../../meals/presentation/screens/meal_detail.dart';
 import '../../meals/presentation/screens/meal_detail_new.dart';
-import '../../user_home/presentation/screens/all_meals_screen.dart';
 import '../../user_home/presentation/viewmodels/favorites_viewmodel.dart';
 import '../../user_home/domain/entities/meal_offer.dart';
 import '../../user_home/domain/entities/meal.dart';
@@ -82,7 +81,7 @@ class AppRouter {
   AppRouter({required this.auth});
 
   late final GoRouter router = GoRouter(
-    initialLocation: '/',
+    initialLocation: '/auth-splash',
     refreshListenable: auth,
     observers: [observer],
     redirect: (context, state) {
@@ -107,27 +106,65 @@ class AppRouter {
         return '/new-password';
       }
       
-      // RULE 2: Show splash screen while initializing (only if logged in)
-      // This prevents redirect loops on logout
-      if (!isInitialized && isLoggedIn && !isAuthSplash) {
+      // RULE 2: Show splash screen while initializing
+      if (!isInitialized) {
+        // Stay on splash screen while loading
+        if (isAuthSplash) return null;
+        // Redirect to splash if trying to access other screens
         return '/auth-splash';
       }
       
-      // RULE 3: Not logged in - allow onboarding and auth flows
-      if (!isLoggedIn) {
+      // RULE 3: Initialized and not logged in - redirect to onboarding/auth
+      if (isInitialized && !isLoggedIn) {
+        // Don't show splash screen when logged out
+        if (isAuthSplash) return '/';
+        
         // Allow onboarding screen
         if (isOnboarding) return null;
         
         // Allow auth flow screens
         if (isAuthFlow) return null;
         
-        // Redirect everything else to auth
-        return '/auth';
+        // Redirect everything else to onboarding
+        return '/';
       }
       
-      // RULE 4: Logged in and initialized - route based on user state
-      if (isLoggedIn && isInitialized) {
+      // RULE 4: Initialized and logged in - route based on user state
+      if (isInitialized && isLoggedIn) {
         final role = user?.role;
+        
+        // If on splash screen and initialized, redirect to appropriate screen
+        if (isAuthSplash) {
+          // Check approval status first
+          if (user != null && user.needsApproval) {
+            if (!user.isApproved) {
+              return '/pending-approval';
+            }
+          }
+          
+          // Check onboarding for regular users
+          if (role == 'user' && user != null) {
+            final needsProfile = !(user.isProfileCompleted ?? false);
+            final needsCategories = !(user.isOnboardingCompleted ?? false);
+            
+            if (needsProfile) {
+              return '/onboarding/profile';
+            }
+            if (needsCategories) {
+              return '/onboarding/categories';
+            }
+          }
+          
+          // Redirect to appropriate dashboard
+          if (role == 'restaurant') {
+            return '/restaurant-dashboard';
+          } else if (role == 'ngo') {
+            return '/ngo/home';
+          } else if (role == 'admin') {
+            return '/admin-dashboard';
+          }
+          return '/home';
+        }
         
         // Check if user needs onboarding (only for regular users)
         if (role == 'user' && user != null) {
@@ -173,15 +210,10 @@ class AppRouter {
           }
         }
         
-        // If on auth flow or onboarding, redirect to appropriate dashboard
+        // If on auth flow or initial onboarding screen, redirect to appropriate dashboard
         if (isAuthFlow || isOnboarding) {
           // Check approval status (now guaranteed to be accurate)
           if (user != null && user.needsApproval) {
-            // If approval status is still unknown, stay on splash
-            if (user.isApprovalStatusUnknown) {
-              return '/auth-splash';
-            }
-            
             // If not approved, go to pending screen
             if (!user.isApproved) {
               return '/pending-approval';
@@ -620,15 +652,6 @@ class AppRouter {
         builder: (context, state) => const PendingApprovalScreen(),
       ),
 
-      // All meals route
-      GoRoute(
-        path: '/meals/all',
-        builder: (context, state) {
-          final extra = state.extra as List<MealOffer>?;
-          return AllMealsScreen(meals: extra ?? []);
-        },
-      ),
-
       GoRoute(
         name: RouteNames.product,
         path: '/meal/:id',
@@ -665,7 +688,7 @@ class AppRouter {
       // Kathir Agent Route
       GoRoute(
         path: '/kathir-agent',
-        builder: (context, state) => KathirAgentScreen(),
+        builder: (context, state) => const KathirAgentScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

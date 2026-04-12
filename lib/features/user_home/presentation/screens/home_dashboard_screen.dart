@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
-import 'package:kathir_final/features/authentication/presentation/blocs/auth_provider.dart';
 import 'package:kathir_final/features/user_home/domain/entities/meal_offer.dart';
 import 'package:kathir_final/features/user_home/presentation/viewmodels/home_viewmodel.dart';
+import 'package:kathir_final/features/profile/presentation/providers/foodie_state.dart';
 import '../widgets/home_header_widget.dart';
-import '../widgets/location_bar_widget.dart';
 import '../widgets/search_bar_widget.dart';
 import '../widgets/category_chips_widget.dart';
 import '../widgets/flash_deals_section.dart';
@@ -72,6 +71,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
     final vm = context.watch<HomeViewModel>();
+    final foodie = context.watch<FoodieState>();
 
     return Scaffold(
       backgroundColor: bg,
@@ -82,12 +82,12 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               const SliverToBoxAdapter(child: HomeHeaderWidget()),
-              SliverToBoxAdapter(
-                child: LocationBarWidget(
-                  location: context.watch<AuthProvider>().user?.defaultLocation ??
-                      'Cairo, Egypt',
-                ),
-              ),
+              // SliverToBoxAdapter(
+              //   child: LocationBarWidget(
+              //     location: context.watch<AuthProvider>().user?.defaultLocation ??
+              //         'Cairo, Egypt',
+              //   ),
+              // ),
               SliverToBoxAdapter(
                 child: SearchBarWidget(
                   onQueryChanged: (q) => setState(() => _query = q),
@@ -113,7 +113,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 child: AvailableMealsGridSection(
                   meals: _filteredMeals,
                   onSeeAll: () {
-                    context.go('/meals/all', extra: vm.meals);
+                    context.go('/meals/all');
                   },
                 ),
               ),
@@ -122,6 +122,52 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           ),
         ),
       ),
+      floatingActionButton: foodie.cartCount > 0
+          ? FloatingActionButton.extended(
+              onPressed: () => context.go('/cart'),
+              backgroundColor: AppColors.primary,
+              elevation: 6,
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(Icons.shopping_cart, color: Colors.white),
+                  Positioned(
+                    right: -8,
+                    top: -8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 20,
+                        minHeight: 20,
+                      ),
+                      child: Text(
+                        '${foodie.cartCount}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              label: Text(
+                'EGP ${foodie.total.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            )
+          : null,
     );
   }
 }

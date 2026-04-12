@@ -10,7 +10,7 @@ import '../../../../core/utils/responsive_utils.dart';
 class UserCategorySelectionScreen extends StatefulWidget {
   static const routeName = '/onboarding/categories';
   
-  const UserCategorySelectionScreen({Key? key}) : super(key: key);
+  const UserCategorySelectionScreen({super.key});
 
   @override
   State<UserCategorySelectionScreen> createState() => _UserCategorySelectionScreenState();
@@ -125,7 +125,7 @@ class _UserCategorySelectionScreenState extends State<UserCategorySelectionScree
         }
       } catch (profileError) {
         print('[CategorySelection] Error updating profile: $profileError');
-        throw profileError;
+        rethrow;
       }
 
       if (mounted) {
@@ -138,7 +138,7 @@ class _UserCategorySelectionScreenState extends State<UserCategorySelectionScree
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to save preferences. Please try again.'),
+            content: const Text('Failed to save preferences. Please try again.'),
             backgroundColor: Colors.red,
             action: SnackBarAction(
               label: 'Retry',
@@ -248,7 +248,7 @@ class _UserCategorySelectionScreenState extends State<UserCategorySelectionScree
                             ),
                             if (isSelected) ...[
                               const SizedBox(width: 6),
-                              Icon(
+                              const Icon(
                                 Icons.check_circle,
                                 size: 18,
                                 color: Colors.white,

@@ -372,16 +372,16 @@ class _MealDetailsScreenState extends State<MealDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    const Row(
                       children: [
-                        const Icon(Icons.category, color: Color(0xFFEA580C), size: 18),
-                        const SizedBox(width: 6),
+                        Icon(Icons.category, color: Color(0xFFEA580C), size: 18),
+                        SizedBox(width: 6),
                         Text(
                           'CATEGORY',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFFEA580C),
+                            color: Color(0xFFEA580C),
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -418,16 +418,16 @@ class _MealDetailsScreenState extends State<MealDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    const Row(
                       children: [
-                        const Icon(Icons.inventory, color: Color(0xFF059669), size: 18),
-                        const SizedBox(width: 6),
+                        Icon(Icons.inventory, color: Color(0xFF059669), size: 18),
+                        SizedBox(width: 6),
                         Text(
                           'QUANTITY',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFF059669),
+                            color: Color(0xFF059669),
                             letterSpacing: 0.5,
                           ),
                         ),

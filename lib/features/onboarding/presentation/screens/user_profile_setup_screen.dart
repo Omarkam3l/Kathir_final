@@ -12,7 +12,7 @@ import '../../../../core/utils/responsive_utils.dart';
 class UserProfileSetupScreen extends StatefulWidget {
   static const routeName = '/onboarding/profile';
   
-  const UserProfileSetupScreen({Key? key}) : super(key: key);
+  const UserProfileSetupScreen({super.key});
 
   @override
   State<UserProfileSetupScreen> createState() => _UserProfileSetupScreenState();
@@ -204,7 +204,7 @@ class _UserProfileSetupScreenState extends State<UserProfileSetupScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to save profile. Please try again.'),
+            content: const Text('Failed to save profile. Please try again.'),
             backgroundColor: Colors.red,
             action: SnackBarAction(
               label: 'Retry',

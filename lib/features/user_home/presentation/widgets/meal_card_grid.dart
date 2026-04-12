@@ -18,6 +18,35 @@ class MealCardGrid extends StatelessWidget {
     this.onTap,
   });
 
+  String _getRelativeTime(DateTime expiry) {
+    final now = DateTime.now();
+    final difference = expiry.difference(now);
+    
+    if (difference.isNegative) {
+      return 'Expired';
+    }
+    
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h';
+    } else if (difference.inDays < 30) {
+      return '${difference.inDays}d';
+    } else {
+      final months = (difference.inDays / 30).floor();
+      return '${months}mo';
+    }
+  }
+
+  String _formatPickupTime(DateTime? pickupTime) {
+    if (pickupTime == null) return '';
+    final h = pickupTime.hour;
+    final m = pickupTime.minute;
+    final period = h >= 12 ? 'PM' : 'AM';
+    final hour12 = h > 12 ? h - 12 : (h == 0 ? 12 : h);
+    return '$hour12:${m.toString().padLeft(2, '0')} $period';
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -26,7 +55,9 @@ class MealCardGrid extends StatelessWidget {
     const muted = AppColors.grey;
     final border = isDark ? AppColors.dividerDark : AppColors.dividerLight;
 
-    final pickupStr = _pickupString(offer.expiry);
+    final restaurantLocation = offer.restaurant.addressText ?? offer.location;
+    final pickupTimeStr = _formatPickupTime(offer.pickupTime);
+    final relativeTime = _getRelativeTime(offer.expiry);
 
     return Material(
       color: Colors.transparent,
@@ -79,7 +110,7 @@ class MealCardGrid extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
-                              vertical: 2,
+                              vertical: 4,
                             ),
                             decoration: BoxDecoration(
                               color: offer.quantity <= 2
@@ -99,6 +130,40 @@ class MealCardGrid extends StatelessWidget {
                             ),
                           ),
                         ),
+                      // Expiry timer badge
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.timer_outlined,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                relativeTime,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -140,14 +205,14 @@ class MealCardGrid extends StatelessWidget {
                       Row(
                         children: [
                           Icon(
-                            Icons.location_on,
+                            Icons.location_on_outlined,
                             size: ResponsiveUtils.iconSize(context, 11),
-                            color: muted,
+                            color: AppColors.primary,
                           ),
                           SizedBox(width: ResponsiveUtils.spacing(context, 2)),
                           Flexible(
                             child: Text(
-                              'Cairo, Egypt • $pickupStr',
+                              restaurantLocation,
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: ResponsiveUtils.fontSize(context, 8.5),
                                 fontWeight: FontWeight.w500,
@@ -160,6 +225,40 @@ class MealCardGrid extends StatelessWidget {
                           ),
                         ],
                       ),
+                      // Pickup time if available
+                      if (pickupTimeStr.isNotEmpty) ...[
+                        SizedBox(height: ResponsiveUtils.spacing(context, 3)),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.access_time,
+                                size: ResponsiveUtils.iconSize(context, 10),
+                                color: AppColors.primary,
+                              ),
+                              SizedBox(width: ResponsiveUtils.spacing(context, 2)),
+                              Text(
+                                'Pickup: $pickupTimeStr',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: ResponsiveUtils.fontSize(context, 8),
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                  height: 1.15,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       const Spacer(),
                       // Price row with button
                       Row(
@@ -208,12 +307,6 @@ class MealCardGrid extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _pickupString(DateTime expiry) {
-    final h = expiry.hour;
-    final m = expiry.minute;
-    return 'Pick up by ${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
   }
 }
 

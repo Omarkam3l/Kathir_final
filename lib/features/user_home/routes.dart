@@ -30,6 +30,10 @@ List<GoRoute> homeRoutes() => [
     builder: (context, state) => const MainNavigationScreen(initialIndex: 4),
   ),
   GoRoute(
+    path: '/meals/all',
+    builder: (context, state) => const MainNavigationScreen(initialIndex: 5),
+  ),
+  GoRoute(
     path: '/restaurant-search',
     builder: (context, state) => const RestaurantSearchScreen(),
   ),

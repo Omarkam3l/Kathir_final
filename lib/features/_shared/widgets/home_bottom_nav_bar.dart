@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
 
-/// Bottom nav matching user home page design: Home, Favorites, [Cart - elevated], Orders, Profile.
+/// Bottom nav matching user home page design: Favorites, Meals, [Home - elevated], Orders, Profile.
 class HomeBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int>? onTap;
@@ -32,20 +32,8 @@ class HomeBottomNavBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _NavItem(
-                icon: Icons.home,
-                label: 'Home',
-                selected: currentIndex == 0,
-                onTap: () {
-                  if (onTap != null) {
-                    onTap!(0);
-                  } else {
-                    context.go('/home');
-                  }
-                },
-                filled: true,
-              ),
-              _NavItem(
-                icon: Icons.favorite,
+                icon: Icons.favorite_border,
+                activeIcon: Icons.favorite,
                 label: 'Favorites',
                 selected: currentIndex == 1,
                 onTap: () {
@@ -57,41 +45,57 @@ class HomeBottomNavBar extends StatelessWidget {
                 },
                 filled: false,
               ),
-              // Elevated Cart Button
+              _NavItem(
+                icon: Icons.restaurant_menu_outlined,
+                activeIcon: Icons.restaurant_menu,
+                label: 'Meals',
+                selected: currentIndex == 5,
+                onTap: () {
+                  if (onTap != null) {
+                    onTap!(5);
+                  } else {
+                    context.go('/meals/all');
+                  }
+                },
+                filled: false,
+              ),
+              // Elevated Home Button
               Transform.translate(
                 offset: const Offset(0, -24),
                 child: GestureDetector(
                   onTap: () {
                     if (onTap != null) {
-                      onTap!(2);
+                      onTap!(0);
                     } else {
-                      context.go('/cart');
+                      context.go('/home');
                     }
                   },
                   child: Container(
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: AppColors.primaryGreen,
+                      color: currentIndex == 0 ? AppColors.primary : AppColors.darkText,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primaryGreen.withValues(alpha: 0.4),
+                          color: (currentIndex == 0 ? AppColors.primary : AppColors.darkText)
+                              .withValues(alpha: 0.4),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
                       ],
                     ),
                     child: const Icon(
-                      Icons.shopping_basket,
+                      Icons.home,
                       size: 28,
-                      color: Colors.black,
+                      color: Colors.white,
                     ),
                   ),
                 ),
               ),
               _NavItem(
-                icon: Icons.receipt_long,
+                icon: Icons.receipt_long_outlined,
+                activeIcon: Icons.receipt_long,
                 label: 'Orders',
                 selected: currentIndex == 3,
                 onTap: () {
@@ -104,7 +108,8 @@ class HomeBottomNavBar extends StatelessWidget {
                 filled: false,
               ),
               _NavItem(
-                icon: Icons.person,
+                icon: Icons.person_outline,
+                activeIcon: Icons.person,
                 label: 'Profile',
                 selected: currentIndex == 4,
                 onTap: () {
@@ -126,6 +131,7 @@ class HomeBottomNavBar extends StatelessWidget {
 
 class _NavItem extends StatelessWidget {
   final IconData icon;
+  final IconData? activeIcon;
   final String label;
   final bool selected;
   final VoidCallback onTap;
@@ -133,6 +139,7 @@ class _NavItem extends StatelessWidget {
 
   const _NavItem({
     required this.icon,
+    this.activeIcon,
     required this.label,
     required this.selected,
     required this.onTap,
@@ -154,10 +161,9 @@ class _NavItem extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              icon,
+              selected && activeIcon != null ? activeIcon! : icon,
               size: 24,
               color: color,
-              fill: (selected && filled) ? 1.0 : 0.0,
             ),
             const SizedBox(height: 4),
             Text(
