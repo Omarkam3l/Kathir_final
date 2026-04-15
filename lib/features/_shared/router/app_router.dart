@@ -44,7 +44,6 @@ import '../../authentication/presentation/blocs/auth_provider.dart';
 import '../../authentication/presentation/screens/pending_approval_screen.dart';
 import '../../authentication/presentation/screens/auth_splash_screen.dart';
 import '../../meals/presentation/screens/meal_detail.dart';
-import '../../meals/presentation/screens/meal_detail_new.dart';
 import '../../user_home/presentation/viewmodels/favorites_viewmodel.dart';
 import '../../user_home/domain/entities/meal_offer.dart';
 import '../../user_home/domain/entities/meal.dart';
@@ -660,7 +659,7 @@ class AppRouter {
           if (extra is MealOffer) {
             return ChangeNotifierProvider(
               create: (_) => FavoritesViewModel()..loadFavorites(),
-              child: MealDetailScreen(product: extra),
+              child: ProductDetailPage(product: extra),
             );
           }
           final id = state.pathParameters['id'] ?? '';

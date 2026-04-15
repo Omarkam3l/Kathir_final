@@ -129,7 +129,7 @@ class _AllMealsScreenState extends State<AllMealsScreen> {
                           top: 8,
                           child: Container(
                             padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: Colors.red,
                               shape: BoxShape.circle,
                             ),

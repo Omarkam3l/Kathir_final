@@ -305,7 +305,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   child: Column(
                     children: [
                       ...foodie.cartItems.map((item) => _buildOrderItem(item,
-                          textColor, subTextColor, primaryColor, borderColor)),
+                          textColor, subTextColor, primaryColor, borderColor, foodie)),
                       const SizedBox(height: 16),
                       // Delivery Info
                       Container(
@@ -747,7 +747,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildOrderItem(CartItem item, Color textColor, Color subTextColor,
-      Color primaryColor, Color borderColor) {
+      Color primaryColor, Color borderColor, FoodieState foodie) {
+    // Calculate effective price with Rush Hour discount
+    final effectivePrice = foodie.getEffectivePrice(item.meal);
+    final lineTotal = item.calculateLineTotal(effectivePrice);
+    
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -777,7 +781,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 fontWeight: FontWeight.bold, color: textColor),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis)),
-                    Text('EGP ${item.lineTotal.toStringAsFixed(2)}',
+                    Text('EGP ${lineTotal.toStringAsFixed(2)}',
                         style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.bold, color: textColor)),
                   ],

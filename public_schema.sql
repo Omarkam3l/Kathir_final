@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict n48cNljbAam853uAcmaSFfjXCkGYuGeJdeFUjbaebtqxGxvmsi6Ed4AFkwumlmx
+\restrict 5oUHxW96gBUqCVIiDXn50dXPI5CiNN2emRZVMJdbseB77AXGE7q9WHuxjQtxljX
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.1
@@ -1665,6 +1665,33 @@ COMMENT ON FUNCTION public.increment_meal_quantity(meal_id uuid, qty integer) IS
 
 
 --
+-- Name: increment_promo_code_usage(text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.increment_promo_code_usage(p_code text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+BEGIN
+  UPDATE public.promo_codes
+  SET 
+    current_uses = current_uses + 1,
+    updated_at = now()
+  WHERE code = UPPER(p_code)
+    AND is_active = true;
+END;
+$$;
+
+
+ALTER FUNCTION public.increment_promo_code_usage(p_code text) OWNER TO postgres;
+
+--
+-- Name: FUNCTION increment_promo_code_usage(p_code text); Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON FUNCTION public.increment_promo_code_usage(p_code text) IS 'Increment the usage count of a promo code';
+
+
+--
 -- Name: initialize_user_loyalty(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -3110,6 +3137,70 @@ $$;
 ALTER FUNCTION public.update_user_tier(p_user_id uuid) OWNER TO postgres;
 
 --
+-- Name: validate_promo_code(text, numeric); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.validate_promo_code(p_code text, p_order_amount numeric DEFAULT 0) RETURNS TABLE(is_valid boolean, discount_percentage numeric, message text)
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+DECLARE
+  v_promo RECORD;
+BEGIN
+  -- Get promo code details
+  SELECT * INTO v_promo
+  FROM public.promo_codes
+  WHERE code = UPPER(p_code)
+    AND is_active = true;
+
+  -- Check if code exists
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT false, 0::NUMERIC, 'Invalid promo code'::TEXT;
+    RETURN;
+  END IF;
+
+  -- Check if code has started
+  IF v_promo.valid_from > now() THEN
+    RETURN QUERY SELECT false, 0::NUMERIC, 'Promo code not yet valid'::TEXT;
+    RETURN;
+  END IF;
+
+  -- Check if code has expired
+  IF v_promo.valid_until IS NOT NULL AND v_promo.valid_until < now() THEN
+    RETURN QUERY SELECT false, 0::NUMERIC, 'Promo code has expired'::TEXT;
+    RETURN;
+  END IF;
+
+  -- Check usage limit
+  IF v_promo.max_uses IS NOT NULL AND v_promo.current_uses >= v_promo.max_uses THEN
+    RETURN QUERY SELECT false, 0::NUMERIC, 'Promo code usage limit reached'::TEXT;
+    RETURN;
+  END IF;
+
+  -- Check minimum order amount
+  IF p_order_amount < v_promo.min_order_amount THEN
+    RETURN QUERY SELECT 
+      false, 
+      0::NUMERIC, 
+      format('Minimum order amount is EGP %s', v_promo.min_order_amount)::TEXT;
+    RETURN;
+  END IF;
+
+  -- All checks passed
+  RETURN QUERY SELECT true, v_promo.discount_percentage, 'Valid promo code'::TEXT;
+END;
+$$;
+
+
+ALTER FUNCTION public.validate_promo_code(p_code text, p_order_amount numeric) OWNER TO postgres;
+
+--
+-- Name: FUNCTION validate_promo_code(p_code text, p_order_amount numeric); Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON FUNCTION public.validate_promo_code(p_code text, p_order_amount numeric) IS 'Validate a promo code and return discount percentage';
+
+
+--
 -- Name: verify_pickup_code(uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -3904,6 +3995,10 @@ CREATE TABLE public.orders (
     pickup_address_text text,
     stripe_payment_intent_id text,
     stripe_customer_id text,
+    promo_code text,
+    discount_percentage numeric(5,2) DEFAULT 0,
+    discount_amount numeric(12,2) DEFAULT 0,
+    original_total numeric(12,2),
     CONSTRAINT orders_delivery_type_check CHECK ((delivery_type = ANY (ARRAY['pickup'::text, 'delivery'::text, 'donation'::text]))),
     CONSTRAINT orders_payment_method_check CHECK ((payment_method = ANY (ARRAY['card'::text, 'wallet'::text, 'cod'::text, 'cash'::text]))),
     CONSTRAINT orders_payment_status_check CHECK ((payment_status = ANY (ARRAY['pending'::text, 'paid'::text, 'failed'::text, 'refunded'::text]))),
@@ -4033,6 +4128,34 @@ COMMENT ON COLUMN public.orders.stripe_customer_id IS 'Stripe Customer ID for th
 
 
 --
+-- Name: COLUMN orders.promo_code; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.orders.promo_code IS 'Promo code applied to this order';
+
+
+--
+-- Name: COLUMN orders.discount_percentage; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.orders.discount_percentage IS 'Discount percentage from promo code (e.g., 100 for 100% off)';
+
+
+--
+-- Name: COLUMN orders.discount_amount; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.orders.discount_amount IS 'Actual discount amount in currency';
+
+
+--
+-- Name: COLUMN orders.original_total; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.orders.original_total IS 'Original total before promo code discount (what restaurant sees)';
+
+
+--
 -- Name: orders_order_code_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -4110,6 +4233,94 @@ COMMENT ON COLUMN public.payments.last_4 IS 'Last 4 digits of card';
 --
 
 COMMENT ON COLUMN public.payments.card_brand IS 'Card brand (visa, mastercard, etc.)';
+
+
+--
+-- Name: promo_codes; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.promo_codes (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    code text NOT NULL,
+    description text,
+    discount_percentage numeric(5,2) NOT NULL,
+    is_active boolean DEFAULT true,
+    valid_from timestamp with time zone DEFAULT now(),
+    valid_until timestamp with time zone,
+    max_uses integer,
+    current_uses integer DEFAULT 0,
+    min_order_amount numeric(10,2) DEFAULT 0,
+    created_by uuid,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT code_uppercase CHECK ((code = upper(code))),
+    CONSTRAINT promo_codes_discount_percentage_check CHECK (((discount_percentage >= (0)::numeric) AND (discount_percentage <= (100)::numeric)))
+);
+
+
+ALTER TABLE public.promo_codes OWNER TO postgres;
+
+--
+-- Name: TABLE promo_codes; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.promo_codes IS 'Promotional discount codes for orders';
+
+
+--
+-- Name: COLUMN promo_codes.code; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.promo_codes.code IS 'Unique promo code (uppercase)';
+
+
+--
+-- Name: COLUMN promo_codes.discount_percentage; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.promo_codes.discount_percentage IS 'Discount percentage (0-100)';
+
+
+--
+-- Name: COLUMN promo_codes.is_active; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.promo_codes.is_active IS 'Whether the promo code is currently active';
+
+
+--
+-- Name: COLUMN promo_codes.valid_from; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.promo_codes.valid_from IS 'Start date for promo code validity';
+
+
+--
+-- Name: COLUMN promo_codes.valid_until; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.promo_codes.valid_until IS 'End date for promo code validity (null = no expiry)';
+
+
+--
+-- Name: COLUMN promo_codes.max_uses; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.promo_codes.max_uses IS 'Maximum number of times code can be used (null = unlimited)';
+
+
+--
+-- Name: COLUMN promo_codes.current_uses; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.promo_codes.current_uses IS 'Current number of times code has been used';
+
+
+--
+-- Name: COLUMN promo_codes.min_order_amount; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.promo_codes.min_order_amount IS 'Minimum order amount required to use code';
 
 
 --
@@ -4627,6 +4838,22 @@ ALTER TABLE ONLY public.profiles
 
 ALTER TABLE ONLY public.profiles
     ADD CONSTRAINT profiles_stripe_customer_id_key UNIQUE (stripe_customer_id);
+
+
+--
+-- Name: promo_codes promo_codes_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.promo_codes
+    ADD CONSTRAINT promo_codes_code_key UNIQUE (code);
+
+
+--
+-- Name: promo_codes promo_codes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.promo_codes
+    ADD CONSTRAINT promo_codes_pkey PRIMARY KEY (id);
 
 
 --
@@ -5271,6 +5498,27 @@ CREATE INDEX idx_profiles_id ON public.profiles USING btree (id);
 --
 
 CREATE INDEX idx_profiles_role ON public.profiles USING btree (role);
+
+
+--
+-- Name: idx_promo_codes_active; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_promo_codes_active ON public.promo_codes USING btree (is_active);
+
+
+--
+-- Name: idx_promo_codes_code; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_promo_codes_code ON public.promo_codes USING btree (code);
+
+
+--
+-- Name: idx_promo_codes_valid_dates; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_promo_codes_valid_dates ON public.promo_codes USING btree (valid_from, valid_until);
 
 
 --
@@ -5980,6 +6228,14 @@ ALTER TABLE ONLY public.profiles
 
 
 --
+-- Name: promo_codes promo_codes_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.promo_codes
+    ADD CONSTRAINT promo_codes_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id);
+
+
+--
 -- Name: restaurant_ratings restaurant_ratings_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -6084,6 +6340,24 @@ ALTER TABLE ONLY public.user_rewards
 
 
 --
+-- Name: promo_codes Admins and restaurants can insert promo codes; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Admins and restaurants can insert promo codes" ON public.promo_codes FOR INSERT WITH CHECK ((auth.uid() IN ( SELECT profiles.id
+   FROM public.profiles
+  WHERE (profiles.role = ANY (ARRAY['admin'::text, 'restaurant'::text])))));
+
+
+--
+-- Name: promo_codes Admins and restaurants can update their promo codes; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Admins and restaurants can update their promo codes" ON public.promo_codes FOR UPDATE USING ((auth.uid() IN ( SELECT profiles.id
+   FROM public.profiles
+  WHERE (profiles.role = ANY (ARRAY['admin'::text, 'restaurant'::text])))));
+
+
+--
 -- Name: order_issues Admins can manage all issues; Type: POLICY; Schema: public; Owner: postgres
 --
 
@@ -6150,6 +6424,13 @@ CREATE POLICY "Anonymous can view active meals" ON public.meals FOR SELECT TO an
 --
 
 CREATE POLICY "Anyone can read NGO locations" ON public.ngos FOR SELECT USING (true);
+
+
+--
+-- Name: promo_codes Anyone can read active promo codes; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Anyone can read active promo codes" ON public.promo_codes FOR SELECT USING ((is_active = true));
 
 
 --
@@ -6227,6 +6508,15 @@ CREATE POLICY "NGOs can view their orders" ON public.orders FOR SELECT TO authen
 --
 
 COMMENT ON POLICY "NGOs can view their orders" ON public.orders IS 'Allows NGOs to view orders assigned to them';
+
+
+--
+-- Name: promo_codes Only admins can delete promo codes; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Only admins can delete promo codes" ON public.promo_codes FOR DELETE USING ((auth.uid() IN ( SELECT profiles.id
+   FROM public.profiles
+  WHERE (profiles.role = 'admin'::text))));
 
 
 --
@@ -7203,6 +7493,12 @@ COMMENT ON POLICY profiles_update_own ON public.profiles IS 'Users can update th
 
 
 --
+-- Name: promo_codes; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.promo_codes ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: restaurant_ratings; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
@@ -7564,6 +7860,15 @@ GRANT ALL ON FUNCTION public.increment_meal_quantity(meal_id uuid, qty integer) 
 
 
 --
+-- Name: FUNCTION increment_promo_code_usage(p_code text); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.increment_promo_code_usage(p_code text) TO anon;
+GRANT ALL ON FUNCTION public.increment_promo_code_usage(p_code text) TO authenticated;
+GRANT ALL ON FUNCTION public.increment_promo_code_usage(p_code text) TO service_role;
+
+
+--
 -- Name: FUNCTION initialize_user_loyalty(); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -7825,6 +8130,15 @@ GRANT ALL ON FUNCTION public.update_user_tier(p_user_id uuid) TO service_role;
 
 
 --
+-- Name: FUNCTION validate_promo_code(p_code text, p_order_amount numeric); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.validate_promo_code(p_code text, p_order_amount numeric) TO anon;
+GRANT ALL ON FUNCTION public.validate_promo_code(p_code text, p_order_amount numeric) TO authenticated;
+GRANT ALL ON FUNCTION public.validate_promo_code(p_code text, p_order_amount numeric) TO service_role;
+
+
+--
 -- Name: FUNCTION verify_pickup_code(p_order_id uuid, p_pickup_code text); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -8068,6 +8382,15 @@ GRANT ALL ON TABLE public.payments TO service_role;
 
 
 --
+-- Name: TABLE promo_codes; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.promo_codes TO anon;
+GRANT ALL ON TABLE public.promo_codes TO authenticated;
+GRANT ALL ON TABLE public.promo_codes TO service_role;
+
+
+--
 -- Name: TABLE restaurant_ratings; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -8212,5 +8535,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON T
 -- PostgreSQL database dump complete
 --
 
-\unrestrict n48cNljbAam853uAcmaSFfjXCkGYuGeJdeFUjbaebtqxGxvmsi6Ed4AFkwumlmx
+\unrestrict 5oUHxW96gBUqCVIiDXn50dXPI5CiNN2emRZVMJdbseB77AXGE7q9WHuxjQtxljX
 

@@ -19,8 +19,11 @@ class _CartScreenState extends State<CartScreen> {
   void initState() {
     super.initState();
     // Load cart from database when screen opens
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<FoodieState>().loadCart();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final foodie = context.read<FoodieState>();
+      await foodie.loadCart();
+      // Refresh prices to ensure Rush Hour discounts are applied
+      await foodie.refreshPrices();
     });
   }
 
@@ -363,15 +366,30 @@ class _CartItemCard extends StatelessWidget {
     final foodie = context.watch<FoodieState>();
     final meal = item.meal;
     
+    // Get Rush Hour info from centralized cache
+    final rushHourInfo = foodie.getRushHourInfo(meal.restaurant.id);
+    final isRushHour = rushHourInfo != null;
+    final effectivePrice = foodie.getEffectivePrice(meal);
+    
     final canAddMore = item.qty < meal.quantity;
     final isAtMax = item.qty >= meal.quantity;
+    
+    // Calculate discount percentage
+    final discountPercent = rushHourInfo != null
+        ? rushHourInfo.discountPercentage
+        : (meal.originalPrice > 0
+            ? ((meal.originalPrice - meal.donationPrice) / meal.originalPrice * 100).round()
+            : 0);
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(
+          color: isRushHour ? Colors.red.withValues(alpha: 0.3) : Colors.grey[200]!,
+          width: isRushHour ? 2 : 1,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -383,20 +401,53 @@ class _CartItemCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: SizedBox(
-              width: 90,
-              height: 90,
-              child: Image.network(
-                meal.imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: Colors.grey[100],
-                  child: Icon(Icons.restaurant, color: Colors.grey[400], size: 40),
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  width: 90,
+                  height: 90,
+                  child: Image.network(
+                    meal.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: Colors.grey[100],
+                      child: Icon(Icons.restaurant, color: Colors.grey[400], size: 40),
+                    ),
+                  ),
                 ),
               ),
-            ),
+              // Rush Hour Badge
+              if (isRushHour)
+                Positioned(
+                  top: 4,
+                  left: 4,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.bolt, color: Colors.white, size: 10),
+                        const SizedBox(width: 2),
+                        Text(
+                          'RUSH',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 8,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -417,22 +468,41 @@ class _CartItemCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      'EGP ${meal.donationPrice.toStringAsFixed(2)}',
+                      'EGP ${effectivePrice.toStringAsFixed(2)}',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
+                        color: isRushHour ? Colors.red : AppColors.primary,
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      'EGP ${meal.originalPrice.toStringAsFixed(2)}',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        decoration: TextDecoration.lineThrough,
-                        color: Colors.grey[500],
+                    if (meal.originalPrice > effectivePrice)
+                      Text(
+                        'EGP ${meal.originalPrice.toStringAsFixed(2)}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          decoration: TextDecoration.lineThrough,
+                          color: Colors.grey[500],
+                        ),
                       ),
-                    ),
+                    if (isRushHour) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '-$discountPercent%',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 10),

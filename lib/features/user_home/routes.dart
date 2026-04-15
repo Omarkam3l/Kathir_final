@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import '../_shared/screens/main_navigation_screen.dart';
 import 'presentation/screens/restaurant_search_screen.dart';
 import 'presentation/screens/restaurant_meals_screen.dart';
+import 'presentation/screens/all_rush_hour_meals_screen.dart';
 import 'domain/entities/restaurant.dart';
 
 List<GoRoute> homeRoutes() => [
@@ -32,6 +33,10 @@ List<GoRoute> homeRoutes() => [
   GoRoute(
     path: '/meals/all',
     builder: (context, state) => const MainNavigationScreen(initialIndex: 5),
+  ),
+  GoRoute(
+    path: '/rush-hour-meals',
+    builder: (context, state) => const AllRushHourMealsScreen(),
   ),
   GoRoute(
     path: '/restaurant-search',

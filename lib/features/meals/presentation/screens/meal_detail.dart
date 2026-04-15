@@ -3,12 +3,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart'; // Assuming google_fonts is available, if not will fallback
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import '../../../profile/presentation/providers/foodie_state.dart';
 import '../../../user_home/domain/entities/meal_offer.dart';
+import '../../../user_home/domain/usecases/check_rush_hour_status.dart';
 import '../../../../core/utils/app_colors.dart';
 import 'package:intl/intl.dart';
 
@@ -23,6 +24,34 @@ class ProductDetailPage extends StatefulWidget {
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
   int qty = 1;
+  RushHourInfo? _rushHourInfo;
+  bool _isLoadingRushHour = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkRushHour();
+  }
+
+  Future<void> _checkRushHour() async {
+    final info = await RushHourChecker.checkMealRushHour(widget.product.restaurant.id);
+    if (mounted) {
+      setState(() {
+        _rushHourInfo = info;
+        _isLoadingRushHour = false;
+      });
+    }
+  }
+
+  double get _effectivePrice {
+    if (_rushHourInfo != null) {
+      return RushHourChecker.calculateEffectivePrice(
+        widget.product.originalPrice,
+        _rushHourInfo!.discountPercentage,
+      );
+    }
+    return widget.product.donationPrice;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -124,6 +153,63 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           ),
                         ),
                       ),
+                      // Rush Hour Badge (Top Center)
+                      if (_rushHourInfo != null && !_isLoadingRushHour)
+                        Positioned(
+                          top: 80,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFFF3B30), Color(0xFFFF6B6B)],
+                                ),
+                                borderRadius: BorderRadius.circular(30),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.red.withValues(alpha: 0.4),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.bolt, color: Colors.white, size: 20),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'RUSH HOUR',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.3),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '-${_rushHourInfo!.discountPercentage}%',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -144,6 +230,58 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Rush Hour Info Banner (if active)
+                        if (_rushHourInfo != null && !_isLoadingRushHour)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.red.withValues(alpha: 0.1),
+                                  Colors.orange.withValues(alpha: 0.1),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(Icons.bolt, color: Colors.white, size: 20),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Rush Hour Active!',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Extra ${_rushHourInfo!.discountPercentage}% off • ${_rushHourInfo!.timeRemaining}',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 12,
+                                          color: isDark ? Colors.white70 : Colors.black87,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        
                         // Title and Price
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,15 +301,37 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Text(
-                                  '\$${meal.donationPrice.toStringAsFixed(2)}',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: primaryColor,
-                                  ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      '\$${_effectivePrice.toStringAsFixed(2)}',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: _rushHourInfo != null ? Colors.red : primaryColor,
+                                      ),
+                                    ),
+                                    if (_rushHourInfo != null) ...[
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red,
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          '-${_rushHourInfo!.discountPercentage}%',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
-                                if (meal.originalPrice > meal.donationPrice)
+                                if (meal.originalPrice > _effectivePrice)
                                   Text(
                                     '\$${meal.originalPrice.toStringAsFixed(2)}',
                                     style: GoogleFonts.plusJakartaSans(
@@ -497,7 +657,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             ),
                           ),
                           Text(
-                            '\$${(meal.donationPrice * qty).toStringAsFixed(2)}',
+                            '\$${(_effectivePrice * qty).toStringAsFixed(2)}',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,

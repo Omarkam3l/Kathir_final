@@ -56,6 +56,12 @@ class SupabaseHomeRemoteDataSource implements HomeRemoteDataSource {
   DateTime? _cacheTime;
   static const _cacheDuration = Duration(minutes: 2);
 
+  /// Clear the cache (useful for testing or force refresh)
+  void clearCache() {
+    _cachedMeals = null;
+    _cacheTime = null;
+  }
+
   @override
   Future<List<Meal>> getAvailableMeals() async {
     // Return cached data if still valid
@@ -89,8 +95,7 @@ class SupabaseHomeRemoteDataSource implements HomeRemoteDataSource {
     ''').eq('status', 'active')
       .gt('quantity_available', 0)
       .gt('expiry_date', DateTime.now().toIso8601String())
-      .order('updated_at', ascending: false)  // Sort by updated_at to show republished meals first
-      .limit(20); // Pagination: fetch first 20 meals
+      .order('updated_at', ascending: false); // Removed limit to fetch all meals
     
     final data = (res as List).cast<Map<String, dynamic>>();
     final meals = data.map((e) {

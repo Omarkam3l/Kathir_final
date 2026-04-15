@@ -2,20 +2,22 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../user_home/domain/entities/meal_offer.dart';
 import '../../../cart/data/services/cart_service.dart';
+import '../../../user_home/domain/usecases/check_rush_hour_status.dart';
 
 class CartItem {
   final MealOffer meal;
   int qty;
+  
   CartItem({required this.meal, this.qty = 1});
 
-  double get lineTotal {
+  /// Calculate line total with given effective price
+  double calculateLineTotal(double effectivePrice) {
     try {
-      final price = meal.donationPrice;
-      if (price.isNaN || price.isInfinite || price < 0) {
-        debugPrint('Warning: Invalid price for meal ${meal.id}: $price');
+      if (effectivePrice.isNaN || effectivePrice.isInfinite || effectivePrice < 0) {
+        debugPrint('Warning: Invalid price for meal ${meal.id}: $effectivePrice');
         return 0.0;
       }
-      final total = price * qty;
+      final total = effectivePrice * qty;
       return total.isNaN || total.isInfinite ? 0.0 : total;
     } catch (e) {
       debugPrint('Error calculating line total: $e');
@@ -36,6 +38,9 @@ class FoodieState extends ChangeNotifier {
   String? _promoCode;
   double _promoCodeDiscount = 0.0; // Percentage discount (0-100)
   bool _isLoadingCart = false;
+  
+  // Centralized Rush Hour cache - refreshed once for all items
+  Map<String, RushHourInfo> _rushHourCache = {};
 
   // ... (existing favourites logic)
 
@@ -88,10 +93,76 @@ class FoodieState extends ChangeNotifier {
   List<CartItem> get cartItems => List.unmodifiable(_cart);
   int get cartCount => _cart.fold<int>(0, (sum, item) => sum + item.qty);
   
+  /// Get effective price for a meal (with Rush Hour discount if active)
+  double getEffectivePrice(MealOffer meal) {
+    final rushHourInfo = _rushHourCache[meal.restaurant.id];
+    if (rushHourInfo != null) {
+      return RushHourChecker.calculateEffectivePrice(
+        meal.originalPrice,
+        rushHourInfo.discountPercentage,
+      );
+    }
+    return meal.donationPrice;
+  }
+  
+  /// Check if a meal has active Rush Hour
+  bool hasActiveRushHour(String restaurantId) {
+    return _rushHourCache.containsKey(restaurantId);
+  }
+  
+  /// Get Rush Hour info for a restaurant
+  RushHourInfo? getRushHourInfo(String restaurantId) {
+    return _rushHourCache[restaurantId];
+  }
+  
+  /// Refresh Rush Hour cache for all restaurants in cart
+  Future<void> _refreshRushHourCache() async {
+    try {
+      // Get unique restaurant IDs from cart
+      final restaurantIds = _cart.map((item) => item.meal.restaurant.id).toSet();
+      
+      if (restaurantIds.isEmpty) {
+        _rushHourCache.clear();
+        return;
+      }
+      
+      // Query all active Rush Hours for these restaurants in one call
+      final now = DateTime.now();
+      final response = await _supabase
+          .from('rush_hours')
+          .select('restaurant_id, discount_percentage, start_time, end_time')
+          .inFilter('restaurant_id', restaurantIds.toList())
+          .eq('is_active', true);
+      
+      // Clear old cache
+      _rushHourCache.clear();
+      
+      // Build new cache
+      for (final row in response) {
+        final startTime = DateTime.parse(row['start_time'] as String);
+        final endTime = DateTime.parse(row['end_time'] as String);
+        
+        // Only cache if currently active
+        if (now.isAfter(startTime) && now.isBefore(endTime)) {
+          _rushHourCache[row['restaurant_id'] as String] = RushHourInfo(
+            isActive: true,
+            discountPercentage: row['discount_percentage'] as int,
+            endTime: endTime,
+          );
+        }
+      }
+      
+      debugPrint('🔄 Rush Hour cache refreshed: ${_rushHourCache.length} active');
+    } catch (e) {
+      debugPrint('Error refreshing Rush Hour cache: $e');
+    }
+  }
+  
   double get subtotal {
     try {
       final total = _cart.fold<double>(0.0, (sum, item) {
-        final lineTotal = item.lineTotal;
+        final effectivePrice = getEffectivePrice(item.meal);
+        final lineTotal = item.calculateLineTotal(effectivePrice);
         if (lineTotal.isNaN || lineTotal.isInfinite) {
           debugPrint('Warning: Invalid line total for meal ${item.meal.id}');
           return sum;
@@ -152,12 +223,21 @@ class FoodieState extends ChangeNotifier {
       final items = await _cartService.loadCart(userId);
       _cart.clear();
       _cart.addAll(items);
+      
+      // Refresh Rush Hour cache once for all items
+      await _refreshRushHourCache();
     } catch (e) {
       debugPrint('Error loading cart: $e');
     } finally {
       _isLoadingCart = false;
       notifyListeners();
     }
+  }
+  
+  /// Refresh Rush Hour status and prices
+  Future<void> refreshPrices() async {
+    await _refreshRushHourCache();
+    notifyListeners();
   }
 
   /// Add to cart (database + memory)
@@ -181,6 +261,9 @@ class FoodieState extends ChangeNotifier {
         _cart.add(CartItem(meal: meal, qty: safeQty));
         await _cartService.addToCart(userId, meal.id, safeQty);
       }
+      
+      // Refresh Rush Hour cache after adding
+      await _refreshRushHourCache();
       notifyListeners();
     } catch (e) {
       debugPrint('Error adding to cart: $e');
