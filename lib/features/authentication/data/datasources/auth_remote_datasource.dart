@@ -9,6 +9,7 @@ import '../models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
   Future<UserModel> signIn(String email, String password);
+  Future<UserModel> signInAnonymously();
   Future<UserModel> signUpUser(String fullName, String email, String password, {required String phone});
   Future<UserModel> signUpNGO(
       String orgName, String fullName, String email, String password,
@@ -54,6 +55,28 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
     } catch (e, stackTrace) {
       AuthLogger.errorLog('signIn.failed',
           ctx: {'email': email},
+          error: e,
+          stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<UserModel> signInAnonymously() async {
+    try {
+      AuthLogger.info('signInAnonymously.attempt', ctx: {});
+      
+      final res = await client.auth.signInAnonymously();
+      
+      AuthLogger.info('signInAnonymously.success', ctx: {
+        'userId': res.user?.id,
+        'hasSession': res.session != null,
+      });
+      
+      return UserModelFactory.fromAuthUser(res.user!);
+    } catch (e, stackTrace) {
+      AuthLogger.errorLog('signInAnonymously.failed',
+          ctx: {},
           error: e,
           stackTrace: stackTrace);
       rethrow;

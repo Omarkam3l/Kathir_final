@@ -4,6 +4,7 @@ import '../../../../core/utils/either.dart';
 
 abstract class AuthRepository {
   Future<Either<Failure, UserEntity>> signIn(String email, String password);
+  Future<Either<Failure, UserEntity>> signInAnonymously();
   Future<Either<Failure, UserEntity>> signUpUser(
       String fullName, String email, String password, {required String phone});
   Future<Either<Failure, UserEntity>> signUpNGO(

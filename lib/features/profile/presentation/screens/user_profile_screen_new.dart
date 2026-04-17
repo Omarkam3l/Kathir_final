@@ -7,6 +7,7 @@ import '../../../authentication/presentation/blocs/auth_provider.dart';
 import '../../../../core/utils/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'addresses_screen.dart';
+import '../widgets/growing_tree_widget.dart';
 
 class UserProfileScreenNew extends StatefulWidget {
   static const routeName = '/user-profile-new';
@@ -21,6 +22,7 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
   bool _isUploadingImage = false;
   int _totalOrders = 0;
   double _foodSaved = 0.0;
+  int _donationCount = 0;
 
   @override
   void initState() {
@@ -36,13 +38,22 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
       // Get total orders count
       final ordersResponse = await _supabase
           .from('orders')
-          .select('id')
+          .select('id, delivery_type')
           .eq('user_id', userId);
+      
+      // Count donation orders
+      int donations = 0;
+      for (var order in ordersResponse as List) {
+        if (order['delivery_type'] == 'donation') {
+          donations++;
+        }
+      }
       
       // Check if widget is still mounted before calling setState
       if (mounted) {
         setState(() {
           _totalOrders = (ordersResponse as List).length;
+          _donationCount = donations;
           // Calculate food saved (example: 0.5kg per order)
           _foodSaved = _totalOrders * 0.5;
         });
@@ -608,6 +619,17 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
                   onTap: () {
                     context.go('/favorites');
                   },
+                  showDivider: true,
+                ),
+                _buildSettingsTile(
+                  icon: Icons.speed,
+                  iconBgColor: AppColors.primary.withValues(alpha: 0.2),
+                  iconColor: AppColors.primary,
+                  title: 'Your Impact ',
+                  subtitle: 'See your environmental impact',
+                  onTap: () {
+                    _showImpactTreeDialog(context);
+                  },
                   showDivider: false,
                 ),
               ],
@@ -949,6 +971,198 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showImpactTreeDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: 500,
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.speed, color: AppColors.primary, size: 24),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Your Impact Score',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close, color: Colors.black),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Content - Make it scrollable
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      // Growing Tree Widget
+                      GrowingTreeWidget(
+                        donationCount: _donationCount,
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                _donationCount == 0
+                                    ? 'Make your first donation to start growing your tree!'
+                                    : 'Keep donating to grow your tree even more!',
+                              ),
+                              backgroundColor: AppColors.primary,
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Impact Stats
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Your Environmental Impact',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            _buildImpactStat(
+                              Icons.eco,
+                              'CO₂ Saved',
+                              '${(_donationCount * 2.5).toStringAsFixed(1)} kg',
+                              Colors.green,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildImpactStat(
+                              Icons.water_drop,
+                              'Water Saved',
+                              '${(_donationCount * 50)} liters',
+                              Colors.blue,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildImpactStat(
+                              Icons.people,
+                              'People Helped',
+                              '$_donationCount',
+                              Colors.orange,
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 20),
+                      
+                      // Call to Action
+                      if (_donationCount == 0)
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.info_outline, color: AppColors.primary),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Make your first donation to plant your tree and start making an impact!',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImpactStat(IconData icon, String label, String value, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              color: Colors.grey[700],
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+      ],
     );
   }
 }

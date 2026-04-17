@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../../core/utils/responsive_utils.dart';
+import '../../../../core/utils/phone_formatter.dart';
 import '../../../authentication/presentation/blocs/auth_provider.dart';
 import '../../../_shared/widgets/location_selector_widget.dart';
 import '../widgets/restaurant_bottom_nav.dart';
@@ -217,6 +218,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                   labelText: 'Phone',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.phone),
+                  hintText: '01012345678',
                 ),
                 keyboardType: TextInputType.phone,
               ),
@@ -258,11 +260,16 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
 
+      // Format phone number to WhatsApp format (201xxxxxxxxx)
+      final formattedPhone = phone.trim().isEmpty
+          ? null
+          : PhoneFormatter.formatEgyptianPhone(phone.trim());
+
       await _supabase.from('restaurants').upsert({
         'profile_id': userId,
         'restaurant_name': name,
         'address': address,
-        'phone': phone,
+        'phone': formattedPhone,
       });
 
       if (mounted) {

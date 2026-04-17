@@ -21,6 +21,16 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, UserEntity>> signInAnonymously() async {
+    try {
+      final u = await remote.signInAnonymously();
+      return Right(u);
+    } catch (e) {
+      return Left(Failure('signInAnonymously failed', cause: e));
+    }
+  }
+
+  @override
   Future<Either<Failure, UserEntity>> signUpUser(
       String fullName, String email, String password, {required String phone}) async {
     try {

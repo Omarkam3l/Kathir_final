@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
 import 'package:kathir_final/core/utils/responsive_utils.dart';
 import 'package:kathir_final/core/utils/user_role.dart';
+import 'package:kathir_final/core/utils/phone_formatter.dart';
 import 'package:kathir_final/features/authentication/presentation/screens/verification_screen.dart';
 import 'package:kathir_final/features/authentication/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as s;
@@ -80,6 +81,12 @@ class _AuthScreenState extends State<AuthScreen> {
           : _selectedRole == UserRole.ngo
               ? SignUpRole.ngo
               : SignUpRole.restaurant;
+      
+      // Format phone number to WhatsApp format (201xxxxxxxxx)
+      final formattedPhone = _phoneController.text.trim().isEmpty
+          ? null
+          : PhoneFormatter.formatEgyptianPhone(_phoneController.text.trim());
+      
       final ok = await vm.signup(
         role,
         _nameController.text.trim(),
@@ -88,7 +95,7 @@ class _AuthScreenState extends State<AuthScreen> {
         organizationName: _orgNameController.text.trim().isEmpty
             ? null
             : _orgNameController.text.trim(),
-        phone: _phoneController.text.trim(),
+        phone: formattedPhone,
       );
       
       if (ok) {
@@ -160,8 +167,8 @@ class _AuthScreenState extends State<AuthScreen> {
         case 'facebook':
           ok = await vm.loginWithProvider(s.OAuthProvider.facebook);
           break;
-        case 'apple':
-          ok = await vm.loginWithProvider(s.OAuthProvider.apple);
+        case 'guest':
+          ok = await vm.loginAsGuest();
           break;
         case 'otp':
           ok = true;
@@ -296,7 +303,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       if (!isLogin)
                         _AuthInput(
                           label: 'Phone Number',
-                          hint: '+20 10 1234 5678',
+                          hint: '01012345678',
                           controller: _phoneController,
                           prefixIcon: Icons.call_outlined,
                           keyboardType: TextInputType.phone,
@@ -305,8 +312,15 @@ class _AuthScreenState extends State<AuthScreen> {
                           textMuted: textMuted,
                           surface: surface,
                           border: border,
-                          validator: (v) =>
-                              (v ?? '').trim().isEmpty ? 'Phone number is required' : null,
+                          validator: (v) {
+                            if ((v ?? '').trim().isEmpty) {
+                              return 'Phone number is required';
+                            }
+                            if (!PhoneFormatter.isValidEgyptianPhone(v!)) {
+                              return 'Invalid Egyptian phone number';
+                            }
+                            return null;
+                          },
                         ),
                       if (!isLogin) const SizedBox(height: 16),
                       _AuthInput(
@@ -381,9 +395,9 @@ class _AuthScreenState extends State<AuthScreen> {
                                 border: border),
                             const SizedBox(width: 12),
                             _SocialButton(
-                                icon: Icons.apple,
-                                label: 'Apple',
-                                onTap: () => _handleSocialLogin('Apple'),
+                                icon: Icons.person_outline,
+                                label: 'Guest',
+                                onTap: () => _handleSocialLogin('Guest'),
                                 isDark: isDark,
                                 textPrimary: textPrimary,
                                 surface: surface,
