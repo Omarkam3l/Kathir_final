@@ -49,10 +49,12 @@ class _UserProfileSetupScreenState extends State<UserProfileSetupScreen> {
   Future<void> _loadUserData() async {
     final user = _supabase.auth.currentUser;
     if (user != null) {
-      setState(() {
-        _nameController.text = user.userMetadata?['full_name'] ?? '';
-        _phoneController.text = user.userMetadata?['phone_number'] ?? '';
-      });
+      if (mounted) {
+        setState(() {
+          _nameController.text = user.userMetadata?['full_name'] ?? '';
+          _phoneController.text = user.userMetadata?['phone_number'] ?? '';
+        });
+      }
 
       // Load avatar from profile
       try {
@@ -62,7 +64,7 @@ class _UserProfileSetupScreenState extends State<UserProfileSetupScreen> {
             .eq('id', user.id)
             .maybeSingle();
         
-        if (profile != null && profile['avatar_url'] != null) {
+        if (profile != null && profile['avatar_url'] != null && mounted) {
           setState(() {
             _avatarUrl = profile['avatar_url'];
           });

@@ -83,9 +83,18 @@ class _AuthScreenState extends State<AuthScreen> {
               : SignUpRole.restaurant;
       
       // Format phone number to WhatsApp format (201xxxxxxxxx)
-      final formattedPhone = _phoneController.text.trim().isEmpty
-          ? null
-          : PhoneFormatter.formatEgyptianPhone(_phoneController.text.trim());
+      final phoneText = _phoneController.text.trim();
+      if (phoneText.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Phone number is required',
+                  style: TextStyle(color: AppColors.white)),
+              backgroundColor: AppColors.error),
+        );
+        return;
+      }
+      
+      final formattedPhone = PhoneFormatter.formatEgyptianPhone(phoneText);
       
       final ok = await vm.signup(
         role,
