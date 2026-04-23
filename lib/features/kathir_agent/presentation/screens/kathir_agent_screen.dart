@@ -37,6 +37,60 @@ class _KathirAgentScreenState extends State<KathirAgentScreen> {
     _viewModel.dispose();
     super.dispose();
   }
+  
+  Future<bool> _onWillPop() async {
+    // If there's an active session, ask user if they want to end it
+    if (_viewModel.hasActiveSession) {
+      final shouldPop = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(
+            'End Chat Session?',
+            style: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          content: Text(
+            'You have an active chat session. Do you want to:\n\n'
+            '• Keep Session: Your chat history will be saved and you can continue later\n'
+            '• End Session: Clear all chat history and start fresh next time',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(
+                'Keep Session',
+                style: GoogleFonts.plusJakartaSans(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                await _viewModel.clearConversation();
+                if (context.mounted) {
+                  Navigator.pop(context, true);
+                }
+              },
+              child: Text(
+                'End Session',
+                style: GoogleFonts.plusJakartaSans(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+      return shouldPop ?? false;
+    }
+    return true;
+  }
 
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
@@ -63,43 +117,58 @@ class _KathirAgentScreenState extends State<KathirAgentScreen> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
       value: _viewModel,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFE8F5E9),
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: Text(
-            'Kathir AI Assistant',
-            style: GoogleFonts.plusJakartaSans(
-              color: Colors.black,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.more_vert, color: Colors.black),
-              onPressed: () {
-                _showOptionsMenu();
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+          final shouldPop = await _onWillPop();
+          if (shouldPop && context.mounted) {
+            Navigator.pop(context);
+          }
+        },
+        child: Scaffold(
+          backgroundColor: const Color(0xFFE8F5E9),
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              onPressed: () async {
+                final shouldPop = await _onWillPop();
+                if (shouldPop && context.mounted) {
+                  Navigator.pop(context);
+                }
               },
             ),
-          ],
-        ),
-        body: Consumer<KathirAgentViewModel>(
-          builder: (context, viewModel, _) {
-            if (viewModel.isLoading) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            }
+            title: Text(
+              'Kathir AI Assistant',
+              style: GoogleFonts.plusJakartaSans(
+                color: Colors.black,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.more_vert, color: Colors.black),
+                onPressed: () {
+                  _showOptionsMenu();
+                },
+              ),
+            ],
+          ),
+          body: Consumer<KathirAgentViewModel>(
+            builder: (context, viewModel, _) {
+              if (viewModel.isLoading) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
 
-            // Always show chat interface
-            return _buildChatInterface(viewModel);
-          },
+              // Always show chat interface
+              return _buildChatInterface(viewModel);
+            },
+          ),
         ),
       ),
     );
@@ -638,16 +707,48 @@ class _KathirAgentScreenState extends State<KathirAgentScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.refresh),
+              leading: const Icon(Icons.refresh, color: AppColors.primary),
               title: const Text('New Conversation'),
-              onTap: () {
+              subtitle: const Text('Clear chat history and start fresh'),
+              onTap: () async {
                 Navigator.pop(context);
-                _viewModel.clearConversation();
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(
+                      'Start New Conversation?',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    content: Text(
+                      'This will clear your current chat history. Are you sure?',
+                      style: GoogleFonts.plusJakartaSans(fontSize: 14),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red,
+                        ),
+                        child: const Text('Clear & Start New'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm == true) {
+                  await _viewModel.clearConversation();
+                }
               },
             ),
             ListTile(
-              leading: const Icon(Icons.help_outline),
+              leading: const Icon(Icons.help_outline, color: AppColors.primary),
               title: const Text('Help'),
+              subtitle: const Text('Learn what I can do'),
               onTap: () {
                 Navigator.pop(context);
                 _showHelpDialog();
