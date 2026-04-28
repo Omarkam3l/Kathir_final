@@ -17,8 +17,7 @@ class AvailableMealsGridSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMain = isDark ? AppColors.white : AppColors.darkText;
+    const textMain = Colors.white;
     
     // Limit to 4 meals for home screen display
     final displayMeals = meals.take(4).toList();

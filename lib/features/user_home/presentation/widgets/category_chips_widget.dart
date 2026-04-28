@@ -60,10 +60,9 @@ class _CategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final card = isDark ? AppColors.surfaceDark : AppColors.white;
-    final textMain = isDark ? AppColors.white : AppColors.darkText;
-    final border = isDark ? AppColors.dividerDark : AppColors.dividerLight;
+    final card = AppColors.glassCardBg; // ← استخدام اللون من AppColors
+    const textMain = Color(0xFF0F1B3D);
+    final border = AppColors.glassCardBorder; // ← استخدام اللون من AppColors
 
     return Material(
       color: Colors.transparent,

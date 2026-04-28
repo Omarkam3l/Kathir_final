@@ -8,6 +8,7 @@ import '../../data/services/order_issue_service.dart';
 import '../widgets/rating_dialog.dart';
 import '../widgets/report_issue_dialog.dart';
 import '../../../loyalty/presentation/screens/loyalty_screen.dart';
+import '../../../_shared/widgets/common_app_bar.dart';
 
 class MyOrdersScreenNew extends StatefulWidget {
   static const routeName = '/my-orders';
@@ -141,7 +142,7 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
       body: SafeArea(
         child: Column(
           children: [
-            _buildAppBar(),
+            const CommonAppBar(title: 'My Orders'),
             _buildTabBar(),
             Expanded(
               child: _isLoading
@@ -252,7 +253,7 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
     return RefreshIndicator(
       onRefresh: _loadOrders,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100), // ← زودنا bottom padding
         children: [
           Text(
             'ACTIVE ORDERS (${_activeOrders.length})',
@@ -278,7 +279,7 @@ class _MyOrdersScreenNewState extends State<MyOrdersScreenNew>
     return RefreshIndicator(
       onRefresh: _loadOrders,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100), // ← زودنا bottom padding
         children: [
           Text(
             'PAST ORDERS',

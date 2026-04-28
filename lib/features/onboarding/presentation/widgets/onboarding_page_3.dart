@@ -165,7 +165,7 @@ class OnboardingPage3 extends StatelessWidget {
                   width: double.infinity,
                   child: Container(
                     decoration: BoxDecoration(
-                      gradient: AppColors.primaryGradient,
+                      color: AppColors.primary,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(

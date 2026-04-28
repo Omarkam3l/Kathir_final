@@ -190,7 +190,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
         color: AppColors.primaryGreen,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100), // ← زودنا bottom padding
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

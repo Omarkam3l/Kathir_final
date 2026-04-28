@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../profile/presentation/providers/foodie_state.dart';
 import '../../../user_home/domain/entities/restaurant.dart';
 import '../../../../core/utils/app_colors.dart';
+import '../../../_shared/widgets/common_app_bar.dart';
 
 class CartScreen extends StatefulWidget {
   static const routeName = '/cart';
@@ -56,95 +57,92 @@ class _CartScreenState extends State<CartScreen> {
             // Group items by restaurant
             final groupedItems = _groupByRestaurant(foodie.cartItems);
 
-            return Stack(
+            return Column(
               children: [
-                Column(
-                  children: [
-                    // Top App Bar
-                    _buildAppBar(context, foodie, textColor, accentColor, isDark),
-
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Cart Items Grouped by Restaurant
-                            ...groupedItems.entries.map((entry) {
-                              final restaurant = entry.value.first.meal.restaurant;
-                              final items = entry.value;
-                              
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Restaurant Header
-                                  _RestaurantHeader(
-                                    restaurant: restaurant,
-                                    itemCount: items.length,
-                                    isDark: isDark,
-                                    textColor: textColor,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  
-                                  // Items for this restaurant
-                                  ...items.map((item) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: _CartItemCard(
-                                      item: item,
-                                      isDark: isDark,
-                                      textColor: textColor,
-                                      accentColor: accentColor,
-                                    ),
-                                  )),
-                                  
-                                  const SizedBox(height: 16),
-                                ],
-                              );
-                            }),
-
-                            // Distribution Method
-                            const SizedBox(height: 8),
-                            Text(
-                              'Distribution Method',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: textColor,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            _DistributionMethodSelector(
-                              foodie: foodie,
-                              isDark: isDark,
-                              accentColor: accentColor,
-                              textColor: textColor,
-                            ),
-
-                            // Bill Summary
-                            const SizedBox(height: 24),
-                            _BillDetailsCard(
-                              foodie: foodie,
-                              isDark: isDark,
-                              textColor: textColor,
-                              accentColor: accentColor,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                // Common App Bar
+                CommonAppBar(
+                  title: 'My Cart',
+                  subtitle: '${foodie.cartCount} ${foodie.cartCount == 1 ? 'item' : 'items'}',
                 ),
 
-                // Sticky Checkout Button
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: _StickyCheckoutBar(
-                    foodie: foodie,
-                    isDark: isDark,
-                    accentColor: accentColor,
-                    textColor: textColor,
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Cart Items Grouped by Restaurant
+                        ...groupedItems.entries.map((entry) {
+                          final restaurant = entry.value.first.meal.restaurant;
+                          final items = entry.value;
+                          
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Restaurant Header
+                              _RestaurantHeader(
+                                restaurant: restaurant,
+                                itemCount: items.length,
+                                isDark: isDark,
+                                textColor: textColor,
+                              ),
+                              const SizedBox(height: 12),
+                              
+                              // Items for this restaurant
+                              ...items.map((item) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _CartItemCard(
+                                  item: item,
+                                  isDark: isDark,
+                                  textColor: textColor,
+                                  accentColor: accentColor,
+                                ),
+                              )),
+                              
+                              const SizedBox(height: 16),
+                            ],
+                          );
+                        }),
+
+                        // Distribution Method
+                        const SizedBox(height: 8),
+                        Text(
+                          'Distribution Method',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _DistributionMethodSelector(
+                          foodie: foodie,
+                          isDark: isDark,
+                          accentColor: accentColor,
+                          textColor: textColor,
+                        ),
+
+                        // Bill Summary
+                        const SizedBox(height: 24),
+                        _BillDetailsCard(
+                          foodie: foodie,
+                          isDark: isDark,
+                          textColor: textColor,
+                          accentColor: accentColor,
+                        ),
+                        
+                        // Checkout Button (في آخر الصفحة عادي)
+                        const SizedBox(height: 24),
+                        _CheckoutButton(
+                          foodie: foodie,
+                          isDark: isDark,
+                          textColor: textColor,
+                          accentColor: accentColor,
+                        ),
+                        
+                        const SizedBox(height: 100), // مساحة للـ nav bar
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -867,7 +865,99 @@ class _BillDetailsCard extends StatelessWidget {
   }
 }
 
-// Sticky Checkout Bar
+// Checkout Button (عادي في آخر الصفحة)
+class _CheckoutButton extends StatelessWidget {
+  final FoodieState foodie;
+  final bool isDark;
+  final Color textColor;
+  final Color accentColor;
+
+  const _CheckoutButton({
+    required this.foodie,
+    required this.isDark,
+    required this.textColor,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Total Amount',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'EGP ${foodie.total.toStringAsFixed(2)}',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                ],
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  context.go('/checkout');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accentColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Checkout',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.arrow_forward, size: 20),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Sticky Checkout Bar (مش مستخدم دلوقتي)
 class _StickyCheckoutBar extends StatelessWidget {
   final FoodieState foodie;
   final bool isDark;

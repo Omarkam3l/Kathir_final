@@ -40,7 +40,7 @@ class FoodieState extends ChangeNotifier {
   bool _isLoadingCart = false;
   
   // Centralized Rush Hour cache - refreshed once for all items
-  Map<String, RushHourInfo> _rushHourCache = {};
+  final Map<String, RushHourInfo> _rushHourCache = {};
 
   // ... (existing favourites logic)
 

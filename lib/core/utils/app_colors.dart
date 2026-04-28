@@ -1,223 +1,161 @@
-// import 'package:flutter/material.dart';
-
-// /// Centralized color constants for the entire application
-// class AppColors {
-//   // Primary Color Palette (RED-based as per design)
-//   static const Color richNavy = Color(0xFF08314A);
-//   static const Color deepTeal = Color(0xFF005F7B);
-//   static const Color tealAqua = Color(0xFF00A0A9);
-//   static const Color aquaCyan = Color(0xFF04E4D8);
-//   static const Color mintAqua = Color(0xFF7FEDD9);
-
-//   // Theme Specific Colors — RED primary and gradient (dark red / soft red)
-//   static const Color primary = Color(0xFF2E7D32);
-//   static const Color primaryDark = Color(0xFF1B5E20);
-//   static const Color primarySoft = Color(0xFF66BB6A);
-//   static const Color primaryGreen = primary;
-
-//   // Base Colors
-//   static const Color white = Color(0xFFFFFFFF);
-//   static const Color offWhite = Color(0xFFFAF9F6);
-//   static const Color black = Color(0xFF000000);
-//   static const Color transparent = Colors.transparent;
-
-//   // Background Colors
-//   static const Color backgroundLight = Color(0xFFF0F0F0);
-//   static const Color backgroundDark = Color(0xFF121212);
-//   static const Color surfaceDark = Color(0xFF1E1E1E);
-//   static const Color surfaceLight = white;
-
-//   // Input Fields
-//   static const Color inputFillLight = Color(0xFFF3F1EB); // Creamy
-//   static const Color inputFillDark = Color(0xFF2C2C2C);
-//   static const Color inputFillDarker = Color(0xFF1E1E1E);
-
-//   // Semantic Colors (aligned with RED primary)
-//   static const Color primaryAccent = primary;
-//   static const Color secondaryAccent = primaryDark;
-//   static const Color darkText = richNavy;
-//   static const Color lightText = white;
-//   static const Color lightBackground = backgroundLight;
-
-//   // Status Colors
-//   static const Color error = Color(0xFFE53935); // Red 600
-//   static const Color success = Color(0xFF43A047); // Green 600
-//   static const Color warning = Color(0xFFFB8C00); // Orange 600
-//   static const Color info = Color(0xFF1E88E5); // Blue 600
-//   static const Color rating = Colors.amber;
-//   static const Color grey = Colors.grey;
-//   static const Color red = Color(0xFFE53935);
-//   static const Color orange = Color(0xFFFB8C00);
-//   static const Color green = Color(0xFF43A047);
-
-//   // Search Background
-//   static const Color searchBackground = Color(0xFFF3F4F6);
-
-//   // Brand Color (unified with primary red)
-//   static const Color brandRed = primary;
-
-//   // Divider
-//   static const Color dividerDark = Colors.white12;
-//   static const Color dividerLight = Colors.black12;
-// }
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 
-/// Centralized color constants for the entire application
-/// Based on Kathir design system with vibrant lime green primary
+/// Centralized color constants — Light background + Blue primary
 class AppColors {
-  // Primary Color Palette - Kathir Green Theme
-  static const Color primary = Color(0xFF3ce858);        // Vibrant lime green
-  static const Color primaryDark = Color(0xFF0FB847);    // Darker green for pressed states
-  static const Color primarySoft = Color(0xFF7FEDD9);    // Soft green for highlights
+  // ── Primary — Blue ────────────────────────────────────────────
+  /// ⭐ PRIMARY COLOR — Change this to change buttons, icons, selected states
+  static const Color primary     = Color(0xFF1B70DF); // ← Change this color
+  static const Color primaryDark = Color(0xFFFFF8F0); // Deeper blue
+  static const Color primarySoft = Color(0xFF7AAAF9); // Light blue
+
+  // Legacy aliases
   static const Color primaryGreen = primary;
+  static const Color richNavy     = Color(0xFF1A3A6B);
+  static const Color deepTeal     = Color(0xFF1E4D8C);
+  static const Color tealAqua     = Color(0xFF2563EB);
+  static const Color aquaCyan     = Color(0xFF3B7BF6);
+  static const Color mintAqua     = Color(0xFFBFD7FF);
 
-  // Legacy colors (kept for backward compatibility)
-  static const Color richNavy = Color(0xFF08314A);
-  static const Color deepTeal = Color(0xFF005F7B);
-  static const Color tealAqua = Color(0xFF00A0A9);
-  static const Color aquaCyan = Color(0xFF04E4D8);
-  static const Color mintAqua = Color(0xFF7FEDD9);
-
-  // Base Colors
-  static const Color white = Color(0xFFFFFFFF);
-  static const Color offWhite = Color(0xFFF6F8F6);       // Kathir off-white
-  static const Color black = Color(0xFF000000);
+  // ── Base ─────────────────────────────────────────────────────
+  static const Color white       = Color(0xFFFFFFFF);
+  static const Color offWhite    = Color(0xFFF4F6FA);
+  static const Color black       = Color(0xFF000000);
   static const Color transparent = Colors.transparent;
 
-  // Background Colors - Kathir Theme
-  static const Color backgroundLight = Color(0xFFF6F8F6); // Kathir light background
-  static const Color backgroundDark = Color(0xFF102216);  // Kathir dark background
-  static const Color surfaceLight = white;
-  static const Color surfaceDark = Color(0xFF1A2C20);     // Kathir dark surface
+  // ── Backgrounds — Light ───────────────────────────────────────
+  static const Color backgroundLight = Color(0xFFF0F4FF); // Very light blue-white
+  static const Color backgroundDark  = Color(0xFFE8EEFF); // Slightly deeper
+  static const Color surfaceLight    = Color(0xFFFFFFFF);
+  static const Color surfaceDark     = Color(0xFFEDF1FF);
 
-  // Card Colors
-  static const Color cardLight = white;
-  static const Color cardDark = Color(0xFF1A2C20);
+  // ── Cards ────────────────────────────────────────────────────
+  static const Color cardLight = Color(0xFFFFFFFF);
+  static const Color cardDark  = Color(0xFFEDF1FF);
 
-  // Text Colors - Kathir Theme
-  static const Color textMain = Color(0xFF0D1B12);        // Main text in light mode
-  static const Color textMuted = Color(0xFF4C9A66);       // Muted/secondary text
-  static const Color textMutedDark = Color(0xFF8ABFA0);   // Muted text in dark mode
+  // ── Glass / Nav ──────────────────────────────────────────────
+  ///  GLASS CARD COLORS — Ultra transparent glassmorphism effect (شفاف تماماً)
+  static final Color glassCardBg = Colors.white.withValues(alpha: 0.15); // ← خلفية شفافة جداً (كان 0.10)
+  static final Color glassCardBorder = Colors.white.withValues(alpha: 0.20); // ← بوردر خفيف (كان 0.10)
+  static final Color glassCardBgLight = Colors.white.withValues(alpha: 0.10); // ← خلفية أفتح شوية
+  static final Color glassCardBgDark = Colors.white.withValues(alpha: 0.10); // ← خلفية أغمق شوية
+  
+  // Legacy glass colors (kept for compatibility)
+  static const Color glassNavBg     = Color(0xFFFFFFFF);
+  static const Color glassNavBorder = Color(0xFFDDE5FF);
 
-  // Input Fields
-  static const Color inputFillLight = Color(0xFFFFFFFF);
-  static const Color inputFillDark = Color(0xFF1A2E22);
-  static const Color inputFillDarker = Color(0xFF1E1E1E);
-  static const Color inputBorderLight = Color(0xFFCFE7D7);
-  static const Color inputBorderDark = Color(0xFF2A4535);
+  // ── Text ─────────────────────────────────────────────────────
+  static const Color textMain      = Color(0xFF0F1B3D); // Deep navy text
+  static const Color textMuted     = Color(0xFF6B7A99); // Muted blue-gray
+  static const Color textMutedDark = Color(0xFF9AAAC4);
 
-  // Semantic Colors
-  static const Color primaryAccent = primary;
+  // ── Input Fields ─────────────────────────────────────────────
+  static const Color inputFillLight   = Color(0xFFFFFFFF);
+  static const Color inputFillDark    = Color(0xFFEDF1FF);
+  static const Color inputFillDarker  = Color(0xFFE0E8FF);
+  static const Color inputBorderLight = Color(0xFFD0DCFF);
+  static const Color inputBorderDark  = Color(0xFFB8CAFF);
+
+  // ── Semantic ─────────────────────────────────────────────────
+  static const Color primaryAccent   = primary;
   static const Color secondaryAccent = primaryDark;
-  static const Color darkText = textMain;
-  static const Color lightText = white;
+  static const Color darkText        = textMain;
+  static const Color lightText       = white;
   static const Color lightBackground = backgroundLight;
 
-  // Status Colors
-  static const Color error = Color(0xFFE53935);           // Red 600
-  static const Color success = Color(0xFF43A047);         // Green 600
-  static const Color warning = Color(0xFFFB8C00);         // Orange 600
-  static const Color info = Color(0xFF1E88E5);            // Blue 600
-  static const Color rating = Colors.amber;
-  static const Color grey = Colors.grey;
+  // ── Status ───────────────────────────────────────────────────
+  static const Color error   = Color(0xFFEF4444);
+  static const Color success = Color(0xFF22C55E);
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color info    = Color(0xFF3B7BF6);
+  static const Color rating  = Color(0xFFF59E0B);
+  static const Color grey    = Color(0xFF9AAAC4);
 
-  // Search Background
-  static const Color searchBackground = Color(0xFFF3F4F6);
+  // ── Misc ─────────────────────────────────────────────────────
+  static const Color searchBackground = Color(0xFFF0F4FF);
+  static const Color brandGreen       = primary;
+  static const Color brandRed         = primary;
+  static const Color dividerDark      = Color(0x1A3B7BF6);
+  static const Color dividerLight     = Color(0x1A3B7BF6);
 
-  // Brand Color
-  static const Color brandGreen = primary;
-  static const Color brandRed = primary; // Legacy alias
-
-  // Divider
-  static const Color dividerDark = Colors.white12;
-  static const Color dividerLight = Colors.black12;
-
-  // ========================================
-  // GRADIENT DEFINITIONS
-  // ========================================
+  // ── Gradients ────────────────────────────────────────────────
+  /// Base gradient colors (main background)
+  static const Color bgBaseColor1 = Color(0xFFFFFFFF); 
+  static const Color bgBaseColor2 = Color(0xFFFFFFFF);
   
-  /// Primary gradient (vibrant lime to darker green)
-  static const LinearGradient primaryGradient = LinearGradient(
+  /// Overlay 1 colors (radial glow effect)
+  static const Color bgOverlay1Color = Color(0xFFFFFFFF); 
+  static const double bgOverlay1Opacity = 0.5; 
+  
+  /// Overlay 2 colors (random scattered effect)
+  static const Color bgOverlay2Color1 = Color(0xFFFFFFFF); 
+  static const Color bgOverlay2Color2 = Color(0xFFFFFFFF);  
+  static const double bgOverlay2Opacity1 = 0.15; // ← Light spots strength
+  static const double bgOverlay2Opacity2 = 0.1; // ← Dark spots strength
+
+  static const LinearGradient backgroundGradient = LinearGradient(
     colors: [
-      Color(0xFF13EC5B),  // primary
-      Color(0xFF007354),  // primaryDark
+      Color(0xFFade8f4), // ← TOP-LEFT color (change this)
+      Color(0xFFcaf0f8), // ← BOTTOM-RIGHT color (change this)
     ],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-  
-  /// Vertical primary gradient
+
+  /// ⭐⭐⭐ COMPLEX BACKGROUND BUILDER — Simple 2-color gradient
+  /// Returns a simple gradient background with 2 colors only
+  static Widget buildComplexBackground() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color(0xFFCCECF6),    
+            Color(0xFFFFFFFF),   
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+    );
+  }
+
+  static const LinearGradient primaryGradient = LinearGradient(
+    colors: [Color(0xFF4B2E2B), Color(0xFFC08552)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
   static const LinearGradient primaryGradientVertical = LinearGradient(
-    colors: [
-      Color(0xFF13EC5B),  // primary
-      Color(0xFF007354),  // primaryDark
-    ],
+    colors: [Color(0xFF3B7BF6), Color(0xFF1A5FD4)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
-  
-  /// Horizontal primary gradient
+
   static const LinearGradient primaryGradientHorizontal = LinearGradient(
-    colors: [
-      Color(0xFF13EC5B),  // primary
-      Color(0xFF0FB847),  // primaryDark
-    ],
+    colors: [Color(0xFF7AAAF9), Color(0xFF3B7BF6)],
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
   );
-  
-  /// Soft primary gradient (vibrant lime to soft mint)
+
   static const LinearGradient primaryGradientSoft = LinearGradient(
-    colors: [
-      Color(0xFF13EC5B),  // primary
-      Color(0xFF7FEDD9),  // primarySoft
-    ],
+    colors: [Color(0xFF3B7BF6), Color(0xFF7AAAF9)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-  
-  /// Subtle gradient for backgrounds
-  static const LinearGradient backgroundGradient = LinearGradient(
-    colors: [
-      Color(0xFFF6F8F6),  // backgroundLight
-      Color(0xFFFFFFFF),  // white
-    ],
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-  );
-  
-  /// Dark mode gradient
+
   static const LinearGradient darkGradient = LinearGradient(
-    colors: [
-      Color(0xFF102216),  // backgroundDark
-      Color(0xFF1A2C20),  // surfaceDark
-    ],
+    colors: [Color(0xFF1A3A6B), Color(0xFF1E4D8C)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
-  
-  /// Success gradient (for completed actions)
+
   static const LinearGradient successGradient = LinearGradient(
-    colors: [
-      Color(0xFF43A047),  // success
-      Color(0xFF2E7D32),  // darker green
-    ],
+    colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-  
-  /// Warning gradient
+
   static const LinearGradient warningGradient = LinearGradient(
-    colors: [
-      Color(0xFFFB8C00),  // warning
-      Color(0xFFF57C00),  // darker orange
-    ],
+    colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

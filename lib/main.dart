@@ -41,7 +41,7 @@ void main() async {
       } catch (e) {
         debugPrint('Error initializing Stripe: $e');
       }
-    } else {
+    } else {  
       debugPrint('CRITICAL: STRIPE_PUBLISHABLE_KEY not found in .env');
     }
   } else {
@@ -79,8 +79,15 @@ class MyApp extends StatelessWidget {
 
           final lightBase = ThemeData.light(useMaterial3: true);
           final lightTheme = lightBase.copyWith(
+            scaffoldBackgroundColor: AppColors.backgroundLight,
             colorScheme: lightBase.colorScheme.copyWith(
               primary: AppColors.primary,
+              surface: AppColors.surfaceLight,
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: AppColors.backgroundLight,
+              foregroundColor: AppColors.textMain,
+              elevation: 0,
             ),
           );
 

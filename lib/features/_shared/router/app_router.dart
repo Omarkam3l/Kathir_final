@@ -296,9 +296,15 @@ class AppRouter {
           return '/home';
         }
         
-        // User trying to access NGO routes
-        if (role == 'user' && (location.startsWith('/ngo') || location == '/ngo-dashboard')) {
-          return '/home';
+        // User trying to access NGO dashboard routes
+        // Allow: /ngos/all (list), /ngo/:id (profile view - single segment after /ngo/)
+        // Block: all /ngo/... dashboard routes (home, meals, map, profile, orders, cart, etc.)
+        if (role == 'user') {
+          final isNgoDashboardRoute = 
+            location == '/ngo-dashboard' ||
+            location == '/ngo-notifications' ||
+            (location.startsWith('/ngo/') && _isNgoDashboardPath(location));
+          if (isNgoDashboardRoute) return '/home';
         }
         
         // Admin trying to access other dashboards
@@ -696,6 +702,19 @@ class AppRouter {
       ),
     ),
   );
+
+  /// Returns true if the /ngo/... path is an NGO dashboard route (not a user-viewable route)
+  static bool _isNgoDashboardPath(String location) {
+    // /ngo/:id is a single-segment path for user-viewable NGO profile
+    // Everything else under /ngo/ is a dashboard route
+    const dashboardSegments = [
+      'home', 'meals', 'map', 'profile', 'orders', 'order',
+      'cart', 'checkout', 'select-location', 'order-summary',
+      'chats', 'chat', 'meal', 'restaurant', 'notifications',
+    ];
+    final segment = location.replaceFirst('/ngo/', '').split('/').first;
+    return dashboardSegments.contains(segment);
+  }
 
   static GoRouter of(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context, listen: true);

@@ -18,12 +18,9 @@ class HomeHeaderWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
-    final card = isDark ? AppColors.surfaceDark : AppColors.white;
-    final textMain = isDark ? AppColors.white : AppColors.darkText;
-    const textMuted = AppColors.grey;
-    final border = isDark ? AppColors.dividerDark : AppColors.dividerLight;
+    final card = AppColors.glassCardBg; // ← استخدام اللون من AppColors
+    const textMain = Color(0xFF0F1B3D);
+    final border = AppColors.glassCardBorder; // ← استخدام اللون من AppColors
 
     final auth = context.watch<AuthProvider>();
     final name = auth.user?.name ?? 'Guest';
@@ -31,7 +28,7 @@ class HomeHeaderWidget extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-      decoration: BoxDecoration(color: bg),
+      decoration: const BoxDecoration(color: Colors.transparent),
       child: Row(
         children: [
           // Avatar + online dot
@@ -64,7 +61,7 @@ class HomeHeaderWidget extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.primary,
                     shape: BoxShape.circle,
-                    border: Border.all(color: bg, width: 2),
+                    border: Border.all(color: Colors.transparent, width: 2),
                   ),
                 ),
               ),
@@ -80,15 +77,15 @@ class HomeHeaderWidget extends StatelessWidget {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: textMuted,
+                    color: const Color(0xFF6B7A99),
                   ),
                 ),
                 Text(
                   name,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: textMain,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF0F1B3D),
                     height: 1.2,
                   ),
                   maxLines: 1,
@@ -107,7 +104,7 @@ class HomeHeaderWidget extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
+                  color: AppColors.primary,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
@@ -152,7 +149,7 @@ class HomeHeaderWidget extends StatelessWidget {
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    Center(
+                    const Center(
                       child: Icon(
                         Icons.notifications_outlined,
                         size: 22,

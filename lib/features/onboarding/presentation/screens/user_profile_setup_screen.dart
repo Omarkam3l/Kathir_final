@@ -340,7 +340,7 @@ class _UserProfileSetupScreenState extends State<UserProfileSetupScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  gradient: AppColors.primaryGradient,
+                                  color: AppColors.primary,
                                   shape: BoxShape.circle,
                                   border: Border.all(color: Colors.white, width: 3),
                                 ),
@@ -470,7 +470,7 @@ class _UserProfileSetupScreenState extends State<UserProfileSetupScreen> {
                     width: double.infinity,
                     height: 56,
                     decoration: BoxDecoration(
-                      gradient: AppColors.primaryGradient,
+                      color: AppColors.primary,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(

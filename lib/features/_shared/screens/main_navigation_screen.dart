@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:kathir_final/features/user_home/presentation/screens/home_screen.dart';
 import 'package:kathir_final/features/user_home/presentation/screens/favorites_screen_new.dart';
-import 'package:kathir_final/features/user_home/presentation/screens/all_meals_screen.dart';
 import 'package:kathir_final/features/user_home/presentation/viewmodels/favorites_viewmodel.dart';
 import 'package:kathir_final/features/user_home/presentation/viewmodels/home_viewmodel.dart';
 import 'package:kathir_final/features/cart/presentation/screens/cart_screen.dart';
@@ -11,13 +10,11 @@ import 'package:kathir_final/features/profile/presentation/screens/user_profile_
 import 'package:kathir_final/features/_shared/widgets/home_bottom_nav_bar.dart';
 import 'package:kathir_final/features/profile/presentation/providers/foodie_state.dart';
 import 'package:kathir_final/di/global_injection/app_locator.dart';
+import 'package:kathir_final/core/utils/app_colors.dart';
 
-/// Main shell: Home, Favorites, Cart, Orders, Profile, Meals.
-/// Matches the Kathir user_home_page bottom nav design.
 class MainNavigationScreen extends StatefulWidget {
   final int initialIndex;
-
-  const MainNavigationScreen({super.key, this.initialIndex = 0});
+  const MainNavigationScreen({super.key, this.initialIndex = 2}); // Home = index 2
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
@@ -29,9 +26,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex.clamp(0, 5);
-    
-    // Load cart from database when app starts
+    _currentIndex = widget.initialIndex.clamp(0, 4);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<FoodieState>().loadCart();
     });
@@ -40,43 +35,32 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   void didUpdateWidget(MainNavigationScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // Always sync when initialIndex changes (e.g. from go_router)
     if (widget.initialIndex != oldWidget.initialIndex) {
-      setState(() {
-        _currentIndex = widget.initialIndex.clamp(0, 5);
-      });
+      setState(() => _currentIndex = widget.initialIndex.clamp(0, 4));
     }
   }
 
+  // Keep pages alive to avoid rebuilding on tab switch
+  final Map<int, Widget> _pageCache = {};
+
   Widget _buildPage(int index) {
+    if (!_pageCache.containsKey(index)) {
+      _pageCache[index] = _createPage(index);
+    }
+    return _pageCache[index]!;
+  }
+
+  Widget _createPage(int index) {
     switch (index) {
-      case 0:
-        return const HomeScreen();
-      case 1:
-        return ChangeNotifierProvider(
+      case 0: return ChangeNotifierProvider(
           create: (_) => FavoritesViewModel()..loadFavorites(),
-          child: const FavoritesScreenNew(),
-        );
-      case 2:
-        return const CartScreen();
-      case 3:
-        return const MyOrdersScreenNew();
-      case 4:
-        return const UserProfileScreenNew();
-      case 5:
-        // Meals screen - load meals from HomeViewModel
-        return Consumer<HomeViewModel>(
-          builder: (context, viewModel, _) {
-            // Ensure meals are loaded
-            if (viewModel.meals.isEmpty && viewModel.status != HomeStatus.loading) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                viewModel.loadIfNeeded();
-              });
-            }
-            return AllMealsScreen(meals: viewModel.meals);
-          },
-        );
-      default:
-        return const HomeScreen();
+          child: const FavoritesScreenNew());
+      case 1: return const CartScreen();
+      case 2: return const HomeScreen();   // ← Home in middle, default
+      case 3: return const MyOrdersScreenNew();
+      case 4: return const UserProfileScreenNew();
+      default: return const HomeScreen();
     }
   }
 
@@ -85,10 +69,33 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     return ChangeNotifierProvider.value(
       value: AppLocator.I.get<HomeViewModel>(),
       child: Scaffold(
-        body: _buildPage(_currentIndex),
-        bottomNavigationBar: HomeBottomNavBar(
-          currentIndex: _currentIndex,
-          // Don't pass onTap - let the nav bar use context.go() for proper URL updates
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          children: [
+            // ⭐⭐⭐ COMPLEX MULTI-LAYER BACKGROUND
+            Positioned.fill(
+              child: AppColors.buildComplexBackground(),
+            ),
+            
+            // All pages — IndexedStack keeps them alive
+            Positioned.fill(
+              child: IndexedStack(
+                index: _currentIndex,
+                children: List.generate(5, (i) => _buildPage(i)),
+              ),
+            ),
+            
+            // Floating nav bar
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: HomeBottomNavBar(
+                currentIndex: _currentIndex,
+                onTap: (i) => setState(() => _currentIndex = i),
+              ),
+            ),
+          ],
         ),
       ),
     );

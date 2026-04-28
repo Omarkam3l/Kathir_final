@@ -1,9 +1,10 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
 
-/// Bottom nav matching user home page design: Favorites, Meals, [Home - elevated], Orders, Profile.
-class HomeBottomNavBar extends StatelessWidget {
+/// Animated glassmorphism bottom nav bar
+/// The selected circle slides from one icon to another
+class HomeBottomNavBar extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int>? onTap;
 
@@ -14,167 +15,150 @@ class HomeBottomNavBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? const Color(0xFF1A2E22) : Colors.white;
-    final borderColor = isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB);
+  State<HomeBottomNavBar> createState() => _HomeBottomNavBarState();
+}
 
-    return Container(
-      decoration: BoxDecoration(
-        color: bgColor,
-        border: Border(top: BorderSide(color: borderColor)),
-      ),
-      child: SafeArea(
-        child: Container(
-          height: 70,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _NavItem(
-                icon: Icons.favorite_border,
-                activeIcon: Icons.favorite,
-                label: 'Favorites',
-                selected: currentIndex == 1,
-                onTap: () {
-                  if (onTap != null) {
-                    onTap!(1);
-                  } else {
-                    context.go('/favorites');
-                  }
-                },
-                filled: false,
+class _HomeBottomNavBarState extends State<HomeBottomNavBar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _slideAnim;
+
+  // 5 items → positions 0..4
+  static const int _itemCount = 5;
+  late double _fromIndex;
+  late double _toIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _fromIndex = widget.currentIndex.toDouble();
+    _toIndex   = widget.currentIndex.toDouble();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+
+    _slideAnim = Tween<double>(begin: _fromIndex, end: _toIndex)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic));
+  }
+
+  @override
+  void didUpdateWidget(HomeBottomNavBar old) {
+    super.didUpdateWidget(old);
+    if (old.currentIndex != widget.currentIndex) {
+      _fromIndex = _slideAnim.value; // start from current animated position
+      _toIndex   = widget.currentIndex.toDouble();
+
+      _slideAnim = Tween<double>(begin: _fromIndex, end: _toIndex)
+          .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic));
+
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 8, 16, bottomPadding > 0 ? bottomPadding : 12),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(36),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            height: 62,
+            decoration: BoxDecoration(
+              color: AppColors.glassCardBg, // ← استخدام اللون من AppColors
+              borderRadius: BorderRadius.circular(36),
+              border: Border.all(
+                color: AppColors.glassCardBorder, // ← استخدام اللون من AppColors
+                width: 1,
               ),
-              _NavItem(
-                icon: Icons.restaurant_menu_outlined,
-                activeIcon: Icons.restaurant_menu,
-                label: 'Meals',
-                selected: currentIndex == 5,
-                onTap: () {
-                  if (onTap != null) {
-                    onTap!(5);
-                  } else {
-                    context.go('/meals/all');
-                  }
-                },
-                filled: false,
-              ),
-              // Elevated Home Button
-              Transform.translate(
-                offset: const Offset(0, -24),
-                child: GestureDetector(
-                  onTap: () {
-                    if (onTap != null) {
-                      onTap!(0);
-                    } else {
-                      context.go('/home');
-                    }
-                  },
-                  child: Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: currentIndex == 0 ? AppColors.primary : AppColors.darkText,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: (currentIndex == 0 ? AppColors.primary : AppColors.darkText)
-                              .withValues(alpha: 0.4),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05), // ← ظل خفيف جداً
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final itemWidth = constraints.maxWidth / _itemCount;
+
+                return AnimatedBuilder(
+                  animation: _slideAnim,
+                  builder: (context, _) {
+                    // Circle x position (center of animated slot)
+                    final circleX = itemWidth * _slideAnim.value + itemWidth / 2;
+
+                    return Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // ── Sliding circle ──────────────────────────────
+                        Positioned(
+                          left: circleX - 23, // 23 = half of 46
+                          child: Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withValues(alpha: 0.35),
+                                  blurRadius: 12,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // ── Icons row ────────────────────────────────────
+                        Row(
+                          children: [
+                            _buildItem(0, Icons.favorite_border_rounded, Icons.favorite_rounded,      itemWidth),
+                            _buildItem(1, Icons.shopping_cart_outlined,  Icons.shopping_cart_rounded, itemWidth),
+                            _buildItem(2, Icons.home_outlined,           Icons.home_rounded,          itemWidth),
+                            _buildItem(3, Icons.receipt_long_outlined,   Icons.receipt_long_rounded,  itemWidth),
+                            _buildItem(4, Icons.person_outline_rounded,  Icons.person_rounded,        itemWidth),
+                          ],
                         ),
                       ],
-                    ),
-                    child: const Icon(
-                      Icons.home,
-                      size: 28,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-              _NavItem(
-                icon: Icons.receipt_long_outlined,
-                activeIcon: Icons.receipt_long,
-                label: 'Orders',
-                selected: currentIndex == 3,
-                onTap: () {
-                  if (onTap != null) {
-                    onTap!(3);
-                  } else {
-                    context.go('/my-orders');
-                  }
-                },
-                filled: false,
-              ),
-              _NavItem(
-                icon: Icons.person_outline,
-                activeIcon: Icons.person,
-                label: 'Profile',
-                selected: currentIndex == 4,
-                onTap: () {
-                  if (onTap != null) {
-                    onTap!(4);
-                  } else {
-                    context.go('/profile');
-                  }
-                },
-                filled: false,
-              ),
-            ],
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ),
       ),
     );
   }
-}
 
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final IconData? activeIcon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  final bool filled;
-
-  const _NavItem({
-    required this.icon,
-    this.activeIcon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-    required this.filled,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = selected
-        ? AppColors.primaryGreen
-        : const Color(0xFF9CA3AF);
-
+  Widget _buildItem(int idx, IconData icon, IconData activeIcon, double width) {
+    final selected = widget.currentIndex == idx;
     return GestureDetector(
-      onTap: onTap,
+      onTap: () => widget.onTap?.call(idx),
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              selected && activeIcon != null ? activeIcon! : icon,
-              size: 24,
-              color: color,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: selected ? FontWeight.bold : FontWeight.w500,
-                color: color,
-              ),
-            ),
-          ],
+      child: SizedBox(
+        width: width,
+        height: 62,
+        child: Center(
+          child: Icon(
+            selected ? activeIcon : icon,
+            size: 22,
+            color: selected ? Colors.white : const Color.fromARGB(255, 41, 39, 39),
+          ),
         ),
       ),
     );

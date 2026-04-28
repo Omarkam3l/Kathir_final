@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/app_colors.dart';
@@ -23,70 +24,74 @@ class HomeBottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentRoute = _getCurrentRoute(context);
+  final currentRoute = _getCurrentRoute(context);
 
-    return Container(
-      height: AppDimensions.bottomNavHeight,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 10,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(22),
+  return ClipRRect(
+    borderRadius: const BorderRadius.vertical(
+      top: Radius.circular(22),
+    ),
+    child: BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+      child: Container(
+        height: AppDimensions.bottomNavHeight,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 10,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, -4),
-          )
-        ],
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.2),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(22),
+          ),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.2), // optional شيك
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildNavItem(
+              context: context,
+              icon: Icons.favorite_border,
+              activeIcon: Icons.favorite,
+              isActive: currentRoute == 'favorites',
+              onTap: () => context.go('/favorites'),
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.restaurant_menu_outlined,
+              activeIcon: Icons.restaurant_menu,
+              isActive: currentRoute == 'meals',
+              onTap: () => context.go('/meals/all'),
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.home_outlined,
+              activeIcon: Icons.home,
+              isActive: currentRoute == 'home',
+              onTap: () => context.go('/home'),
+              isCenter: true,
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.receipt_long_outlined,
+              activeIcon: Icons.receipt_long,
+              isActive: currentRoute == 'orders',
+              onTap: () => context.go('/my-orders'),
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.person_outline,
+              activeIcon: Icons.person,
+              isActive: currentRoute == 'profile',
+              onTap: () => context.go('/profile'),
+            ),
+          ],
+        ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(
-            context: context,
-            icon: Icons.favorite_border,
-            activeIcon: Icons.favorite,
-            isActive: currentRoute == 'favorites',
-            onTap: () => context.go('/favorites'),
-          ),
-          _buildNavItem(
-            context: context,
-            icon: Icons.restaurant_menu_outlined,
-            activeIcon: Icons.restaurant_menu,
-            isActive: currentRoute == 'meals',
-            onTap: () => context.go('/meals/all'),
-          ),
-          _buildNavItem(
-            context: context,
-            icon: Icons.home_outlined,
-            activeIcon: Icons.home,
-            isActive: currentRoute == 'home',
-            onTap: () => context.go('/home'),
-            isCenter: true,
-          ),
-          _buildNavItem(
-            context: context,
-            icon: Icons.receipt_long_outlined,
-            activeIcon: Icons.receipt_long,
-            isActive: currentRoute == 'orders',
-            onTap: () => context.go('/my-orders'),
-          ),
-          _buildNavItem(
-            context: context,
-            icon: Icons.person_outline,
-            activeIcon: Icons.person,
-            isActive: currentRoute == 'profile',
-            onTap: () => context.go('/profile'),
-          ),
-        ],
-      ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildNavItem({
     required BuildContext context,

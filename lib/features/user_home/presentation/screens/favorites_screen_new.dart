@@ -6,6 +6,7 @@ import '../../../../core/utils/app_colors.dart';
 import '../../../../core/utils/responsive_utils.dart';
 import '../../../profile/presentation/providers/foodie_state.dart';
 import '../viewmodels/favorites_viewmodel.dart';
+import '../../../_shared/widgets/common_app_bar.dart';
 
 class FavoritesScreenNew extends StatefulWidget {
   const FavoritesScreenNew({super.key});
@@ -41,8 +42,8 @@ class _FavoritesScreenNewState extends State<FavoritesScreenNew> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top App Bar
-            _buildAppBar(context, textMain),
+            // Common App Bar
+            const CommonAppBar(title: 'My Favorites'),
 
             // Segmented Buttons
             _buildSegmentedButtons(isDark, textSub),

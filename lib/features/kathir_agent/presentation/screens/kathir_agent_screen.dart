@@ -367,7 +367,7 @@ class _KathirAgentScreenState extends State<KathirAgentScreen> {
                 const SizedBox(width: 12),
                 Container(
                   decoration: const BoxDecoration(
-                    gradient: AppColors.primaryGradient,
+                    color: AppColors.primary,
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(

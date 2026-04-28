@@ -272,7 +272,7 @@ class _UserCategorySelectionScreenState extends State<UserCategorySelectionScree
                     width: double.infinity,
                     height: 56,
                     decoration: BoxDecoration(
-                      gradient: AppColors.primaryGradient,
+                      color: AppColors.primary,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(

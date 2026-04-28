@@ -7,6 +7,7 @@ import '../../../authentication/presentation/blocs/auth_provider.dart';
 import '../../../../core/utils/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'addresses_screen.dart';
+import '../../../_shared/widgets/common_app_bar.dart';
 
 class UserProfileScreenNew extends StatefulWidget {
   static const routeName = '/user-profile-new';
@@ -180,8 +181,8 @@ class _UserProfileScreenNewState extends State<UserProfileScreenNew> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top App Bar
-            _buildAppBar(context),
+            // Common App Bar
+            const CommonAppBar(title: 'My Profile'),
             
             // Scrollable Content
             Expanded(
