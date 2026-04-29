@@ -258,7 +258,7 @@ class _RestaurantHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.restaurant, color: AppColors.primaryGreen, size: 20),
+              const Icon(Icons.storefront, color: AppColors.primaryGreen, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(

@@ -107,7 +107,7 @@ class HomeHeaderWidget extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
+                  color: Colors.white,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
@@ -117,11 +117,29 @@ class HomeHeaderWidget extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: const Center(
-                  child: Icon(
-                    Icons.smart_toy,
-                    size: 22,
-                    color: Colors.white,
+                child: ClipOval(
+                  child: Image.asset(
+                    'lib/resources/assets/images/robot_avatar.png',
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                    filterQuality: FilterQuality.high,
+                    isAntiAlias: true,
+                    errorBuilder: (context, error, stackTrace) {
+                      // Fallback to gradient with icon if image not found
+                      return Container(
+                        decoration: const BoxDecoration(
+                          gradient: AppColors.primaryGradient,
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.smart_toy,
+                            size: 22,
+                            color: Colors.white,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),

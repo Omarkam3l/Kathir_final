@@ -140,13 +140,54 @@ class _KathirAgentScreenState extends State<KathirAgentScreen> {
                 }
               },
             ),
-            title: Text(
-              'Kathir AI Assistant',
-              style: GoogleFonts.plusJakartaSans(
-                color: Colors.black,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
+            title: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.2),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'lib/resources/assets/images/robot_avatar.png',
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        // Fallback to emoji if image not found
+                        return Container(
+                          decoration: const BoxDecoration(
+                            gradient: AppColors.primaryGradient,
+                          ),
+                          child: const Center(
+                            child: Text(
+                              '🤖',
+                              style: TextStyle(fontSize: 18),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Kathir AI Assistant',
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Colors.black,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
             actions: [
               IconButton(
@@ -381,8 +422,13 @@ class _KathirAgentScreenState extends State<KathirAgentScreen> {
           child: ListView.builder(
             controller: _scrollController,
             padding: const EdgeInsets.all(16),
-            itemCount: viewModel.messages.length,
+            itemCount: viewModel.messages.length + (viewModel.isSending ? 1 : 0),
             itemBuilder: (context, index) {
+              // Show typing indicator as last item when sending
+              if (index == viewModel.messages.length && viewModel.isSending) {
+                return _buildTypingIndicator();
+              }
+              
               final message = viewModel.messages[index];
               return _buildMessageBubble(message);
             },
@@ -451,6 +497,96 @@ class _KathirAgentScreenState extends State<KathirAgentScreen> {
       ],
     );
   }
+  
+  Widget _buildTypingIndicator() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Robot Avatar
+        Container(
+          width: 36,
+          height: 36,
+          margin: const EdgeInsets.only(right: 8, top: 4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ClipOval(
+            child: Image.asset(
+              'lib/resources/assets/images/kathir_inside_chat_icon.jpeg',
+              width: 36,
+              height: 36,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                // Fallback to gradient circle with robot emoji if image not found
+                return Container(
+                  decoration: const BoxDecoration(
+                    gradient: AppColors.primaryGradient,
+                  ),
+                  child: const Center(
+                    child: Text(
+                      '🤖',
+                      style: TextStyle(fontSize: 20),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        // Typing indicator
+        Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(4),
+              topRight: Radius.circular(16),
+              bottomLeft: Radius.circular(16),
+              bottomRight: Radius.circular(16),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Kathir is thinking...',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _buildMessageBubble(AgentMessage message) {
     final isUser = message.isUser;
@@ -459,132 +595,224 @@ class _KathirAgentScreenState extends State<KathirAgentScreen> {
     return Column(
       crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
-        // Text message
-        Align(
-          alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.75,
-            ),
-            decoration: BoxDecoration(
-              color: isUser ? AppColors.primary : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+        // AI Avatar + Message
+        if (!isUser)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Robot Avatar
+              Container(
+                width: 36,
+                height: 36,
+                margin: const EdgeInsets.only(right: 8, top: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Text(
-              message.content,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 14,
-                color: isUser ? Colors.white : Colors.black87,
+                child: ClipOval(
+                  child: Image.asset(
+                    'lib/resources/assets/images/kathir_inside_chat_icon.jpeg',
+                    width: 36,
+                    height: 36,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      // Fallback to gradient circle with robot emoji if image not found
+                      return Container(
+                        decoration: const BoxDecoration(
+                          gradient: AppColors.primaryGradient,
+                        ),
+                        child: const Center(
+                          child: Text(
+                            '🤖',
+                            style: TextStyle(fontSize: 20),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              // Message bubble
+              Flexible(
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(4),
+                      topRight: Radius.circular(16),
+                      bottomLeft: Radius.circular(16),
+                      bottomRight: Radius.circular(16),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    message.content,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          )
+        else
+          // User message (no avatar)
+          Align(
+            alignment: Alignment.centerRight,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.75,
+              ),
+              decoration: BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                  bottomLeft: Radius.circular(16),
+                  bottomRight: Radius.circular(4),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Text(
+                message.content,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
-        ),
         
         // Meal cards if available
         if (hasMeals) ...[
           const SizedBox(height: 8),
-          ...message.data!.meals!.map((meal) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _buildMealCard(meal),
-          )),
-          
-          // Total and action button
-          if (message.data!.total != null)
-            Container(
-              margin: const EdgeInsets.only(top: 8, bottom: 12),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Total',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          color: Colors.grey[600],
+          Padding(
+            padding: const EdgeInsets.only(left: 44), // Align with message
+            child: Column(
+              children: [
+                ...message.data!.meals!.map((meal) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildMealCard(meal),
+                )),
+                
+                // Total and action button
+                if (message.data!.total != null)
+                  Container(
+                    margin: const EdgeInsets.only(top: 8, bottom: 12),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Total',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            Text(
+                              '${message.data!.total!.toStringAsFixed(2)} EGP',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      Text(
-                        '${message.data!.total!.toStringAsFixed(2)} EGP',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      // Add meals to cart
-                      try {
-                        final userId = _supabase.auth.currentUser?.id;
-                        if (userId == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please login first')),
-                          );
-                          return;
-                        }
-                        
-                        // Add each meal to cart
-                        for (final meal in message.data!.meals!) {
-                          await _supabase.from('cart_items').insert({
-                            'user_id': userId,
-                            'meal_id': meal.id,
-                            'quantity': meal.quantity,
-                          });
-                        }
-                        
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Added ${message.data!.meals!.length} items to cart!'),
+                        ElevatedButton(
+                          onPressed: () async {
+                            // Add meals to cart
+                            try {
+                              final userId = _supabase.auth.currentUser?.id;
+                              if (userId == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Please login first')),
+                                );
+                                return;
+                              }
+                              
+                              // Add each meal to cart
+                              for (final meal in message.data!.meals!) {
+                                await _supabase.from('cart_items').insert({
+                                  'user_id': userId,
+                                  'meal_id': meal.id,
+                                  'quantity': meal.quantity,
+                                });
+                              }
+                              
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Added ${message.data!.meals!.length} items to cart!'),
+                                  backgroundColor: AppColors.primary,
+                                ),
+                              );
+                              
+                              // Navigate to cart
+                              context.go('/cart');
+                            } catch (e) {
+                              print('❌ Error adding to cart: $e');
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: $e')),
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                        );
-                        
-                        // Navigate to cart
-                        context.go('/cart');
-                      } catch (e) {
-                        print('❌ Error adding to cart: $e');
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error: $e')),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(
-                      'Add to Cart',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
+                          child: Text(
+                            'Add to Cart',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+              ],
             ),
+          ),
         ],
       ],
     );
