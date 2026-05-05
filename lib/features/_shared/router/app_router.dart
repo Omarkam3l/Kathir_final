@@ -37,7 +37,7 @@ import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_chat_list_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_chat_screen.dart';
 import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_leaderboard_screen.dart';
-import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/restaurant_surplus_settings_screen.dart';
+import 'package:kathir_final/features/restaurant_dashboard/presentation/screens/rush_hour_screen.dart';
 import 'package:kathir_final/features/onboarding/presentation/screens/onboarding_flow_screen.dart';
 import 'package:provider/provider.dart';
 import '../../authentication/presentation/blocs/auth_provider.dart';
@@ -471,8 +471,8 @@ class AppRouter {
         builder: (context, state) => const RestaurantLeaderboardScreen(),
       ),
       GoRoute(
-        path: '/restaurant-dashboard/surplus-settings',
-        builder: (context, state) => const RestaurantSurplusSettingsScreen(),
+        path: '/restaurant-dashboard/rush-hour',
+        builder: (context, state) => const RushHourScreen(),
       ),
       // NGO Dashboard Routes
       GoRoute(

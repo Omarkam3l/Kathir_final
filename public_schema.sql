@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 5oUHxW96gBUqCVIiDXn50dXPI5CiNN2emRZVMJdbseB77AXGE7q9WHuxjQtxljX
+\restrict yXqrndv9tKZpqKGlnq8OR0SskRqssOqCWtd2eFyVroELx5YvFe9lJF95Tbid1S4
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.1
@@ -526,6 +526,23 @@ $$;
 ALTER FUNCTION public.check_and_award_badges(p_user_id uuid) OWNER TO postgres;
 
 --
+-- Name: clean_old_whatsapp_messages(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.clean_old_whatsapp_messages() RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+BEGIN
+  DELETE FROM whatsapp_queue
+  WHERE created_at < NOW() - INTERVAL '30 days'
+  AND status IN ('sent', 'delivered', 'read');
+END;
+$$;
+
+
+ALTER FUNCTION public.clean_old_whatsapp_messages() OWNER TO postgres;
+
+--
 -- Name: complete_pickup(uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -778,6 +795,29 @@ $$;
 ALTER FUNCTION public.ensure_restaurant_details_on_profile() OWNER TO postgres;
 
 --
+-- Name: execute_readonly_sql(text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.execute_readonly_sql(sql_query text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+DECLARE
+  result JSONB;
+BEGIN
+  IF sql_query !~* '^\s*SELECT' THEN
+    RAISE EXCEPTION 'Only SELECT queries are allowed';
+  END IF;
+  
+  EXECUTE format('SELECT jsonb_agg(row_to_json(t)) FROM (%s) t', sql_query) INTO result;
+  
+  RETURN COALESCE(result, '[]'::jsonb);
+END;
+$$;
+
+
+ALTER FUNCTION public.execute_readonly_sql(sql_query text) OWNER TO postgres;
+
+--
 -- Name: find_nearby_ngos(double precision, double precision, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -847,6 +887,54 @@ $$;
 
 
 ALTER FUNCTION public.find_nearby_restaurants(user_lat double precision, user_lng double precision, radius_meters integer, limit_count integer) OWNER TO postgres;
+
+--
+-- Name: format_egyptian_phone(text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.format_egyptian_phone(phone_input text) RETURNS text
+    LANGUAGE plpgsql IMMUTABLE
+    AS $$
+DECLARE
+  cleaned TEXT;
+BEGIN
+  -- Return NULL if input is NULL or empty
+  IF phone_input IS NULL OR phone_input = '' THEN
+    RETURN phone_input;
+  END IF;
+  
+  -- Remove all non-digit characters
+  cleaned := regexp_replace(phone_input, '[^\d]', '', 'g');
+  
+  -- If already starts with 20, return as is
+  IF cleaned ~ '^20' THEN
+    RETURN cleaned;
+  END IF;
+  
+  -- If starts with 0, remove it and add 20
+  IF cleaned ~ '^0' THEN
+    RETURN '20' || substring(cleaned from 2);
+  END IF;
+  
+  -- If starts with 1 (missing leading 0), add 20
+  IF cleaned ~ '^1' THEN
+    RETURN '20' || cleaned;
+  END IF;
+  
+  -- Otherwise, add 20 prefix
+  RETURN '20' || cleaned;
+END;
+$$;
+
+
+ALTER FUNCTION public.format_egyptian_phone(phone_input text) OWNER TO postgres;
+
+--
+-- Name: FUNCTION format_egyptian_phone(phone_input text); Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON FUNCTION public.format_egyptian_phone(phone_input text) IS 'Formats Egyptian phone numbers to international format (201xxxxxxxxx) for WhatsApp compatibility';
+
 
 --
 -- Name: generate_order_number(); Type: FUNCTION; Schema: public; Owner: postgres
@@ -2200,6 +2288,48 @@ $$;
 ALTER FUNCTION public.queue_order_emails() OWNER TO postgres;
 
 --
+-- Name: queue_whatsapp_message(uuid, text, text, text, jsonb); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.queue_whatsapp_message(p_order_id uuid, p_recipient_phone text, p_recipient_type text, p_template_name text, p_template_params jsonb DEFAULT '{}'::jsonb) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+DECLARE
+  v_message_id UUID;
+BEGIN
+  -- Insert into queue
+  INSERT INTO whatsapp_queue (
+    order_id,
+    recipient_phone,
+    recipient_type,
+    template_name,
+    template_params,
+    status
+  ) VALUES (
+    p_order_id,
+    p_recipient_phone,
+    p_recipient_type,
+    p_template_name,
+    p_template_params,
+    'queued'
+  )
+  RETURNING id INTO v_message_id;
+  
+  RETURN v_message_id;
+END;
+$$;
+
+
+ALTER FUNCTION public.queue_whatsapp_message(p_order_id uuid, p_recipient_phone text, p_recipient_type text, p_template_name text, p_template_params jsonb) OWNER TO postgres;
+
+--
+-- Name: FUNCTION queue_whatsapp_message(p_order_id uuid, p_recipient_phone text, p_recipient_type text, p_template_name text, p_template_params jsonb); Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON FUNCTION public.queue_whatsapp_message(p_order_id uuid, p_recipient_phone text, p_recipient_type text, p_template_name text, p_template_params jsonb) IS 'Queue a WhatsApp message to be sent via Edge Function';
+
+
+--
 -- Name: redeem_reward(uuid, uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -2341,6 +2471,148 @@ ALTER FUNCTION public.safe_delete_meal(p_meal_id uuid) OWNER TO postgres;
 --
 
 COMMENT ON FUNCTION public.safe_delete_meal(p_meal_id uuid) IS 'Safely deletes a meal only if it is not in any orders. Otherwise suggests marking as inactive.';
+
+
+--
+-- Name: send_order_whatsapp_messages(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.send_order_whatsapp_messages() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+DECLARE
+  v_user_phone TEXT;
+  v_user_name TEXT;
+  v_restaurant_phone TEXT;
+  v_restaurant_name TEXT;
+  v_ngo_phone TEXT;
+  v_ngo_name TEXT;
+  v_order_items TEXT;
+  v_delivery_address TEXT;
+  v_estimated_time TEXT;
+BEGIN
+  -- Only send for new orders
+  IF TG_OP = 'INSERT' THEN
+    
+    -- Get user details
+    SELECT 
+      p.phone_number,
+      p.full_name
+    INTO v_user_phone, v_user_name
+    FROM profiles p
+    WHERE p.id = NEW.user_id;
+    
+    -- Get restaurant details
+    SELECT 
+      r.phone,
+      r.name
+    INTO v_restaurant_phone, v_restaurant_name
+    FROM restaurants r
+    WHERE r.id = NEW.restaurant_id;
+    
+    -- Build order items list
+    SELECT STRING_AGG(
+      m.name || ' x' || oi.quantity || ' (' || oi.price || ' EGP)',
+      E'\n'
+    )
+    INTO v_order_items
+    FROM order_items oi
+    JOIN meals m ON m.id = oi.meal_id
+    WHERE oi.order_id = NEW.id;
+    
+    -- Get delivery address or pickup instructions
+    IF NEW.delivery_type = 'delivery' THEN
+      v_delivery_address := COALESCE(NEW.delivery_address, 'Not specified');
+    ELSIF NEW.delivery_type = 'pickup' THEN
+      v_delivery_address := 'Pickup at: ' || v_restaurant_name;
+    ELSIF NEW.delivery_type = 'donation' THEN
+      v_delivery_address := 'Donation pickup at: ' || v_restaurant_name;
+    END IF;
+    
+    -- Format estimated time
+    v_estimated_time := TO_CHAR(NEW.estimated_ready_time, 'HH24:MI DD/MM/YYYY');
+    
+    -- 1. Queue message to USER
+    IF v_user_phone IS NOT NULL AND v_user_phone != '' THEN
+      PERFORM queue_whatsapp_message(
+        NEW.id,
+        v_user_phone,
+        'user',
+        'order_confirmation_user',
+        jsonb_build_object(
+          'customer_name', v_user_name,
+          'order_id', NEW.id::TEXT,
+          'order_items', v_order_items,
+          'total_amount', NEW.total_amount::TEXT,
+          'delivery_address', v_delivery_address,
+          'estimated_time', v_estimated_time
+        )
+      );
+    END IF;
+    
+    -- 2. Queue message to RESTAURANT
+    IF v_restaurant_phone IS NOT NULL AND v_restaurant_phone != '' THEN
+      PERFORM queue_whatsapp_message(
+        NEW.id,
+        v_restaurant_phone,
+        'restaurant',
+        'new_order_restaurant',
+        jsonb_build_object(
+          'order_id', NEW.id::TEXT,
+          'customer_name', v_user_name,
+          'customer_phone', v_user_phone,
+          'order_items', v_order_items,
+          'total_amount', NEW.total_amount::TEXT,
+          'delivery_type', NEW.delivery_type,
+          'address_or_instructions', v_delivery_address,
+          'requested_time', v_estimated_time
+        )
+      );
+    END IF;
+    
+    -- 3. Queue message to NGO (if donation order)
+    IF NEW.delivery_type = 'donation' AND NEW.ngo_id IS NOT NULL THEN
+      -- Get NGO details (phone from profiles via profile_id)
+      SELECT 
+        p.phone_number,
+        n.name
+      INTO v_ngo_phone, v_ngo_name
+      FROM ngos n
+      JOIN profiles p ON p.id = n.profile_id
+      WHERE n.id = NEW.ngo_id;
+      
+      IF v_ngo_phone IS NOT NULL AND v_ngo_phone != '' THEN
+        PERFORM queue_whatsapp_message(
+          NEW.id,
+          v_ngo_phone,
+          'ngo',
+          'donation_pickup_ngo',
+          jsonb_build_object(
+            'order_id', NEW.id::TEXT,
+            'restaurant_name', v_restaurant_name,
+            'restaurant_phone', v_restaurant_phone,
+            'donated_items', v_order_items,
+            'pickup_address', v_delivery_address,
+            'ready_time', v_estimated_time
+          )
+        );
+      END IF;
+    END IF;
+    
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.send_order_whatsapp_messages() OWNER TO postgres;
+
+--
+-- Name: FUNCTION send_order_whatsapp_messages(); Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON FUNCTION public.send_order_whatsapp_messages() IS 'Automatically queue WhatsApp messages when new order is created';
 
 
 --
@@ -2913,6 +3185,46 @@ COMMENT ON FUNCTION public.sync_user_verification() IS 'Syncs email verification
 
 
 --
+-- Name: trigger_format_phone_profiles(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.trigger_format_phone_profiles() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  -- Format phone_number if it's being inserted or updated
+  IF NEW.phone_number IS NOT NULL AND NEW.phone_number != '' THEN
+    NEW.phone_number := format_egyptian_phone(NEW.phone_number);
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.trigger_format_phone_profiles() OWNER TO postgres;
+
+--
+-- Name: trigger_format_phone_restaurants(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.trigger_format_phone_restaurants() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  -- Format phone if it's being inserted or updated
+  IF NEW.phone IS NOT NULL AND NEW.phone != '' THEN
+    NEW.phone := format_egyptian_phone(NEW.phone);
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.trigger_format_phone_restaurants() OWNER TO postgres;
+
+--
 -- Name: update_cart_items_updated_at(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -3229,6 +3541,27 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: admin_alerts; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.admin_alerts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    severity text NOT NULL,
+    category text NOT NULL,
+    title text NOT NULL,
+    message text NOT NULL,
+    reference_data jsonb DEFAULT '{}'::jsonb,
+    status text DEFAULT 'unread'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT admin_alerts_category_check CHECK ((category = ANY (ARRAY['fraud'::text, 'waste_risk'::text, 'ngo_delay'::text, 'system'::text, 'liquidity'::text, 'churn'::text, 'trust'::text]))),
+    CONSTRAINT admin_alerts_severity_check CHECK ((severity = ANY (ARRAY['critical'::text, 'warning'::text, 'info'::text]))),
+    CONSTRAINT admin_alerts_status_check CHECK ((status = ANY (ARRAY['unread'::text, 'read'::text, 'resolved'::text])))
+);
+
+
+ALTER TABLE public.admin_alerts OWNER TO postgres;
+
+--
 -- Name: backup_profiles_role; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -3359,7 +3692,9 @@ CREATE TABLE public.profiles (
     is_profile_completed boolean DEFAULT false,
     is_onboarding_completed boolean DEFAULT false,
     stripe_customer_id text,
+    is_reporting_blocked boolean DEFAULT false NOT NULL,
     CONSTRAINT profiles_approval_status_check CHECK ((approval_status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text]))),
+    CONSTRAINT profiles_phone_number_format_check CHECK (((phone_number IS NULL) OR (phone_number = ''::text) OR (phone_number ~ '^20\d{10}$'::text))),
     CONSTRAINT profiles_role_check CHECK ((role = ANY (ARRAY['user'::text, 'restaurant'::text, 'ngo'::text, 'admin'::text])))
 );
 
@@ -3416,7 +3751,8 @@ CREATE TABLE public.restaurants (
     latitude double precision,
     longitude double precision,
     location public.geography(Point,4326),
-    location_updated_at timestamp with time zone DEFAULT now()
+    location_updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT restaurants_phone_format_check CHECK (((phone IS NULL) OR (phone = ''::text) OR (phone ~ '^20\d{10}$'::text)))
 );
 
 
@@ -4236,6 +4572,78 @@ COMMENT ON COLUMN public.payments.card_brand IS 'Card brand (visa, mastercard, e
 
 
 --
+-- Name: pinned_charts; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.pinned_charts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    title text NOT NULL,
+    chart_type text NOT NULL,
+    data_payload jsonb NOT NULL,
+    insights_summary text,
+    pinned_by text DEFAULT 'admin'::text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    grid_x integer DEFAULT 0,
+    grid_y integer DEFAULT 0,
+    grid_w integer DEFAULT 6,
+    grid_h integer DEFAULT 4
+);
+
+
+ALTER TABLE public.pinned_charts OWNER TO postgres;
+
+--
+-- Name: COLUMN pinned_charts.grid_x; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.pinned_charts.grid_x IS 'Grid column position (0-11 for 12-column grid)';
+
+
+--
+-- Name: COLUMN pinned_charts.grid_y; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.pinned_charts.grid_y IS 'Grid row position (auto-increments)';
+
+
+--
+-- Name: COLUMN pinned_charts.grid_w; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.pinned_charts.grid_w IS 'Grid width in columns (1-12)';
+
+
+--
+-- Name: COLUMN pinned_charts.grid_h; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.pinned_charts.grid_h IS 'Grid height in rows';
+
+
+--
+-- Name: pinned_kpis; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.pinned_kpis (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    title text NOT NULL,
+    value text NOT NULL,
+    metric_type text NOT NULL,
+    icon text,
+    color text DEFAULT '#ef4444'::text,
+    trend text,
+    trend_value text,
+    description text,
+    pinned_by text DEFAULT 'admin'::text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.pinned_kpis OWNER TO postgres;
+
+--
 -- Name: promo_codes; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -4322,6 +4730,20 @@ COMMENT ON COLUMN public.promo_codes.current_uses IS 'Current number of times co
 
 COMMENT ON COLUMN public.promo_codes.min_order_amount IS 'Minimum order amount required to use code';
 
+
+--
+-- Name: recent_searches; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.recent_searches (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    query text NOT NULL,
+    searched_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.recent_searches OWNER TO postgres;
 
 --
 -- Name: restaurant_ratings; Type: TABLE; Schema: public; Owner: postgres
@@ -4610,10 +5032,73 @@ CREATE TABLE public.whatsapp_logs (
 ALTER TABLE public.whatsapp_logs OWNER TO postgres;
 
 --
+-- Name: whatsapp_queue; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.whatsapp_queue (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    order_id uuid NOT NULL,
+    recipient_phone text NOT NULL,
+    recipient_type text NOT NULL,
+    template_name text NOT NULL,
+    template_params jsonb DEFAULT '{}'::jsonb NOT NULL,
+    status text DEFAULT 'queued'::text NOT NULL,
+    whatsapp_message_id text,
+    error_message text,
+    attempts integer DEFAULT 0,
+    max_attempts integer DEFAULT 3,
+    created_at timestamp with time zone DEFAULT now(),
+    sent_at timestamp with time zone,
+    delivered_at timestamp with time zone,
+    read_at timestamp with time zone,
+    CONSTRAINT whatsapp_queue_recipient_type_check CHECK ((recipient_type = ANY (ARRAY['user'::text, 'restaurant'::text, 'ngo'::text]))),
+    CONSTRAINT whatsapp_queue_status_check CHECK ((status = ANY (ARRAY['queued'::text, 'sent'::text, 'failed'::text, 'delivered'::text, 'read'::text])))
+);
+
+
+ALTER TABLE public.whatsapp_queue OWNER TO postgres;
+
+--
+-- Name: TABLE whatsapp_queue; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TABLE public.whatsapp_queue IS 'Queue for WhatsApp messages to be sent via Edge Function';
+
+
+--
+-- Name: COLUMN whatsapp_queue.recipient_type; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.whatsapp_queue.recipient_type IS 'Type of recipient: user, restaurant, or ngo';
+
+
+--
+-- Name: COLUMN whatsapp_queue.template_name; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.whatsapp_queue.template_name IS 'WhatsApp template name from Meta Business Manager';
+
+
+--
+-- Name: COLUMN whatsapp_queue.template_params; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON COLUMN public.whatsapp_queue.template_params IS 'JSON object with template variable values';
+
+
+--
 -- Name: orders order_code; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.orders ALTER COLUMN order_code SET DEFAULT nextval('public.orders_order_code_seq'::regclass);
+
+
+--
+-- Name: admin_alerts admin_alerts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.admin_alerts
+    ADD CONSTRAINT admin_alerts_pkey PRIMARY KEY (id);
 
 
 --
@@ -4817,6 +5302,22 @@ ALTER TABLE ONLY public.payments
 
 
 --
+-- Name: pinned_charts pinned_charts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pinned_charts
+    ADD CONSTRAINT pinned_charts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pinned_kpis pinned_kpis_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pinned_kpis
+    ADD CONSTRAINT pinned_kpis_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: profiles profiles_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -4854,6 +5355,22 @@ ALTER TABLE ONLY public.promo_codes
 
 ALTER TABLE ONLY public.promo_codes
     ADD CONSTRAINT promo_codes_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: recent_searches recent_searches_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.recent_searches
+    ADD CONSTRAINT recent_searches_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: recent_searches recent_searches_user_id_query_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.recent_searches
+    ADD CONSTRAINT recent_searches_user_id_query_key UNIQUE (user_id, query);
 
 
 --
@@ -4966,6 +5483,35 @@ ALTER TABLE ONLY public.user_rewards
 
 ALTER TABLE ONLY public.whatsapp_logs
     ADD CONSTRAINT whatsapp_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: whatsapp_queue whatsapp_queue_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.whatsapp_queue
+    ADD CONSTRAINT whatsapp_queue_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: idx_admin_alerts_created_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_admin_alerts_created_at ON public.admin_alerts USING btree (created_at DESC);
+
+
+--
+-- Name: idx_admin_alerts_severity; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_admin_alerts_severity ON public.admin_alerts USING btree (severity);
+
+
+--
+-- Name: idx_admin_alerts_status; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_admin_alerts_status ON public.admin_alerts USING btree (status);
 
 
 --
@@ -5466,6 +6012,13 @@ CREATE INDEX idx_payments_stripe_payment_intent ON public.payments USING btree (
 
 
 --
+-- Name: idx_pinned_charts_layout; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_pinned_charts_layout ON public.pinned_charts USING btree (grid_y, grid_x);
+
+
+--
 -- Name: idx_profiles_approval_role; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -5519,6 +6072,13 @@ CREATE INDEX idx_promo_codes_code ON public.promo_codes USING btree (code);
 --
 
 CREATE INDEX idx_promo_codes_valid_dates ON public.promo_codes USING btree (valid_from, valid_until);
+
+
+--
+-- Name: idx_recent_searches_user_searched_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_recent_searches_user_searched_at ON public.recent_searches USING btree (user_id, searched_at DESC);
 
 
 --
@@ -5676,6 +6236,34 @@ CREATE INDEX idx_whatsapp_logs_status ON public.whatsapp_logs USING btree (statu
 
 
 --
+-- Name: idx_whatsapp_queue_created_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_whatsapp_queue_created_at ON public.whatsapp_queue USING btree (created_at);
+
+
+--
+-- Name: idx_whatsapp_queue_order_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_whatsapp_queue_order_id ON public.whatsapp_queue USING btree (order_id);
+
+
+--
+-- Name: idx_whatsapp_queue_recipient_type; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_whatsapp_queue_recipient_type ON public.whatsapp_queue USING btree (recipient_type);
+
+
+--
+-- Name: idx_whatsapp_queue_status; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_whatsapp_queue_status ON public.whatsapp_queue USING btree (status);
+
+
+--
 -- Name: meals_embedding_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -5690,10 +6278,45 @@ CREATE TRIGGER embed AFTER INSERT OR UPDATE ON public.meals FOR EACH ROW EXECUTE
 
 
 --
+-- Name: profiles format_phone_before_insert_profiles; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER format_phone_before_insert_profiles BEFORE INSERT OR UPDATE OF phone_number ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.trigger_format_phone_profiles();
+
+
+--
+-- Name: TRIGGER format_phone_before_insert_profiles ON profiles; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TRIGGER format_phone_before_insert_profiles ON public.profiles IS 'Auto-formats phone numbers to 201xxxxxxxxx format';
+
+
+--
+-- Name: restaurants format_phone_before_insert_restaurants; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER format_phone_before_insert_restaurants BEFORE INSERT OR UPDATE OF phone ON public.restaurants FOR EACH ROW EXECUTE FUNCTION public.trigger_format_phone_restaurants();
+
+
+--
+-- Name: TRIGGER format_phone_before_insert_restaurants ON restaurants; Type: COMMENT; Schema: public; Owner: postgres
+--
+
+COMMENT ON TRIGGER format_phone_before_insert_restaurants ON public.restaurants IS 'Auto-formats phone numbers to 201xxxxxxxxx format';
+
+
+--
 -- Name: ngos ngos_location_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
 CREATE TRIGGER ngos_location_trigger BEFORE INSERT OR UPDATE OF latitude, longitude ON public.ngos FOR EACH ROW EXECUTE FUNCTION public.update_location_from_coordinates();
+
+
+--
+-- Name: orders on_order_created_send_whatsapp; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER on_order_created_send_whatsapp AFTER INSERT ON public.orders FOR EACH ROW EXECUTE FUNCTION public.send_order_whatsapp_messages();
 
 
 --
@@ -5736,6 +6359,20 @@ CREATE TRIGGER trg_ngos_set_updated_at BEFORE UPDATE ON public.ngos FOR EACH ROW
 --
 
 CREATE TRIGGER trg_notify_category_subscribers AFTER INSERT OR UPDATE ON public.meals FOR EACH ROW EXECUTE FUNCTION public.notify_category_subscribers();
+
+
+--
+-- Name: pinned_charts trg_pinned_charts_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER trg_pinned_charts_updated_at BEFORE UPDATE ON public.pinned_charts FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+
+--
+-- Name: pinned_kpis trg_pinned_kpis_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER trg_pinned_kpis_updated_at BEFORE UPDATE ON public.pinned_kpis FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
 
 --
@@ -6236,6 +6873,14 @@ ALTER TABLE ONLY public.promo_codes
 
 
 --
+-- Name: recent_searches recent_searches_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.recent_searches
+    ADD CONSTRAINT recent_searches_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
 -- Name: restaurant_ratings restaurant_ratings_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -6340,6 +6985,14 @@ ALTER TABLE ONLY public.user_rewards
 
 
 --
+-- Name: whatsapp_queue whatsapp_queue_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.whatsapp_queue
+    ADD CONSTRAINT whatsapp_queue_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
+
+
+--
 -- Name: promo_codes Admins and restaurants can insert promo codes; Type: POLICY; Schema: public; Owner: postgres
 --
 
@@ -6362,6 +7015,34 @@ CREATE POLICY "Admins and restaurants can update their promo codes" ON public.pr
 --
 
 CREATE POLICY "Admins can manage all issues" ON public.order_issues TO service_role USING (true) WITH CHECK (true);
+
+
+--
+-- Name: meal_reports Admins can update all meal reports; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Admins can update all meal reports" ON public.meal_reports FOR UPDATE TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+
+--
+-- Name: order_issues Admins can update all order issues; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Admins can update all order issues" ON public.order_issues FOR UPDATE TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+
+--
+-- Name: meal_reports Admins can view all meal reports; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Admins can view all meal reports" ON public.meal_reports FOR SELECT TO authenticated USING (public.is_admin());
+
+
+--
+-- Name: order_issues Admins can view all order issues; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Admins can view all order issues" ON public.order_issues FOR SELECT TO authenticated USING (public.is_admin());
 
 
 --
@@ -6410,6 +7091,13 @@ CREATE POLICY "Admins can view all orders" ON public.orders FOR SELECT TO authen
 --
 
 COMMENT ON POLICY "Admins can view all orders" ON public.orders IS 'Allows admin users to view all orders in the system for management purposes';
+
+
+--
+-- Name: admin_alerts Allow all for authenticated; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Allow all for authenticated" ON public.admin_alerts USING (true) WITH CHECK (true);
 
 
 --
@@ -6764,6 +7452,13 @@ CREATE POLICY "Service role can insert restaurants" ON public.restaurants FOR IN
 --
 
 CREATE POLICY "Service role can manage email queue" ON public.email_queue TO service_role USING (true) WITH CHECK (true);
+
+
+--
+-- Name: whatsapp_queue Service role can manage whatsapp_queue; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Service role can manage whatsapp_queue" ON public.whatsapp_queue TO service_role USING (true) WITH CHECK (true);
 
 
 --
@@ -7201,6 +7896,19 @@ CREATE POLICY "Users can view their own reports" ON public.meal_reports FOR SELE
 
 
 --
+-- Name: recent_searches Users manage own recent searches; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY "Users manage own recent searches" ON public.recent_searches TO authenticated USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
+
+
+--
+-- Name: admin_alerts; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.admin_alerts ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: cart_items; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
@@ -7437,6 +8145,74 @@ ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: pinned_charts; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.pinned_charts ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: pinned_charts pinned_charts_delete; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY pinned_charts_delete ON public.pinned_charts FOR DELETE TO authenticated USING (true);
+
+
+--
+-- Name: pinned_charts pinned_charts_insert; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY pinned_charts_insert ON public.pinned_charts FOR INSERT TO authenticated WITH CHECK (true);
+
+
+--
+-- Name: pinned_charts pinned_charts_read; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY pinned_charts_read ON public.pinned_charts FOR SELECT TO authenticated, anon USING (true);
+
+
+--
+-- Name: pinned_charts pinned_charts_service; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY pinned_charts_service ON public.pinned_charts TO service_role USING (true) WITH CHECK (true);
+
+
+--
+-- Name: pinned_kpis; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.pinned_kpis ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: pinned_kpis pinned_kpis_delete; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY pinned_kpis_delete ON public.pinned_kpis FOR DELETE TO authenticated USING (true);
+
+
+--
+-- Name: pinned_kpis pinned_kpis_insert; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY pinned_kpis_insert ON public.pinned_kpis FOR INSERT TO authenticated WITH CHECK (true);
+
+
+--
+-- Name: pinned_kpis pinned_kpis_read; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY pinned_kpis_read ON public.pinned_kpis FOR SELECT TO authenticated, anon USING (true);
+
+
+--
+-- Name: pinned_kpis pinned_kpis_service; Type: POLICY; Schema: public; Owner: postgres
+--
+
+CREATE POLICY pinned_kpis_service ON public.pinned_kpis TO service_role USING (true) WITH CHECK (true);
+
+
+--
 -- Name: profiles profiles_insert_service; Type: POLICY; Schema: public; Owner: postgres
 --
 
@@ -7499,6 +8275,12 @@ COMMENT ON POLICY profiles_update_own ON public.profiles IS 'Users can update th
 ALTER TABLE public.promo_codes ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: recent_searches; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.recent_searches ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: restaurant_ratings; Type: ROW SECURITY; Schema: public; Owner: postgres
 --
 
@@ -7551,6 +8333,12 @@ ALTER TABLE public.user_loyalty ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.user_rewards ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: whatsapp_queue; Type: ROW SECURITY; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.whatsapp_queue ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: pg_database_owner
@@ -7626,6 +8414,15 @@ GRANT ALL ON FUNCTION public.check_and_award_badges(p_user_id uuid) TO service_r
 
 
 --
+-- Name: FUNCTION clean_old_whatsapp_messages(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.clean_old_whatsapp_messages() TO anon;
+GRANT ALL ON FUNCTION public.clean_old_whatsapp_messages() TO authenticated;
+GRANT ALL ON FUNCTION public.clean_old_whatsapp_messages() TO service_role;
+
+
+--
 -- Name: FUNCTION complete_pickup(p_order_id uuid, p_pickup_code text); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -7680,6 +8477,15 @@ GRANT ALL ON FUNCTION public.ensure_restaurant_details_on_profile() TO service_r
 
 
 --
+-- Name: FUNCTION execute_readonly_sql(sql_query text); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.execute_readonly_sql(sql_query text) TO anon;
+GRANT ALL ON FUNCTION public.execute_readonly_sql(sql_query text) TO authenticated;
+GRANT ALL ON FUNCTION public.execute_readonly_sql(sql_query text) TO service_role;
+
+
+--
 -- Name: FUNCTION find_nearby_ngos(user_lat double precision, user_lng double precision, radius_meters integer, limit_count integer); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -7695,6 +8501,15 @@ GRANT ALL ON FUNCTION public.find_nearby_ngos(user_lat double precision, user_ln
 GRANT ALL ON FUNCTION public.find_nearby_restaurants(user_lat double precision, user_lng double precision, radius_meters integer, limit_count integer) TO anon;
 GRANT ALL ON FUNCTION public.find_nearby_restaurants(user_lat double precision, user_lng double precision, radius_meters integer, limit_count integer) TO authenticated;
 GRANT ALL ON FUNCTION public.find_nearby_restaurants(user_lat double precision, user_lng double precision, radius_meters integer, limit_count integer) TO service_role;
+
+
+--
+-- Name: FUNCTION format_egyptian_phone(phone_input text); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.format_egyptian_phone(phone_input text) TO anon;
+GRANT ALL ON FUNCTION public.format_egyptian_phone(phone_input text) TO authenticated;
+GRANT ALL ON FUNCTION public.format_egyptian_phone(phone_input text) TO service_role;
 
 
 --
@@ -7959,6 +8774,15 @@ GRANT ALL ON FUNCTION public.queue_order_emails() TO service_role;
 
 
 --
+-- Name: FUNCTION queue_whatsapp_message(p_order_id uuid, p_recipient_phone text, p_recipient_type text, p_template_name text, p_template_params jsonb); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.queue_whatsapp_message(p_order_id uuid, p_recipient_phone text, p_recipient_type text, p_template_name text, p_template_params jsonb) TO anon;
+GRANT ALL ON FUNCTION public.queue_whatsapp_message(p_order_id uuid, p_recipient_phone text, p_recipient_type text, p_template_name text, p_template_params jsonb) TO authenticated;
+GRANT ALL ON FUNCTION public.queue_whatsapp_message(p_order_id uuid, p_recipient_phone text, p_recipient_type text, p_template_name text, p_template_params jsonb) TO service_role;
+
+
+--
 -- Name: FUNCTION redeem_reward(p_user_id uuid, p_reward_id uuid); Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -7974,6 +8798,15 @@ GRANT ALL ON FUNCTION public.redeem_reward(p_user_id uuid, p_reward_id uuid) TO 
 GRANT ALL ON FUNCTION public.safe_delete_meal(p_meal_id uuid) TO anon;
 GRANT ALL ON FUNCTION public.safe_delete_meal(p_meal_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.safe_delete_meal(p_meal_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION send_order_whatsapp_messages(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.send_order_whatsapp_messages() TO anon;
+GRANT ALL ON FUNCTION public.send_order_whatsapp_messages() TO authenticated;
+GRANT ALL ON FUNCTION public.send_order_whatsapp_messages() TO service_role;
 
 
 --
@@ -8046,6 +8879,24 @@ GRANT ALL ON FUNCTION public.sync_profile_emails() TO service_role;
 GRANT ALL ON FUNCTION public.sync_user_verification() TO anon;
 GRANT ALL ON FUNCTION public.sync_user_verification() TO authenticated;
 GRANT ALL ON FUNCTION public.sync_user_verification() TO service_role;
+
+
+--
+-- Name: FUNCTION trigger_format_phone_profiles(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.trigger_format_phone_profiles() TO anon;
+GRANT ALL ON FUNCTION public.trigger_format_phone_profiles() TO authenticated;
+GRANT ALL ON FUNCTION public.trigger_format_phone_profiles() TO service_role;
+
+
+--
+-- Name: FUNCTION trigger_format_phone_restaurants(); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.trigger_format_phone_restaurants() TO anon;
+GRANT ALL ON FUNCTION public.trigger_format_phone_restaurants() TO authenticated;
+GRANT ALL ON FUNCTION public.trigger_format_phone_restaurants() TO service_role;
 
 
 --
@@ -8145,6 +8996,15 @@ GRANT ALL ON FUNCTION public.validate_promo_code(p_code text, p_order_amount num
 GRANT ALL ON FUNCTION public.verify_pickup_code(p_order_id uuid, p_pickup_code text) TO anon;
 GRANT ALL ON FUNCTION public.verify_pickup_code(p_order_id uuid, p_pickup_code text) TO authenticated;
 GRANT ALL ON FUNCTION public.verify_pickup_code(p_order_id uuid, p_pickup_code text) TO service_role;
+
+
+--
+-- Name: TABLE admin_alerts; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.admin_alerts TO anon;
+GRANT ALL ON TABLE public.admin_alerts TO authenticated;
+GRANT ALL ON TABLE public.admin_alerts TO service_role;
 
 
 --
@@ -8382,12 +9242,39 @@ GRANT ALL ON TABLE public.payments TO service_role;
 
 
 --
+-- Name: TABLE pinned_charts; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.pinned_charts TO anon;
+GRANT ALL ON TABLE public.pinned_charts TO authenticated;
+GRANT ALL ON TABLE public.pinned_charts TO service_role;
+
+
+--
+-- Name: TABLE pinned_kpis; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.pinned_kpis TO anon;
+GRANT ALL ON TABLE public.pinned_kpis TO authenticated;
+GRANT ALL ON TABLE public.pinned_kpis TO service_role;
+
+
+--
 -- Name: TABLE promo_codes; Type: ACL; Schema: public; Owner: postgres
 --
 
 GRANT ALL ON TABLE public.promo_codes TO anon;
 GRANT ALL ON TABLE public.promo_codes TO authenticated;
 GRANT ALL ON TABLE public.promo_codes TO service_role;
+
+
+--
+-- Name: TABLE recent_searches; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.recent_searches TO anon;
+GRANT ALL ON TABLE public.recent_searches TO authenticated;
+GRANT ALL ON TABLE public.recent_searches TO service_role;
 
 
 --
@@ -8472,6 +9359,15 @@ GRANT ALL ON TABLE public.whatsapp_logs TO service_role;
 
 
 --
+-- Name: TABLE whatsapp_queue; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.whatsapp_queue TO anon;
+GRANT ALL ON TABLE public.whatsapp_queue TO authenticated;
+GRANT ALL ON TABLE public.whatsapp_queue TO service_role;
+
+
+--
 -- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: postgres
 --
 
@@ -8535,5 +9431,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON T
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 5oUHxW96gBUqCVIiDXn50dXPI5CiNN2emRZVMJdbseB77AXGE7q9WHuxjQtxljX
+\unrestrict yXqrndv9tKZpqKGlnq8OR0SskRqssOqCWtd2eFyVroELx5YvFe9lJF95Tbid1S4
 
