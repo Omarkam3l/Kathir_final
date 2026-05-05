@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:kathir_final/features/authentication/presentation/blocs/auth_provider.dart';
+import 'package:kathir_final/features/user_home/presentation/widgets/location_bar_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
@@ -23,15 +25,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   String _query = '';
   String _category = 'All';
 
-  @override
-  void initState() {
-    super.initState();
-    // Force refresh to clear cache and load all meals
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final vm = context.read<HomeViewModel>();
-      vm.loadAll(forceRefresh: true);
-    });
-  }
   bool _showRecentSearches = false;
   final TextEditingController _searchController = TextEditingController();
 
@@ -40,6 +33,11 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    // Force refresh to clear cache and load all meals
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final vm = context.read<HomeViewModel>();
+      vm.loadAll(forceRefresh: true);
+    });
     _recentVM = AppLocator.I.get<RecentSearchViewModel>();
     _recentVM.addListener(_onRecentVMChanged);
   }
