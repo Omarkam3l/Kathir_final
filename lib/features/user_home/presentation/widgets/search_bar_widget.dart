@@ -2,19 +2,80 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kathir_final/core/utils/app_colors.dart';
+import '../../domain/entities/recent_search.dart';
+import 'recent_searches_dropdown.dart';
 
-/// Search field + filter (tune) button.
-class SearchBarWidget extends StatelessWidget {
+/// Search field + map button.
+/// Dropdown overlays content below when showRecentSearches is true.
+class SearchBarWidget extends StatefulWidget {
   final ValueChanged<String> onQueryChanged;
+  final ValueChanged<String>? onQuerySubmitted;
   final VoidCallback? onFilterTap;
-  final String hint;
+  final VoidCallback? onFocusGained;
+  final VoidCallback? onFocusLost;
+  final TextEditingController? controller;
+
+  // Dropdown props
+  final bool showRecentSearches;
+  final List<RecentSearch> recentSearches;
+  final bool recentSearchesLoading;
+  final ValueChanged<String>? onRecentSearchTap;
+  final ValueChanged<String>? onRecentSearchDelete;
+  final VoidCallback? onClearAll;
 
   const SearchBarWidget({
     super.key,
     required this.onQueryChanged,
+    this.onQuerySubmitted,
     this.onFilterTap,
-    this.hint = 'Search for meals...',
+    this.onFocusGained,
+    this.onFocusLost,
+    this.controller,
+    this.showRecentSearches = false,
+    this.recentSearches = const [],
+    this.recentSearchesLoading = false,
+    this.onRecentSearchTap,
+    this.onRecentSearchDelete,
+    this.onClearAll,
   });
+
+  @override
+  State<SearchBarWidget> createState() => _SearchBarWidgetState();
+}
+
+class _SearchBarWidgetState extends State<SearchBarWidget> {
+  late final FocusNode _focusNode;
+  late final TextEditingController _controller;
+  bool _ownsController = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    if (widget.controller != null) {
+      _controller = widget.controller!;
+    } else {
+      _controller = TextEditingController();
+      _ownsController = true;
+    }
+    _focusNode.addListener(_onFocusChange);
+  }
+
+  void _onFocusChange() {
+    if (_focusNode.hasFocus) {
+      widget.onFocusGained?.call();
+    } else {
+      widget.onFocusLost?.call();
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_onFocusChange);
+    _focusNode.dispose();
+    if (_ownsController) _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,52 +87,88 @@ class SearchBarWidget extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Search field + dropdown overlay ──
           Expanded(
-            child: Container(
-              height: 48,
-              decoration: BoxDecoration(
-                color: card,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: border),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Search field container — expands to include dropdown when visible
+                Container(
+                  decoration: BoxDecoration(
+                    color: card,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: border),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.black.withValues(alpha: 0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: TextField(
-                onChanged: onQueryChanged,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: textMain,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Input row
+                      SizedBox(
+                        height: 48,
+                        child: TextField(
+                          controller: _controller,
+                          focusNode: _focusNode,
+                          onChanged: widget.onQueryChanged,
+                          onSubmitted: widget.onQuerySubmitted,
+                          textInputAction: TextInputAction.search,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: textMain,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Search meals...',
+                            hintStyle: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              color: muted,
+                            ),
+                            prefixIcon: const Icon(Icons.search,
+                                size: 20, color: muted),
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Dropdown — same container, no gap, no border between them
+                      if (widget.showRecentSearches)
+                        RecentSearchesDropdown(
+                          searches: widget.recentSearches,
+                          isLoading: widget.recentSearchesLoading,
+                          onSearchTap: widget.onRecentSearchTap ?? (_) {},
+                          onDeleteTap: widget.onRecentSearchDelete ?? (_) {},
+                          onClearAll: widget.onClearAll ?? () {},
+                        ),
+                    ],
+                  ),
                 ),
-                decoration: InputDecoration(
-                  hintText: hint,
-                  hintStyle: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    color: muted,
-                  ),
-                  prefixIcon: const Icon(Icons.search, size: 22, color: muted),                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                ),
-              ),
+              ],
             ),
           ),
+
           const SizedBox(width: 12),
+
+          // ── Map button ──
           Material(
             color: AppColors.primary,
             borderRadius: BorderRadius.circular(12),
             child: InkWell(
-              onTap: onFilterTap ?? () => context.push('/restaurant-search'),
+              onTap: widget.onFilterTap ??
+                  () => context.push('/restaurant-search'),
               borderRadius: BorderRadius.circular(12),
               child: Container(
                 width: 48,
