@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:async';
 import '../../../../core/utils/app_colors.dart';
 import '../../../../core/utils/responsive_utils.dart';
 import '../../../authentication/presentation/blocs/auth_provider.dart';
@@ -9,6 +10,9 @@ import '../widgets/restaurant_bottom_nav.dart';
 import '../widgets/kpi_card.dart';
 import '../widgets/recent_meal_card.dart';
 import '../widgets/active_order_card.dart';
+import '../widgets/rush_hour_banner_widget.dart';
+import '../../domain/entities/rush_hour_config.dart';
+import '../../data/services/rush_hour_service.dart';
 
 class RestaurantHomeScreen extends StatefulWidget {
   const RestaurantHomeScreen({super.key});
@@ -36,11 +40,74 @@ class _RestaurantHomeScreenState extends State<RestaurantHomeScreen> {
   
   // Active orders (not completed or cancelled)
   List<Map<String, dynamic>> _activeOrders = [];
+  
+  // Rush Hour
+  RushHourConfig? _rushHourConfig;
+  Timer? _rushHourTimer;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _loadRushHourConfig();
+  }
+  
+  @override
+  void dispose() {
+    _rushHourTimer?.cancel();
+    super.dispose();
+  }
+  
+  Future<void> _loadRushHourConfig() async {
+    try {
+      final service = RushHourService(_supabase);
+      final config = await service.getMyRushHour();
+      
+      if (mounted) {
+        setState(() {
+          _rushHourConfig = config;
+        });
+        
+        // Start timer if active
+        if (config.isActive && config.endTime != null) {
+          _startRushHourTimer();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading rush hour config: $e');
+    }
+  }
+  
+  void _startRushHourTimer() {
+    _rushHourTimer?.cancel();
+    _rushHourTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_rushHourConfig != null && _rushHourConfig!.endTime != null) {
+        final now = DateTime.now();
+        final localEndTime = _rushHourConfig!.endTime!.toLocal();
+        
+        if (now.isAfter(localEndTime)) {
+          timer.cancel();
+          _loadRushHourConfig(); // Reload to get updated status
+        } else {
+          if (mounted) setState(() {}); // Update UI
+        }
+      }
+    });
+  }
+  
+  int get _remainingSeconds {
+    if (_rushHourConfig == null || 
+        _rushHourConfig!.endTime == null || 
+        _rushHourConfig!.startTime == null) {
+      return 0;
+    }
+    
+    final now = DateTime.now();
+    final durationInSeconds = _rushHourConfig!.endTime!.difference(_rushHourConfig!.startTime!).inSeconds;
+    final elapsedSeconds = now.difference(_rushHourConfig!.startTime!.toLocal()).inSeconds;
+    final remaining = durationInSeconds - elapsedSeconds;
+    
+    return remaining > 0 ? remaining : 0;
   }
 
   Future<void> _loadData() async {
@@ -130,6 +197,18 @@ class _RestaurantHomeScreenState extends State<RestaurantHomeScreen> {
                 child: CustomScrollView(
                   slivers: [
                     _buildHeader(isDark, surface),
+                    // Rush Hour Banner
+                    if (_rushHourConfig != null && 
+                        _rushHourConfig!.isActive && 
+                        _rushHourConfig!.endTime != null &&
+                        _remainingSeconds > 0)
+                      SliverToBoxAdapter(
+                        child: RushHourBannerWidget(
+                          endTime: _rushHourConfig!.endTime!,
+                          remainingSeconds: _remainingSeconds,
+                          isDark: isDark,
+                        ),
+                      ),
                     _buildKPIsSection(surface, isDark),
                     _buildRecentMealsSection(isDark, surface),
                     _buildActiveOrdersSection(isDark, surface),

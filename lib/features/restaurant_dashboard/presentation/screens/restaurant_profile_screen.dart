@@ -743,7 +743,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
 
     return InkWell(
       onTap: () async {
-        await context.push('/restaurant-dashboard/surplus-settings');
+        await context.push('/restaurant-dashboard/rush-hour');
         // Reload rush hour config when returning
         _loadRushHourConfig();
       },
