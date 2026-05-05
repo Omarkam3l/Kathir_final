@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../authentication/presentation/blocs/auth_provider.dart';
 import '../../../../core/utils/app_colors.dart';
 import '../../../../core/utils/responsive_utils.dart';
+import '../../../../core/utils/phone_formatter.dart';
 
 class UserProfileSetupScreen extends StatefulWidget {
   static const routeName = '/onboarding/profile';
@@ -48,10 +49,12 @@ class _UserProfileSetupScreenState extends State<UserProfileSetupScreen> {
   Future<void> _loadUserData() async {
     final user = _supabase.auth.currentUser;
     if (user != null) {
-      setState(() {
-        _nameController.text = user.userMetadata?['full_name'] ?? '';
-        _phoneController.text = user.userMetadata?['phone_number'] ?? '';
-      });
+      if (mounted) {
+        setState(() {
+          _nameController.text = user.userMetadata?['full_name'] ?? '';
+          _phoneController.text = user.userMetadata?['phone_number'] ?? '';
+        });
+      }
 
       // Load avatar from profile
       try {
@@ -61,7 +64,7 @@ class _UserProfileSetupScreenState extends State<UserProfileSetupScreen> {
             .eq('id', user.id)
             .maybeSingle();
         
-        if (profile != null && profile['avatar_url'] != null) {
+        if (profile != null && profile['avatar_url'] != null && mounted) {
           setState(() {
             _avatarUrl = profile['avatar_url'];
           });
@@ -168,7 +171,9 @@ class _UserProfileSetupScreenState extends State<UserProfileSetupScreen> {
       // Update profile
       await _supabase.from('profiles').update({
         'full_name': _nameController.text.trim(),
-        'phone_number': _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+        'phone_number': _phoneController.text.trim().isEmpty 
+            ? null 
+            : PhoneFormatter.formatEgyptianPhone(_phoneController.text.trim()),
         if (avatarUrl != null) 'avatar_url': avatarUrl,
         'is_profile_completed': true,
       }).eq('id', userId);
@@ -387,6 +392,7 @@ class _UserProfileSetupScreenState extends State<UserProfileSetupScreen> {
                         keyboardType: TextInputType.phone,
                         decoration: InputDecoration(
                           labelText: 'Phone Number (Optional)',
+                          hintText: '01012345678',
                           prefixIcon: const Icon(Icons.phone_outlined, color: AppColors.primary),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -396,6 +402,14 @@ class _UserProfileSetupScreenState extends State<UserProfileSetupScreen> {
                             borderSide: const BorderSide(color: AppColors.primary, width: 2),
                           ),
                         ),
+                        validator: (value) {
+                          if (value != null && value.trim().isNotEmpty) {
+                            if (!PhoneFormatter.isValidEgyptianPhone(value)) {
+                              return 'Invalid Egyptian phone number';
+                            }
+                          }
+                          return null;
+                        },
                       ),
 
                       const SizedBox(height: 16),

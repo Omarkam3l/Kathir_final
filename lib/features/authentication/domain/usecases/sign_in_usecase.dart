@@ -6,6 +6,11 @@ import '../repositories/auth_repository.dart';
 class SignInUseCase {
   final AuthRepository repo;
   const SignInUseCase(this.repo);
-  Future<Either<Failure, UserEntity>> call(String email, String password) => repo.signIn(email, password);
+  
+  Future<Either<Failure, UserEntity>> call(String email, String password) => 
+      repo.signIn(email, password);
+  
+  Future<Either<Failure, UserEntity>> signInAnonymously() => 
+      repo.signInAnonymously();
 }
 

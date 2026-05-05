@@ -150,6 +150,58 @@ class AuthViewModel extends ChangeNotifier {
     return ok;
   }
 
+  Future<bool> loginAsGuest() async {
+    loading = true;
+    notifyListeners();
+    
+    AuthLogger.info('guest.login.attempt', ctx: {});
+    
+    try {
+      // Use Supabase anonymous sign-in (proper guest authentication)
+      // This creates a real session that persists and works with RLS
+      final res = await signIn.signInAnonymously();
+      
+      final ok = res.fold((l) {
+        failure = l;
+        AuthLogger.errorLog('guest.login.failed',
+            ctx: {},
+            error: l.message);
+        return false;
+      }, (r) {
+        user = r;
+        
+        // Create or update profile for guest user
+        final data = {
+          'email': r.email,
+          'full_name': 'Guest User',
+          'role': r.role,
+          'is_verified': false,
+        };
+        
+        AuthLogger.info('guest.login.success', ctx: {
+          'userId': r.id,
+          'email': r.email,
+        });
+        
+        createOrGetProfile.call(r.id, data);
+        return true;
+      });
+      
+      loading = false;
+      notifyListeners();
+      return ok;
+    } catch (e, stackTrace) {
+      AuthLogger.errorLog('guest.login.failed',
+          ctx: {},
+          error: e,
+          stackTrace: stackTrace);
+      failure = Failure('Failed to login as guest: ${e.toString()}');
+      loading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Returns (url, error). On success url is set; on failure error contains the message.
   Future<({String? url, String? error})> uploadLegalDoc(String userId, String fileName, List<int> bytes) async {
     AuthLogger.docUploadAttempt(userId: userId, fileName: fileName);
